@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NASA // MISSION CONTROL: PHYSICS</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+    <style>
+        /* --- ESTÉTICA NASA / CYBERPUNK --- */
+        :root {
+            --bg-color: #0b0c10;
+            --panel-color: #1f2833;
+            --text-color: #c5c6c7;
+            --accent-cyan: #66fcf1;
+            --accent-green: #45a29e;
+            --alert-red: #ff3860;
+            --font-main: 'Courier New', Courier, monospace; /* Fuente tipo Terminal */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Scanlines effect (Efecto monitor viejo) */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* HEADER DEL SISTEMA */
+        .hud-header {
+            width: 100%;
+            padding: 15px;
+            background: rgba(31, 40, 51, 0.9);
+            border-bottom: 2px solid var(--accent-cyan);
+            text-align: center;
+            box-shadow: 0 0 15px var(--accent-cyan);
+            z-index: 3;
+        }
+
+        .hud-title {
+            margin: 0;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 1.2rem;
+            text-shadow: 0 0 5px var(--accent-cyan);
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .mission-console {
+            width: 90%;
+            max-width: 600px;
+            margin-top: 20px;
+            z-index: 3;
+        }
+
+        /* BARRA DE ESTADO */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--accent-green);
+        }
+
+        /* TARJETA DE PREGUNTA */
+        .data-panel {
+            background: rgba(31, 40, 51, 0.8);
+            border: 1px solid var(--accent-cyan);
+            padding: 20px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        /* Esquinas tecnológicas */
+        .data-panel::after {
+            content: "";
+            position: absolute;
+            bottom: -5px; right: -5px;
+            width: 20px; height: 20px;
+            border-bottom: 2px solid var(--accent-cyan);
+            border-right: 2px solid var(--accent-cyan);
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        /* BOTONES DE OPCIONES */
+        .options-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .btn-option {
+            background: transparent;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 15px;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-option:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan);
+            background: rgba(102, 252, 241, 0.1);
+        }
+
+        .btn-option:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* FEEDBACK VISUAL */
+        .feedback-panel {
+            margin-top: 20px;
+            min-height: 50px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: none; /* Oculto por defecto */
+        }
+
+        .success { color: #00ff00; text-shadow: 0 0 5px #00ff00; }
+        .error { color: var(--alert-red); text-shadow: 0 0 5px red; }
+
+        /* BOTÓN SIGUIENTE */
+        .btn-next {
+            background: var(--accent-green);
+            color: black;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            font-weight: bold;
+            font-family: var(--font-main);
+            margin-top: 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+            display: none;
+        }
+
+        .btn-next:hover {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="hud-header">
+        <h1 class="hud-title">📡 SISTEMA DE ANÁLISIS DIMENSIONAL</h1>
+    </header>
+
+    <div class="mission-console">
+        <div class="status-bar">
+            <span id="progress-text">Misión: 1/12</span>
+            <span id="score-text">Integridad: 100%</span>
+        </div>
+
+        <div class="data-panel" id="quiz-panel">
+            <span class="level-badge" id="level-indicator">NIVEL 1: INICIACIÓN</span>
+            
+            <div class="question-text" id="question-display">
+                Inicializando sistemas...
+            </div>
+
+            <div class="options-grid" id="options-container">
+                </div>
+
+            <div class="feedback-panel" id="feedback-display"></div>
+            <button class="btn-next" id="next-btn" onclick="nextMission()">>> CONFIRMAR Y CONTINUAR >></button>
+        </div>
+    </div>
+
+<script>
+    // --- BASE DE DATOS DE LA MISIÓN ---
+    // Nota: Usamos $$ para fórmulas grandes y $ para pequeñas.
+    // KaTeX se encargará de renderizarlas.
+    
+    const missionData = [
+        // --- NIVEL 1 ---
+        {
+            level: "NIVEL 1: FÁCIL",
+            q: "La Ley de Hooke es $F = k \\cdot x$. Si la fuerza es $[F] = MLT^{-2}$ y la deformación $x$ es Longitud ($L$). Determine la dimensión de la constante elástica $[k]$.",
+            options: [
+                { txt: "$M \\cdot T^{-2}$", correct: true },
+                { txt: "$M \\cdot L \\cdot T^{-2}$", correct: false },
+                { txt: "$M \\cdot L^{-1}$", correct: false }
+            ],
+            feedback: "Correcto. El resorte aguanta la presión."
+        },
+        {
+            level: "NIVEL 1: FÁCIL",
+            q: "En $E_c = \\frac{1}{2} m \\cdot v^2$. Demuestre dimensionalmente a qué equivale la Energía ($E$). (Masa $m$, Velocidad $v$).",
+            options: [
+                { txt: "$M \\cdot L^2 \\cdot T^{-2}$", correct: true }, // Joule
+                { txt: "$M \\cdot L \\cdot T^{-1}$", correct: false },
+                { txt: "$M \\cdot L \\cdot T^{-2}$", correct: false }
+            ],
+            feedback: "Afirmativo. Unidad de Joule verificada."
+        },
+        {
+            level: "NIVEL 1: FÁCIL",
+            q: "El caudal ($Q$) es volumen sobre tiempo ($Q = Vol / t$). ¿Cuál es su dimensión?",
+            options: [
+                { txt: "$L^3 \\cdot T^{-1}$", correct: true },
+                { txt: "$L^2 \\cdot T^{-1}$", correct: false },
+                { txt: "$L^3 \\cdot T$", correct: false }
+            ],
+            feedback: "Caudal estable. Buen trabajo."
+        },
+        {
+            level: "NIVEL 1: FÁCIL",
+            q: "Si $x = A \\cdot t^2$ (distancia y tiempo), ¿cuál es la dimensión de $A$?",
+            options: [
+                { txt: "$L \\cdot T^{-2}$ (Aceleración)", correct: true },
+                { txt: "$L \\cdot T^{-1}$ (Velocidad)", correct: false },
+                { txt: "$L \\cdot T$ (Sin sentido)", correct: false }
+            ],
+            feedback: "Exacto. Es una aceleración constante."
+        },
+
+        // --- NIVEL 2 ---
+        {
+            level: "NIVEL 2: INTERMEDIO",
+            q: "Dada $x = A + B \\cdot t + C \\cdot t^2$. Por homogeneidad, determine $[B]$ y $[C]$.",
+            options: [
+                { txt: "$B=LT^{-1}, \\ C=LT^{-2}$", correct: true },
+                { txt: "$B=L, \\ C=L$", correct: false },
+                { txt: "$B=LT, \\ C=LT^2$", correct: false }
+            ],
+            feedback: "Homogeneidad verificada. Sistemas alineados."
+        },
+        {
+            level: "NIVEL 2: INTERMEDIO",
+            q: "Despeje la constante de Gravitación $[G]$ de: $$F = G \\cdot \\frac{m_1 \\cdot m_2}{r^2}$$",
+            options: [
+                { txt: "$M^{-1} \\cdot L^3 \\cdot T^{-2}$", correct: true },
+                { txt: "$M \\cdot L^3 \\cdot T^{-2}$", correct: false },
+                { txt: "$M^{-1} \\cdot L^2 \\cdot T^{-1}$", correct: false }
+            ],
+            feedback: "¡Excelente! Has calculado la constante del universo."
+        },
+        {
+            level: "NIVEL 2: INTERMEDIO",
+            q: "Velocidad de onda: $v = \\sqrt{\\frac{T}{\\mu}}$ ($T$ es Fuerza). ¿Qué es $\\mu$?",
+            options: [
+                { txt: "$M \\cdot L^{-1}$ (Densidad Lineal)", correct: true },
+                { txt: "$M \\cdot L^{-3}$ (Densidad Volumétrica)", correct: false },
+                { txt: "$M$ (Masa pura)", correct: false }
+            ],
+            feedback: "Correcto. Elevaste al cuadrado exitosamente."
+        },
+        {
+            level: "NIVEL 2: INTERMEDIO",
+            q: "En $E = P \\cdot t + \\frac{1}{2} k \\cdot x^2$. Determine la dimensión del cociente $[P / k]$.",
+            options: [
+                { txt: "$L^2 \\cdot T^{-1}$", correct: true },
+                { txt: "$L \\cdot T^{-1}$", correct: false },
+                { txt: "$L^2 \\cdot T^{-2}$", correct: false }
+            ],
+            feedback: "Cálculo complejo resuelto. Bien hecho."
+        },
+
+        // --- NIVEL 3 ---
+        {
+            level: "NIVEL 3: AVANZADO",
+            q: "En $P = P_0 \\cdot e^{-\\alpha \\cdot t}$. El exponente debe ser adimensional. Halle $[\\alpha]$.",
+            options: [
+                { txt: "$T^{-1}$ (Frecuencia)", correct: true },
+                { txt: "$T$ (Tiempo)", correct: false },
+                { txt: "Adimensional (1)", correct: false }
+            ],
+            feedback: "Correcto. Los exponentes son números puros."
+        },
+        {
+            level: "NIVEL 3: AVANZADO",
+            q: "Van der Waals: $$( P + \\frac{a}{V^2} ) (V - b) = nRT$$ Hallar la dimensión de $[a]$. ($P$=Presión, $V$=Volumen).",
+            options: [
+                { txt: "$M \\cdot L^5 \\cdot T^{-2}$", correct: true },
+                { txt: "$M \\cdot L^{-1} \\cdot T^{-2}$", correct: false },
+                { txt: "$M \\cdot L^2 \\cdot T^{-2}$", correct: false }
+            ],
+            feedback: "Impresionante. Análisis de gases completado."
+        },
+        {
+            level: "NIVEL 3: AVANZADO",
+            q: "Onda: $y = A \\cdot \\cos(k \\cdot x - \\omega \\cdot t)$. Determine $[k \\cdot \\omega]$.",
+            options: [
+                { txt: "$L^{-1} \\cdot T^{-1}$", correct: true },
+                { txt: "$L \\cdot T$", correct: false },
+                { txt: "1 (Adimensional)", correct: false }
+            ],
+            feedback: "Afirmativo. Argumento del coseno analizado."
+        },
+        {
+            level: "NIVEL 3: AVANZADO",
+            q: "Stokes: $F = 6 \\cdot \\pi \\cdot \\eta \\cdot r \\cdot v$. Hallar viscosidad $[\\eta]$.",
+            options: [
+                { txt: "$M \\cdot L^{-1} \\cdot T^{-1}$", correct: true },
+                { txt: "$M \\cdot L \\cdot T^{-1}$", correct: false },
+                { txt: "$M \\cdot L^{-2} \\cdot T$", correct: false }
+            ],
+            feedback: "Misión Cumplida. Viscosidad determinada."
+        }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    // --- MOTOR DEL SISTEMA ---
+    function initSystem() {
+        loadMission(currentIdx);
+    }
+
+    function loadMission(index) {
+        const data = missionData[index];
+        const display = document.getElementById("question-display");
+        const optionsDiv = document.getElementById("options-container");
+        const nextBtn = document.getElementById("next-btn");
+        const feedback = document.getElementById("feedback-display");
+
+        // Reset UI
+        feedback.style.display = "none";
+        nextBtn.style.display = "none";
+        optionsDiv.innerHTML = "";
+        
+        // Actualizar HUD
+        document.getElementById("progress-text").innerText = `Misión: ${index + 1}/${missionData.length}`;
+        document.getElementById("level-indicator").innerText = data.level;
+
+        // Cargar Pregunta
+        display.innerHTML = data.q;
+
+        // Renderizar Matemática en la pregunta (KaTeX)
+        renderMathInElement(display, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false}
+            ]
+        });
+
+        // Generar Botones (Barajar opciones si quisieras, aquí van en orden de diseño)
+        // Vamos a mezclar el array de opciones para que la correcta no sea siempre la misma
+        let shuffledOptions = [...data.options].sort(() => Math.random() - 0.5);
+
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.className = "btn-option";
+            btn.innerHTML = opt.txt; // Usamos innerHTML para que entre el LaTeX
+            btn.onclick = () => evaluate(btn, opt.correct, data.feedback);
+            optionsDiv.appendChild(btn);
+        });
+
+        // Renderizar Matemática en los botones nuevos
+        renderMathInElement(optionsDiv, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false}
+            ]
+        });
+    }
+
+    function evaluate(btn, isCorrect, successMsg) {
+        const feedback = document.getElementById("feedback-display");
+        const nextBtn = document.getElementById("next-btn");
+        const allBtns = document.querySelectorAll(".btn-option");
+
+        // Bloquear botones
+        allBtns.forEach(b => b.disabled = true);
+
+        feedback.style.display = "block";
+        nextBtn.style.display = "block";
+
+        if (isCorrect) {
+            btn.style.borderColor = "#00ff00";
+            btn.style.boxShadow = "0 0 15px #00ff00";
+            feedback.innerHTML = `<span class="success">✅ ${successMsg}</span>`;
+            feedback.className = "feedback-panel success";
+            score++;
+        } else {
+            btn.style.borderColor = "red";
+            btn.style.boxShadow = "0 0 15px red";
+            feedback.innerHTML = `<span class="error">⚠️ ALERTA: Falla en el cálculo. ¿Estás seguro?</span>`;
+            feedback.className = "feedback-panel error";
+        }
+        
+        // Actualizar score visualmente
+        document.getElementById("score-text").innerText = `Integridad: ${Math.round((score / (currentIdx + 1)) * 100)}%`;
+    }
+
+    function nextMission() {
+        currentIdx++;
+        if (currentIdx < missionData.length) {
+            loadMission(currentIdx);
+        } else {
+            finishGame();
+        }
+    }
+
+    function finishGame() {
+        const panel = document.getElementById("quiz-panel");
+        let finalMsg = score > 9 ? "🚀 SISTEMA NOMINAL. LISTO PARA EL LANZAMIENTO." : "⚠️ CRÍTICO. SE REQUIERE REENTRENAMIENTO.";
+        
+        panel.innerHTML = `
+            <h2 style="color:var(--accent-cyan); text-align:center;">REPORTE FINAL</h2>
+            <p style="text-align:center; font-size:1.5rem;">${score} / ${missionData.length} ACIERTOS</p>
+            <p style="text-align:center; margin-top:20px;">${finalMsg}</p>
+            <button class="btn-next" style="display:block" onclick="location.reload()">REINICIAR SIMULACIÓN</button>
+        `;
+    }
+
+    // Arrancar el sistema
+    window.onload = initSystem;
+
+</script>
+</body>
+</html>
