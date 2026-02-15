@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NASA // FERMI PROTOCOL: ESTIMATION</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+    <style>
+        /* --- ESTÉTICA NASA / CYBERPUNK (Mismo Core Visual) --- */
+        :root {
+            --bg-color: #0b0c10;
+            --panel-color: #1f2833;
+            --text-color: #c5c6c7;
+            --accent-cyan: #66fcf1;
+            --accent-orange: #ff9f43; /* Variación de color para Nivel 2 */
+            --alert-red: #ff3860;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Scanlines effect */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .hud-header {
+            width: 100%;
+            padding: 15px;
+            background: rgba(31, 40, 51, 0.9);
+            border-bottom: 2px solid var(--accent-orange);
+            text-align: center;
+            box-shadow: 0 0 15px var(--accent-orange);
+            z-index: 3;
+        }
+
+        .hud-title {
+            margin: 0;
+            color: var(--accent-orange);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 1.2rem;
+            text-shadow: 0 0 5px var(--accent-orange);
+        }
+
+        .mission-console {
+            width: 90%;
+            max-width: 600px;
+            margin-top: 20px;
+            z-index: 3;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+        }
+
+        .data-panel {
+            background: rgba(31, 40, 51, 0.8);
+            border: 1px solid var(--accent-orange);
+            padding: 20px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .data-panel::after {
+            content: "";
+            position: absolute;
+            bottom: -5px; right: -5px;
+            width: 20px; height: 20px;
+            border-bottom: 2px solid var(--accent-orange);
+            border-right: 2px solid var(--accent-orange);
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid var(--accent-orange);
+            color: var(--accent-orange);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .btn-option {
+            background: transparent;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 15px;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-option:hover {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 10px var(--accent-orange);
+            background: rgba(255, 159, 67, 0.1);
+        }
+
+        .btn-option:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .feedback-panel {
+            margin-top: 20px;
+            min-height: 50px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: none; 
+        }
+
+        .success { color: #00ff00; text-shadow: 0 0 5px #00ff00; }
+        .error { color: var(--alert-red); text-shadow: 0 0 5px red; }
+
+        .btn-next {
+            background: var(--accent-orange);
+            color: black;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            font-weight: bold;
+            font-family: var(--font-main);
+            margin-top: 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+            display: none;
+        }
+
+        .btn-next:hover {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="hud-header">
+        <h1 class="hud-title">🧠 Protocolo Fermi: Estimación</h1>
+    </header>
+
+    <div class="mission-console">
+        <div class="status-bar">
+            <span id="progress-text">Misión: 1/12</span>
+            <span id="score-text">Precisión: 100%</span>
+        </div>
+
+        <div class="data-panel" id="quiz-panel">
+            <span class="level-badge" id="level-indicator">NIVEL 1: PRINCIPIANTE</span>
+            
+            <div class="question-text" id="question-display">
+                Cargando datos de estimación...
+            </div>
+
+            <div class="options-grid" id="options-container">
+                </div>
+
+            <div class="feedback-panel" id="feedback-display"></div>
+            <button class="btn-next" id="next-btn" onclick="nextMission()">>> PROCESAR SIGUIENTE >></button>
+        </div>
+    </div>
+
+<script>
+    // --- BASE DE DATOS DE FERMI (ESTIMACIÓN) ---
+    // Cálculos aproximados realizados por tu CTO.
+    
+    const missionData = [
+        // --- NIVEL 1 ---
+        {
+            level: "NIVEL 1: PRINCIPIANTE",
+            q: "El Corazón Incansable: Estime el número de latidos de un estudiante de 20 años. (Frecuencia: ~75 lat/min).",
+            options: [
+                { txt: "$~8 \\times 10^8$ (800 Millones)", correct: true },
+                { txt: "$~1 \\times 10^6$ (1 Millón)", correct: false },
+                { txt: "$~5 \\times 10^{11}$ (500 Billones)", correct: false }
+            ],
+            feedback: "Correcto. 20 años x 365 días x 24h x 60min x 75 latidos = ~788.000.000."
+        },
+        {
+            level: "NIVEL 1: PRINCIPIANTE",
+            q: "La Biblioteca Humana: 200 palabras/min, 4 horas/día durante 5 años de carrera. ¿Total de palabras leídas?",
+            options: [
+                { txt: "$~9 \\times 10^7$ (90 Millones)", correct: true },
+                { txt: "$~1 \\times 10^5$ (100 Mil)", correct: false },
+                { txt: "$~1 \\times 10^{10}$ (10 Billones)", correct: false }
+            ],
+            feedback: "Afirmativo. El cálculo da aprox 87.600.000 palabras."
+        },
+        {
+            level: "NIVEL 1: PRINCIPIANTE",
+            q: "El Diluvio Personal: Agua bebida en 80 años vs Piscina Olímpica (2.5M litros). ¿La llenamos?",
+            options: [
+                { txt: "No. Solo bebemos ~$6 \\times 10^4$ L (aprox 2% de la piscina).", correct: true },
+                { txt: "Sí, la llenamos y sobra.", correct: false },
+                { txt: "Llenamos exactamente 10 piscinas.", correct: false }
+            ],
+            feedback: "Exacto. 2L/día x 365 x 80 = 58.400 Litros. Lejos de la piscina."
+        },
+        {
+            level: "NIVEL 1: PRINCIPIANTE",
+            q: "Pestañeos Colectivos: Clase de 2h, 50 alumnos, 1 pestañeo cada 5s. ¿Suma total?",
+            options: [
+                { txt: "$~7 \\times 10^4$ (72.000 veces)", correct: true },
+                { txt: "$~1 \\times 10^3$ (1.000 veces)", correct: false },
+                { txt: "$~1 \\times 10^6$ (1 Millón de veces)", correct: false }
+            ],
+            feedback: "Correcto. (7200 seg / 5) x 50 alumnos = 72.000."
+        },
+
+        // --- NIVEL 2 ---
+        {
+            level: "NIVEL 2: INTERMEDIO",
+            q: "Invasión Ping-Pong: ¿Cuántas pelotas caben en el aula? (Estime Volumen Aula vs Volumen Esfera)",
+            options: [
+                { txt: "$10^6$ (Millones)", correct: true },
+                { txt: "$10^3$ (Miles)", correct: false },
+                { txt: "$10^9$ (Billones)", correct: false }
+            ],
+            feedback: "Bien estimado. V_aula ~150m3 / V_pelota ~3x10^-5 m3 = orden de Millones."
+        },
+        {
+            level: "NIVEL 2: INTERMEDIO",
+            q: "El Peso del Saber: ¿Una pila con TODOS los libros de física de la biblioteca supera al edificio (15m)?",
+            options: [
+                { txt: "Sí, por mucho (> 100m)", correct: true },
+                { txt: "No, llega a la mitad.", correct: false },
+                { txt: "Sería igual de alta.", correct: false }
+            ],
+            feedback: "Correcto. Si hay 10.000 libros x 2cm = 200 metros de altura."
+        },
+        {
+            level: "NIVEL 2: INTERMEDIO",
+            q: "Mermelada Tucumana: Consumo mensual en S.M. de Tucumán. (Pob: 600k, 50% desayuna, 20g/tostada).",
+            options: [
+                { txt: "$~1.8 \\times 10^5$ kg (180 Toneladas)", correct: true },
+                { txt: "$~500$ kg", correct: false },
+                { txt: "$~1 \\times 10^9$ kg", correct: false }
+            ],
+            feedback: "Cálculo válido. ¡Es mucha mermelada!"
+        },
+        {
+            level: "NIVEL 2: INTERMEDIO",
+            q: "La Fortuna en Monedas: Pila de monedas ($100) altura Aconcagua (7000m). Espesor 2mm. ¿Valor total?",
+            options: [
+                { txt: "$~3.5 \\times 10^8$ ($350 Millones)", correct: true },
+                { txt: "$~3 \\times 10^6$ ($3 Millones)", correct: false },
+                { txt: "$~1 \\times 10^{12}$ (Billones)", correct: false }
+            ],
+            feedback: "Exacto. 7000m / 0.002m = 3.5M monedas x $100."
+        },
+
+        // --- NIVEL 3 ---
+        {
+            level: "NIVEL 3: EXPERTO",
+            q: "Átomos en un Dedo: ¿Átomos en tu uña? (Masa ~0.1g, Molar ~100g, Avogadro $6 \\times 10^{23}$).",
+            options: [
+                { txt: "$~10^{20}$ átomos", correct: true },
+                { txt: "$~10^{10}$ átomos", correct: false },
+                { txt: "$~10^{30}$ átomos", correct: false }
+            ],
+            feedback: "Nivel Cuántico alcanzado. Es del orden de los trillones."
+        },
+        {
+            level: "NIVEL 3: EXPERTO",
+            q: "Desgaste Neumático: Pierde 1cm en 50.000km. ¿Qué pierde en una vuelta? (Perímetro ~2m).",
+            options: [
+                { txt: "Una capa atómica ($~10^{-10}$ m)", correct: true },
+                { txt: "Visible a simple vista (1 mm)", correct: false },
+                { txt: "Nada, es imposible calcular.", correct: false }
+            ],
+            feedback: "¡Increíble! Pierde literalmente una capa de átomos por vuelta."
+        },
+        {
+            level: "NIVEL 3: EXPERTO",
+            q: "Lluvia Estadio: 50mm de lluvia sobre cancha de fútbol ($7000 m^2$). ¿Masa total?",
+            options: [
+                { txt: "350 Toneladas", correct: true },
+                { txt: "3.5 Toneladas", correct: false },
+                { txt: "35.000 Toneladas", correct: false }
+            ],
+            feedback: "Correcto. 0.05m x 7000m2 = 350 m3 = 350.000 kg."
+        },
+        {
+            level: "NIVEL 3: EXPERTO",
+            q: "Recuento Cabellos: Si unes todos tus pelos ($10^5$, largo 20cm) en una línea. ¿Hasta dónde llega?",
+            options: [
+                { txt: "$~20$ km (A otra ciudad)", correct: true },
+                { txt: "$~200$ m (A la puerta de la facu)", correct: false },
+                { txt: "$~2000$ km (A Brasil)", correct: false }
+            ],
+            feedback: "Afirmativo. 100.000 x 0.2m = 20.000 metros."
+        }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function initSystem() {
+        loadMission(currentIdx);
+    }
+
+    function loadMission(index) {
+        const data = missionData[index];
+        const display = document.getElementById("question-display");
+        const optionsDiv = document.getElementById("options-container");
+        const nextBtn = document.getElementById("next-btn");
+        const feedback = document.getElementById("feedback-display");
+
+        feedback.style.display = "none";
+        nextBtn.style.display = "none";
+        optionsDiv.innerHTML = "";
+        
+        document.getElementById("progress-text").innerText = `Misión: ${index + 1}/${missionData.length}`;
+        document.getElementById("level-indicator").innerText = data.level;
+
+        display.innerHTML = data.q;
+        renderMathInElement(display, {
+            delimiters: [{left: "$", right: "$", display: false}]
+        });
+
+        // Barajar opciones
+        let shuffledOptions = [...data.options].sort(() => Math.random() - 0.5);
+
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.className = "btn-option";
+            btn.innerHTML = opt.txt;
+            btn.onclick = () => evaluate(btn, opt.correct, data.feedback);
+            optionsDiv.appendChild(btn);
+        });
+
+        renderMathInElement(optionsDiv, {
+            delimiters: [{left: "$", right: "$", display: false}]
+        });
+    }
+
+    function evaluate(btn, isCorrect, successMsg) {
+        const feedback = document.getElementById("feedback-display");
+        const nextBtn = document.getElementById("next-btn");
+        const allBtns = document.querySelectorAll(".btn-option");
+
+        allBtns.forEach(b => b.disabled = true);
+
+        feedback.style.display = "block";
+        nextBtn.style.display = "block";
+
+        if (isCorrect) {
+            btn.style.borderColor = "#00ff00";
+            btn.style.boxShadow = "0 0 15px #00ff00";
+            feedback.innerHTML = `<span class="success">✅ ${successMsg}</span>`;
+            feedback.className = "feedback-panel success";
+            score++;
+        } else {
+            btn.style.borderColor = "red";
+            btn.style.boxShadow = "0 0 15px red";
+            feedback.innerHTML = `<span class="error">⚠️ Error de Magnitud. Revisa las potencias.</span>`;
+            feedback.className = "feedback-panel error";
+        }
+        
+        document.getElementById("score-text").innerText = `Precisión: ${Math.round((score / (currentIdx + 1)) * 100)}%`;
+    }
+
+    function nextMission() {
+        currentIdx++;
+        if (currentIdx < missionData.length) {
+            loadMission(currentIdx);
+        } else {
+            finishGame();
+        }
+    }
+
+    function finishGame() {
+        const panel = document.getElementById("quiz-panel");
+        let finalMsg = score > 9 ? "🏆 RANGO ALCANZADO: MAESTRO FERMI." : "⚠️ SE REQUIERE AJUSTE DE SENSORES.";
+        
+        panel.innerHTML = `
+            <h2 style="color:var(--accent-orange); text-align:center;">INFORME FINAL</h2>
+            <p style="text-align:center; font-size:1.5rem;">${score} / ${missionData.length} ACIERTOS</p>
+            <p style="text-align:center; margin-top:20px;">${finalMsg}</p>
+            <button class="btn-next" style="display:block" onclick="location.reload()">REINICIAR PROTOCOLO</button>
+            <br>
+            <button class="btn-next" style="background:#45a29e" onclick="window.history.back()">VOLVER AL MENÚ</button>
+        `;
+    }
+
+    window.onload = initSystem;
+
+</script>
+</body>
+</html>
