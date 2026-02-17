@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bio-Lab: Evaluación de Biomoléculas</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- VARIABLES Y TEMAS --- */
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 50%, #f0fdf4, #dbeafe, #bfdbfe);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --primary: #2563eb;       
+            --secondary: #0891b2;     
+            --accent: #f59e0b;        
+            --text-main: #1e293b;
+            --text-light: #475569;
+            --success: #10b981;
+            --error: #ef4444;
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --shadow: 0 20px 50px -10px rgba(37, 99, 235, 0.2);
+            /* Color específico para la etiqueta de progreso */
+            --tag-bg: rgba(30, 41, 59, 0.1); 
+            --tag-text: #1e293b;
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: radial-gradient(circle at 50% 50%, #1e293b, #0f172a, #020617);
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --primary: #60a5fa;
+            --secondary: #22d3ee;
+            --accent: #fbbf24;
+            --text-main: #f1f5f9;
+            --text-light: #cbd5e1;
+            --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+            --shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
+            /* Corrección para modo oscuro */
+            --tag-bg: rgba(255, 255, 255, 0.15); 
+            --tag-text: #f1f5f9;
+        }
+
+        * { box-sizing: border-box; transition: background 0.3s, color 0.3s, border-color 0.3s; }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- BURBUJAS DE FONDO (CAPA 1) --- */
+        .bubbles-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+        .bubble {
+            position: absolute;
+            bottom: -50px;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.1));
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: rise linear infinite;
+        }
+
+        /* --- ELEMENTOS FLOTANTES INTERACTIVOS (CAPA 2) --- */
+        .lab-elements-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .interactive-float {
+            position: absolute;
+            cursor: pointer;
+            font-size: 2rem;
+            opacity: 0.3;
+            transition: transform 0.2s, color 0.2s, opacity 0.2s;
+            animation: floatMove ease-in-out infinite alternate;
+            user-select: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .interactive-float:hover {
+            opacity: 0.8;
+            transform: scale(1.2) !important;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        .pop-anim {
+            animation: popOut 0.3s forwards !important;
+        }
+
+        @keyframes popOut {
+            0% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(0); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-120vh); opacity: 0; }
+        }
+
+        @keyframes floatMove {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        /* --- UI HEADER --- */
+        .top-bar {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            position: sticky; top: 0;
+            z-index: 100;
+        }
+
+        .brand { 
+            font-weight: 800; font-size: 1.4rem; display: flex; align-items: center; gap: 10px; 
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .brand i { color: var(--secondary); }
+
+        .controls { display: flex; gap: 12px; }
+        
+        .icon-btn {
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+            color: var(--text-main);
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+        .icon-btn:hover { background: var(--primary); color: white; transform: translateY(-2px); border-color:transparent; }
+
+        /* --- CONTENEDOR PRINCIPAL (QUIZ) --- */
+        .quiz-wrapper {
+            width: 95%; max-width: 850px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            border-radius: 30px;
+            border: var(--glass-border);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(25px);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        /* --- HUD CORREGIDO --- */
+        .hud {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(125,125,125,0.1);
+        }
+
+        .progress-tag {
+            /* SOLUCIÓN AL BUG: Usar variables de color sólido dedicadas */
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px; border-radius: 20px;
+            font-weight: 700; font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .streak-counter {
+            font-weight: 800; color: var(--accent);
+            display: flex; align-items: center; gap: 8px;
+            font-size: 1.2rem;
+            text-shadow: 0 2px 10px rgba(245, 158, 11, 0.2);
+        }
+        .streak-counter.active i { animation: flame 0.5s infinite alternate; }
+        @keyframes flame { from { transform: scale(1); } to { transform: scale(1.3); } }
+
+        /* --- PREGUNTAS --- */
+        .question-area h2 {
+            font-size: 1.6rem; line-height: 1.4; margin-bottom: 35px;
+            color: var(--text-main); font-weight: 800;
+        }
+
+        .options-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+        @media (min-width: 768px) { .options-grid { grid-template-columns: 1fr 1fr; } }
+
+        .option-card {
+            background: rgba(255,255,255,0.4);
+            border: 2px solid transparent;
+            padding: 22px;
+            border-radius: 18px;
+            cursor: pointer;
+            display: flex; align-items: flex-start; gap: 15px;
+            font-size: 1.05rem;
+            color: var(--text-main);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        [data-theme="dark"] .option-card { background: rgba(0,0,0,0.2); }
+
+        .option-card:hover:not(.disabled) {
+            background: rgba(var(--primary), 0.1);
+            border-color: var(--secondary);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .option-card.disabled { cursor: default; opacity: 0.6; pointer-events: none; }
+
+        .option-letter {
+            background: var(--text-main); color: var(--card-bg);
+            width: 32px; height: 32px;
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 10px; font-weight: 800; font-size: 0.9rem;
+            flex-shrink: 0; margin-top: 2px;
+        }
+
+        /* --- FEEDBACK --- */
+        .option-card.correct {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.15);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+        .option-card.wrong {
+            border-color: var(--error);
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .feedback-modal {
+            margin-top: 25px; padding: 25px;
+            border-radius: 20px;
+            background: rgba(var(--bg-color), 0.3);
+            border: 1px solid var(--glass-border);
+            display: none; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+        }
+        @keyframes slideUp { from {opacity:0; transform:translateY(30px);} to {opacity:1; transform:translateY(0);} }
+
+        .btn-next {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none;
+            width: 100%; padding: 22px;
+            border-radius: 18px; margin-top: 25px;
+            font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+            cursor: pointer; display: none;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);
+            transition: transform 0.2s;
+        }
+        .btn-next:hover { transform: scale(1.02); filter: brightness(1.1); }
+
+        /* --- MODAL APUNTES --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 200;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: var(--card-bg); width: 90%; max-width: 650px; max-height: 85vh;
+            border-radius: 24px; padding: 40px; overflow-y: auto;
+            position: relative; border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        .cheat-sheet-item {
+            margin-bottom: 20px; padding: 15px; 
+            border-radius: 12px; background: rgba(125,125,125,0.05);
+            border-left: 4px solid var(--primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="bubbles-container" id="bubbles-layer"></div>
+
+    <div class="lab-elements-container" id="interactive-layer"></div>
+
+    <nav class="top-bar">
+        <div class="brand">
+            <i class="fa-solid fa-flask-vial"></i> BIO-LAB <span style="font-size:0.7rem; opacity:0.6; margin-left:5px; border:1px solid currentColor; padding:1px 5px; border-radius:4px;">v3.1</span>
+        </div>
+        <div class="controls">
+            <button class="icon-btn" onclick="toggleCheatSheet()" title="Apuntes"><i class="fa-solid fa-clipboard-list"></i></button>
+            <button class="icon-btn" onclick="toggleTheme()" title="Modo Noche"><i class="fa-solid fa-moon"></i></button>
+        </div>
+    </nav>
+
+    <div class="quiz-wrapper" id="quiz-panel">
+        <div class="hud">
+            <span class="progress-tag">PREGUNTA <span id="current-q">1</span> / 18</span>
+            
+            <div class="streak-counter" id="streak-display">
+                <i class="fa-solid fa-fire"></i> 0
+            </div>
+        </div>
+
+        <div class="question-area">
+            <h2 id="question-text">Inicializando sistema...</h2>
+            <div class="options-grid" id="options-container"></div>
+        </div>
+
+        <div class="feedback-modal" id="feedback-area">
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+                <div id="feedback-icon" style="font-size:1.5rem;"></div>
+                <h3 id="feedback-title" style="margin:0;"></h3>
+            </div>
+            <p id="feedback-text" style="margin:0; opacity:0.9; line-height:1.6;"></p>
+        </div>
+
+        <button class="btn-next" id="next-btn" onclick="nextQuestion()">
+            SIGUIENTE <i class="fa-solid fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="cheat-modal">
+        <div class="modal-content">
+            <span style="position:absolute; top:20px; right:20px; font-size:1.5rem; cursor:pointer;" onclick="toggleCheatSheet()">&times;</span>
+            <h2 style="margin-top:0; color:var(--primary)"><i class="fa-solid fa-book-medical"></i> Apuntes</h2>
+            <div class="cheat-sheet-item">
+                <h4>🧪 CHONPS</h4> <p>Base de la vida: C, H, O, N, P, S.</p>
+            </div>
+            <div class="cheat-sheet-item">
+                <h4>⚡ Glúcidos</h4> <p>Energía Inmediata. Solubles (OH Polar).</p>
+            </div>
+            <div class="cheat-sheet-item">
+                <h4>🔋 Lípidos</h4> <p>Reserva densa (9kcal). Hidrofóbicos (Zig-Zag apolar).</p>
+            </div>
+            <div class="cheat-sheet-item">
+                <h4>🤖 Proteínas</h4> <p>Estructura y Maquinaria. Tienen Nitrógeno (N).</p>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- GENERADOR DE AMBIENTE DE LABORATORIO ---
+    
+    function initBubbles() {
+        const container = document.getElementById('bubbles-layer');
+        for(let i=0; i<40; i++) {
+            const b = document.createElement('div');
+            b.className = 'bubble';
+            const size = Math.random() * 20 + 5 + 'px'; 
+            b.style.width = size;
+            b.style.height = size;
+            b.style.left = Math.random() * 100 + '%';
+            b.style.animationDuration = (Math.random() * 10 + 5) + 's'; 
+            b.style.animationDelay = (Math.random() * -10) + 's';
+            b.style.opacity = Math.random() * 0.3;
+            container.appendChild(b);
+        }
+    }
+
+    function initInteractiveElements() {
+        const container = document.getElementById('interactive-layer');
+        const icons = [
+            'fa-flask', 'fa-dna', 'fa-atom', 'fa-virus', 'fa-bacterium', 
+            'fa-capsules', 'fa-vial', 'fa-prescription-bottle', 'fa-syringe'
+        ];
+        const formulas = ['H_2O', 'CO_2', 'ATP', 'C_6H_{12}O_6', 'NaCl', 'NH_3', 'O_2'];
+        const colors = ['#22d3ee', '#818cf8', '#34d399', '#f472b6', '#a78bfa']; 
+
+        for(let i=0; i<30; i++) {
+            const el = document.createElement('div');
+            el.className = 'interactive-float';
+            
+            if(Math.random() > 0.5) {
+                const icon = icons[Math.floor(Math.random() * icons.length)];
+                el.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+            } else {
+                const form = formulas[Math.floor(Math.random() * formulas.length)];
+                el.innerHTML = `\\(${form}\\)`;
+            }
+
+            el.style.left = Math.random() * 95 + '%';
+            el.style.top = Math.random() * 95 + '%';
+            el.style.color = colors[Math.floor(Math.random() * colors.length)];
+            el.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            el.style.fontSize = (Math.random() * 1.5 + 1) + 'rem';
+            
+            el.onclick = function() { popElement(el); };
+
+            container.appendChild(el);
+        }
+        
+        renderMathInElement(container, {delimiters: [{left: "\\(", right: "\\)", display: false}]});
+    }
+
+    function popElement(el) {
+        playSound('pop'); 
+        el.classList.add('pop-anim'); 
+        setTimeout(() => {
+            el.classList.remove('pop-anim');
+            el.style.left = Math.random() * 90 + '%';
+            el.style.top = Math.random() * 90 + '%';
+        }, 300);
+    }
+
+    // --- SONIDOS ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(500, now);
+            osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+        } else if (type === 'pop') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.linearRampToValueAtTime(600, now + 0.05);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        }
+    }
+
+    // --- DATOS DEL CUESTIONARIO ---
+    const quizData = [
+        {
+            q: "Según la infografía 'Arquitectura Atómica', ¿por qué los Sacáridos se disuelven fácilmente en agua?",
+            options: [
+                { txt: "Porque tienen forma de hexágono.", correct: false },
+                { txt: "Porque su grupo $-OH$ (Hidroxilo) es polar y atrae al agua.", correct: true },
+                { txt: "Porque son una estructura inestable y tensa.", correct: false }
+            ],
+            feedback: "Correcto. La polaridad del grupo Hidroxilo permite la interacción con el agua."
+        },
+        {
+            q: "En la analogía de ingeniería de la 'Máquina Humana', ¿con qué componente eléctrico se comparan los Hidratos de Carbono?",
+            options: [
+                { txt: "Con el hardware y los operarios.", correct: false },
+                { txt: "Con un banco de baterías UPS.", correct: false },
+                { txt: "Con la corriente eléctrica (Red Eléctrica) y capacitores.", correct: true }
+            ],
+            feedback: "Exacto. Energía inmediata (AC) y reserva rápida (Capacitores)."
+        },
+        {
+            q: "¿Qué característica estructural de los Lípidos hace que funcionen como excelentes aislantes (hidrofóbicos)?",
+            options: [
+                { txt: "Que son apolares y eléctricamente neutros por la falta de oxígeno.", correct: true },
+                { txt: "Que tienen una forma de zig-zag muy compacta.", correct: false },
+                { txt: "Que almacenan mucha energía en sus enlaces $C-H$.", correct: false }
+            ],
+            feedback: "¡Bien! Al ser apolares, repelen el agua (que es polar)."
+        },
+        {
+            q: "Si observamos la columna de Proteínas, ¿cuál es el componente 'mágico' o variable que define la función del aminoácido?",
+            options: [
+                { txt: "El Grupo Ácido ($-COOH$).", correct: false },
+                { txt: "El Carbono Alfa ($C_\\alpha$).", correct: false },
+                { txt: "El Grupo R (Abajo).", correct: true }
+            ],
+            feedback: "Correcto. El Grupo R es el módulo intercambiable que define la identidad del aminoácido."
+        },
+        {
+            q: "Según la clasificación, ¿cuál es la diferencia energética entre un gramo de grasa y un gramo de azúcar?",
+            options: [
+                { txt: "La grasa aporta 9 kcal y el azúcar 4 kcal.", correct: true },
+                { txt: "Aportan exactamente lo mismo.", correct: false },
+                { txt: "El azúcar aporta el doble de energía que la grasa.", correct: false }
+            ],
+            feedback: "Exacto. Los lípidos son mucho más densos energéticamente (más del doble)."
+        },
+        {
+            q: "¿Qué biomolécula es la única que contiene Nitrógeno ($N$) en su estructura principal?",
+            options: [
+                { txt: "Los Lípidos (Grasas).", correct: false },
+                { txt: "Los Sacáridos (Glucosa).", correct: false },
+                { txt: "Las Proteínas (Aminoácidos).", correct: true }
+            ],
+            feedback: "¡Muy bien! El Nitrógeno es fundamental en el grupo Amino de las proteínas."
+        },
+        {
+            q: "En la infografía de 'La Máquina Humana', ¿qué función cumplen los lípidos como 'Aislante'?",
+            options: [
+                { txt: "Forman tejidos como colágeno y queratina.", correct: false },
+                { txt: "Aíslan térmicamente (grasa subcutánea) y eléctricamente (mielina).", correct: true },
+                { txt: "Son catalizadores biológicos.", correct: false }
+            ],
+            feedback: "Correcto. La mielina es lípido puro que evita 'cortocircuitos' neuronales."
+        },
+        {
+            q: "¿Cuál es la fórmula básica de los Sacáridos mencionada en la sección 'El Anillo de Energía'?",
+            options: [
+                { txt: "$C-C-C-C$ (Cadena lineal).", correct: false },
+                { txt: "$(CH_2O)_n$.", correct: true },
+                { txt: "$NH_2-C-COOH$.", correct: false }
+            ],
+            feedback: "Exacto. Literalmente 'Carbono Hidratado'."
+        },
+        {
+            q: "En la analogía de ingeniería, las Proteínas se describen como:",
+            options: [
+                { txt: "La energía inmediata y el combustible.", correct: false },
+                { txt: "El almacenamiento y aislamiento.", correct: false },
+                { txt: "El hardware, motor, sensores y estructura física.", correct: true }
+            ],
+            feedback: "¡Sí! Son la maquinaria y la estructura (Hardware/Robots)."
+        },
+        {
+            q: "Observando la estructura de los Aminoácidos, ¿qué dos grupos se encuentran a los lados del Carbono Central?",
+            options: [
+                { txt: "Un grupo Hidroxilo y un Hidrógeno.", correct: false },
+                { txt: "Un Grupo Amino ($-NH_2$) y un Grupo Ácido ($-COOH$).", correct: true },
+                { txt: "Dos cadenas de hidrocarburos.", correct: false }
+            ],
+            feedback: "Correcto. De ahí viene el nombre 'Amino-Ácido'."
+        },
+        {
+            q: "¿Qué ejemplo de polisacárido se da como reserva de energía a corto plazo en animales?",
+            options: [
+                { txt: "Almidón.", correct: false },
+                { txt: "Sacarosa.", correct: false },
+                { txt: "Glucógeno.", correct: true }
+            ],
+            feedback: "Así es. El glucógeno se almacena en hígado y músculos."
+        },
+        {
+            q: "¿Por qué la estructura de los Lípidos se visualiza como un 'Zig-Zag'?",
+            options: [
+                { txt: "Porque representa una cadena lineal de Carbonos saturada de Hidrógenos.", correct: true },
+                { txt: "Porque es inestable y tensa.", correct: false },
+                { txt: "Porque se cierra sobre sí misma formando anillos.", correct: false }
+            ],
+            feedback: "Exacto. Es una cadena hidrocarbonada larga y apolar."
+        },
+        {
+            q: "En la clasificación de los Lípidos, ¿cuál es la diferencia principal entre Saponificables e Insaponificables?",
+            options: [
+                { txt: "Los Saponificables contienen ácidos grasos y los Insaponificables no.", correct: true },
+                { txt: "Los Saponificables son solubles en agua y los otros no.", correct: false },
+                { txt: "Los Insaponificables son los únicos que sirven como energía.", correct: false }
+            ],
+            feedback: "Correcto. Saponificables (Aceites/Ceras) tienen ácidos grasos. Insaponificables (Esteroides) no."
+        },
+        {
+            q: "Las Proteínas tienen una función 'Enzimática'. ¿Qué significa esto en términos de ingeniería química?",
+            options: [
+                { txt: "Que sirven como ladrillos para construir paredes.", correct: false },
+                { txt: "Que actúan como catalizadores biológicos acelerando reacciones.", correct: true },
+                { txt: "Que almacenan energía eléctrica de alto voltaje.", correct: false }
+            ],
+            feedback: "¡Exacto! Las enzimas son como 'transistores' que controlan si una reacción ocurre o no."
+        },
+        {
+            q: "Si comes un plato de pasta o arroz, ¿qué tipo de molécula estás ingiriendo principalmente?",
+            options: [
+                { txt: "Proteínas fibrosas.", correct: false },
+                { txt: "Polisacáridos (Almidón).", correct: true },
+                { txt: "Lípidos insaponificables.", correct: false }
+            ],
+            feedback: "Bien. El almidón es la forma en que las plantas almacenan glucosa."
+        },
+        {
+            q: "En el ciclo CHONPS, ¿cuál es la función principal del elemento Fósforo ($P$) representada por el icono de batería?",
+            options: [
+                { txt: "Formar la estructura de los huesos y la molécula de energía ATP.", correct: true },
+                { txt: "Proporcionar el color rojo a la sangre.", correct: false },
+                { txt: "Servir como aislante térmico en la piel.", correct: false }
+            ],
+            feedback: "Correcto. El ATP (Adenosín Trifosfato) es la 'batería cargada' de la célula."
+        },
+        {
+            q: "¿Qué sucede químicamente durante la polimerización (unir monómeros para hacer un polímero)?",
+            options: [
+                { txt: "Generalmente se libera una molécula de agua (Condensación).", correct: true },
+                { txt: "Se rompen todos los enlaces de carbono.", correct: false },
+                { txt: "La molécula se vuelve inestable y explota.", correct: false }
+            ],
+            feedback: "Así es. Para unir los ladrillos, suele 'sobrar' agua (Síntesis por deshidratación)."
+        },
+        {
+            q: "¿Cuál es la diferencia visual entre una proteína Fibrosa y una Globular?",
+            options: [
+                { txt: "No hay diferencia visual.", correct: false },
+                { txt: "Las Fibrosas son largas y resistentes (Estructurales), las Globulares son esféricas (Funcionales).", correct: true },
+                { txt: "Las Fibrosas son líquidas y las Globulares sólidas.", correct: false }
+            ],
+            feedback: "Perfecto. Fibrosa = Viga de construcción. Globular = Herramienta/Máquina."
+        }
+    ];
+
+    // --- LÓGICA DEL JUEGO ---
+    let currentIdx = 0;
+    let score = 0;
+    let streak = 0;
+
+    function initGame() {
+        initBubbles();
+        initInteractiveElements();
+        currentIdx = 0;
+        score = 0;
+        streak = 0;
+        loadQuestion(0);
+        updateStreak();
+    }
+
+    function loadQuestion(index) {
+        const data = quizData[index];
+        const title = document.getElementById("question-text");
+        const container = document.getElementById("options-container");
+        const nextBtn = document.getElementById("next-btn");
+        const feedback = document.getElementById("feedback-area");
+        
+        // Reset UI
+        document.getElementById("current-q").innerText = index + 1;
+        nextBtn.style.display = "none";
+        feedback.style.display = "none";
+        container.innerHTML = "";
+
+        // Set Question
+        title.innerHTML = data.q;
+        renderMathInElement(title, {delimiters: [{left: "$", right: "$", display: false}]});
+
+        // Set Options
+        const letters = ['A', 'B', 'C'];
+        data.options.forEach((opt, i) => {
+            const btn = document.createElement("div");
+            btn.className = "option-card";
+            btn.innerHTML = `<div class="option-letter">${letters[i]}</div> <div>${opt.txt}</div>`;
+            btn.onclick = () => checkAnswer(btn, opt.correct, data.feedback);
+            container.appendChild(btn);
+        });
+        
+        renderMathInElement(container, {delimiters: [{left: "$", right: "$", display: false}]});
+    }
+
+    function checkAnswer(card, isCorrect, feedbackText) {
+        if(card.classList.contains('disabled')) return; 
+
+        const allCards = document.querySelectorAll(".option-card");
+        allCards.forEach(c => c.classList.add("disabled")); 
+        
+        const feedbackArea = document.getElementById("feedback-area");
+        const feedbackTitle = document.getElementById("feedback-title");
+        const feedbackContent = document.getElementById("feedback-text");
+        const feedbackIcon = document.getElementById("feedback-icon");
+        const nextBtn = document.getElementById("next-btn");
+
+        feedbackArea.style.display = "block";
+        nextBtn.style.display = "block";
+
+        if (isCorrect) {
+            playSound('correct');
+            card.classList.add("correct");
+            card.querySelector(".option-letter").style.background = "var(--success)";
+            card.querySelector(".option-letter").style.color = "white";
+            
+            feedbackTitle.innerText = "¡Reacción Exitosa!";
+            feedbackTitle.style.color = "var(--success)";
+            feedbackIcon.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i>';
+            feedbackArea.style.borderLeft = "5px solid var(--success)";
+            
+            score++;
+            streak++;
+            updateStreak();
+        } else {
+            playSound('wrong');
+            card.classList.add("wrong");
+            card.querySelector(".option-letter").style.background = "var(--error)";
+            card.querySelector(".option-letter").style.color = "white";
+            
+            feedbackTitle.innerText = "Fallo en la Estructura";
+            feedbackTitle.style.color = "var(--error)";
+            feedbackIcon.innerHTML = '<i class="fa-solid fa-circle-xmark" style="color:var(--error)"></i>';
+            feedbackArea.style.borderLeft = "5px solid var(--error)";
+            streak = 0;
+            updateStreak();
+        }
+
+        feedbackContent.innerText = feedbackText;
+    }
+
+    function updateStreak() {
+        const streakDisplay = document.getElementById("streak-display");
+        streakDisplay.innerHTML = `<i class="fa-solid fa-fire"></i> ${streak}`;
+        if(streak > 2) streakDisplay.classList.add("active");
+        else streakDisplay.classList.remove("active");
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if (currentIdx < quizData.length) {
+            loadQuestion(currentIdx);
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        const wrapper = document.getElementById("quiz-panel");
+        const percentage = Math.round((score / quizData.length) * 100);
+        
+        wrapper.innerHTML = `
+            <div style="text-align:center; padding:40px 20px;">
+                <h2 style="margin:0; font-size:1.8rem;">Informe Final</h2>
+                <h1 style="font-size:5rem; margin:10px 0; color:var(--text-main);">${percentage}%</h1>
+                <p style="font-size:1.2rem; opacity:0.7;">${score} de ${quizData.length} aciertos</p>
+                <button class="btn-next" style="display:inline-block; width:auto; padding:18px 50px;" onclick="location.reload()">
+                    <i class="fa-solid fa-rotate-right"></i> Reiniciar
+                </button>
+            </div>
+        `;
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        body.setAttribute("data-theme", body.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    }
+
+    function toggleCheatSheet() {
+        const modal = document.getElementById("cheat-modal");
+        modal.style.display = modal.style.display === "flex" ? "none" : "flex";
+    }
+
+    window.onload = initGame;
+
+</script>
+</body>
+</html>
