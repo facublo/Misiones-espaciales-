@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>INGENIERÍA CIVIL: CÁLCULO ESTRUCTURAL</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- ESTÉTICA "INGENIERÍA CIVIL / BLUEPRINT" --- */
+        :root {
+            --bg-color: #1a2530;
+            --grid-color: rgba(255, 255, 255, 0.1);
+            --card-bg: #2c3e50;
+            --primary-yellow: #f1c40f;
+            --accent-orange: #e67e22;
+            --text-main: #ecf0f1;
+            --text-muted: #95a5a6;
+            --success: #27ae60;
+            --error: #c0392b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-main);
+            font-family: 'Roboto Mono', monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .site-header {
+            width: 100%;
+            background: #2c3e50;
+            border-bottom: 4px solid var(--primary-yellow);
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .site-header::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 10px,
+                var(--primary-yellow) 10px,
+                var(--primary-yellow) 20px
+            );
+        }
+
+        .site-title {
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            margin: 0;
+            font-size: 2rem;
+            color: var(--primary-yellow);
+            letter-spacing: 2px;
+        }
+
+        .site-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .blueprint-container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border: 2px solid #34495e;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 30px;
+            position: relative;
+        }
+
+        .blueprint-container::before {
+            content: "PROYECTO: MAT-CIVIL-01";
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 0.7rem;
+            color: var(--primary-yellow);
+            opacity: 0.7;
+        }
+
+        .level-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        
+        .level-1 { background: #27ae60; color: white; }
+        .level-2 { background: #f39c12; color: white; }
+        .level-3 { background: #c0392b; color: white; }
+
+        .question-box {
+            border: 1px dashed var(--text-muted);
+            padding: 20px;
+            margin-bottom: 25px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .math-display {
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #2c3e50;
+            border: 1px solid var(--primary-yellow);
+            color: var(--primary-yellow);
+            overflow-x: auto;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .btn-option {
+            background: #34495e;
+            border: 2px solid transparent;
+            color: var(--text-main);
+            padding: 15px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-option:hover:not(:disabled) {
+            border-color: var(--primary-yellow);
+            background: #3e5871;
+        }
+
+        .btn-option:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .opt-letter {
+            font-weight: bold;
+            margin-right: 15px;
+            color: #2c3e50;
+            background: var(--primary-yellow);
+            width: 30px; height: 30px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        /* Contenedor específico para el texto matemático dentro del botón */
+        .opt-math {
+            margin-left: 5px;
+        }
+
+        .feedback-panel {
+            margin-top: 25px;
+            padding: 15px;
+            border-left: 5px solid;
+            display: none;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .success-msg { border-color: var(--success); color: var(--success); }
+        .error-msg { border-color: var(--error); color: #e74c3c; }
+
+        .btn-next {
+            background: var(--accent-orange);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: none;
+        }
+
+        .btn-next:hover { background: #d35400; }
+
+        .final-score {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--primary-yellow);
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+        }
+
+        /* Ajuste para fórmulas grandes en móvil */
+        .katex { font-size: 1.1em !important; }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <h1 class="site-title">INGENIERÍA CIVIL</h1>
+        <span class="site-subtitle">Certificación de Cálculo Estructural</span>
+    </header>
+
+    <div class="blueprint-container" id="quiz-panel">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #555; padding-bottom:10px;">
+            <span id="level-badge" class="level-indicator level-1">NIVEL 1: CIMIENTOS</span>
+            <span id="progress-text" style="color:var(--text-muted); font-size:0.8rem;">EJERCICIO 1 / 12</span>
+        </div>
+
+        <div class="question-box">
+            <div class="question-text" id="question-text">
+                Cargando especificaciones...
+            </div>
+            <div class="math-display" id="math-display"></div>
+        </div>
+
+        <div class="options-grid" id="options-container">
+            </div>
+
+        <div class="feedback-panel" id="feedback-display"></div>
+        
+        <button class="btn-next" id="next-btn" onclick="nextQuestion()">SIGUIENTE FASE ➜</button>
+    </div>
+
+<script>
+    /* --- CONFIGURACIÓN DE DATOS ---
+       Nota: En el código fuente verás dobles barras (\\) para fracciones.
+       Esto es necesario internamente para Javascript, pero en la pantalla 
+       de la alumna se verán PERFECTAS y sin basura.
+    */
+    
+    const quizData = [
+        // --- NIVEL 1 ---
+        {
+            lvl: 1,
+            title: "Fase 1: Carga de Materiales. <br>Calcula la proporción exacta de cemento para la mezcla.",
+            math: "\\frac{3}{4} - \\left( \\frac{1}{2} + \\frac{1}{3} \\right) + \\frac{5}{6} =",
+            opts: [
+                { txt: "\\frac{3}{4} \\text{ (0.75 kg)}", correct: true },
+                { txt: "\\frac{1}{4} \\text{ (0.25 kg)}", correct: false },
+                { txt: "\\frac{7}{12} \\text{ (0.58 kg)}", correct: false }
+            ],
+            feed: "¡Correcto! El MCM entre 4, 2, 3 y 6 es 12. Al resolver el paréntesis y restar, obtienes el balance exacto."
+        },
+        {
+            lvl: 1,
+            title: "Fase 1: La Torre Grúa. <br>Calcula la altura total. Resuelve cabina y base por separado.",
+            math: "\\frac{\\frac{2}{3} + \\frac{1}{6}}{1 - \\frac{3}{4}} =",
+            opts: [
+                { txt: "\\frac{10}{3} \\text{ (3.33 m)}", correct: true },
+                { txt: "\\frac{5}{6} \\text{ (0.83 m)}", correct: false },
+                { txt: "2 \\text{ (2.00 m)}", correct: false }
+            ],
+            feed: "¡Bien calculado! Arriba da 5/6, abajo da 1/4. Extremo con extremo y medio con medio da 10/3."
+        },
+        {
+            lvl: 1,
+            title: "Fase 1: Control de Calidad. <br>Un operario quiere tachar los '4' incorrectamente. Simplifica la viga de forma segura.",
+            math: "\\text{Simplificar: } \\frac{4x + 8}{4}",
+            opts: [
+                { txt: "x + 8", correct: false },
+                { txt: "x + 2", correct: true },
+                { txt: "4(x+2)", correct: false }
+            ],
+            feed: "¡Exacto! Regla de Oro: Solo se simplifican FACTORES. Sacas factor común 4 arriba y simplificas."
+        },
+        {
+            lvl: 1,
+            title: "Fase 1: Área del Terreno. <br>Multiplica las dimensiones de las parcelas. Simplifica materiales cruzados.",
+            math: "\\frac{10x^2}{3y} \\cdot \\frac{6y^3}{5x} =",
+            opts: [
+                { txt: "4xy^2", correct: true },
+                { txt: "2xy", correct: false },
+                { txt: "\\frac{60x^2y^3}{15xy}", correct: false }
+            ],
+            feed: "¡Excelente! Simplificas números (10 con 5, 6 con 3) y potencias de letras cruzadas."
+        },
+
+        // --- NIVEL 2 ---
+        {
+            lvl: 2,
+            title: "Fase 2: Mezcla de Áridos. <br>Suma volúmenes distintos buscando el contenedor común adecuado.",
+            math: "\\frac{2}{x} + \\frac{3}{x^2} - \\frac{1}{2x} =",
+            opts: [
+                { txt: "\\frac{3x + 6}{2x^2}", correct: true },
+                { txt: "\\frac{4}{2x^2}", correct: false },
+                { txt: "\\frac{3x + 3}{x^2}", correct: false }
+            ],
+            feed: "¡Bien! El MCM es 2x². Ajustando cada numerador obtienes 3x + 6."
+        },
+        {
+            lvl: 2,
+            title: "Fase 2: Resistencia de Materiales. <br>Factoriza vigas superior e inferior para ver qué secciones se cancelan.",
+            math: "\\text{Simplificar: } \\frac{x^2 - 25}{x^2 + 10x + 25}",
+            opts: [
+                { txt: "\\frac{x-5}{x+5}", correct: true },
+                { txt: "-1", correct: false },
+                { txt: "\\frac{1}{10x}", correct: false }
+            ],
+            feed: "¡Perfecto! Arriba es Diferencia de Cuadrados. Abajo es Binomio al Cuadrado. Se cancela un (x+5)."
+        },
+        {
+            lvl: 2,
+            title: "Fase 2: Agrupación de Estructuras. <br>Agrúpalas por parejas para simplificar con la base.",
+            math: "\\frac{ax + ay + bx + by}{a + b} =",
+            opts: [
+                { txt: "x + y", correct: true },
+                { txt: "a + b", correct: false },
+                { txt: "\\frac{(a+b)(x-y)}{a+b}", correct: false }
+            ],
+            feed: "¡Ingenioso! Arriba sacas Factor Común por Grupos (a+b)(x+y) y simplificas."
+        },
+        {
+            lvl: 2,
+            title: "Fase 2: Logística de Transporte. <br>Recuerda: dividir es multiplicar invertido (dar vuelta el camión).",
+            math: "\\frac{x^2 - 9}{2x} \\cdot \\frac{4x^2}{x + 3} \\div (x - 3) =",
+            opts: [
+                { txt: "2x", correct: true },
+                { txt: "2x(x-3)", correct: false },
+                { txt: "\\frac{x+3}{2}", correct: false }
+            ],
+            feed: "¡Correcto! Factorizas, inviertes el último término y todo se cancela excepto el 2x."
+        },
+
+        // --- NIVEL 3 ---
+        {
+            lvl: 3,
+            title: "Fase 3: La Grieta Estructural. <br>Resta de fuerzas con denominadores distintos. ¡Cuidado! Uno contiene al otro.",
+            math: "\\frac{x}{x^2 - 1} - \\frac{1}{x + 1} =",
+            opts: [
+                { txt: "\\frac{1}{x^2 - 1}", correct: true },
+                { txt: "\\frac{x-1}{x^2}", correct: false },
+                { txt: "\\frac{1}{x+1}", correct: false }
+            ],
+            feed: "¡Excelente ojo clínico! El denominador común es (x²-1). Al restar queda 1 sobre el denominador."
+        },
+        {
+            lvl: 3,
+            title: "Fase 3: Edificio Multinivel. <br>Resuelve desde los cimientos (abajo) hacia la azotea.",
+            math: "1 - \\frac{1}{1 - \\frac{1}{x}} =",
+            opts: [
+                { txt: "\\frac{1}{1-x}", correct: true },
+                { txt: "1 - x", correct: false },
+                { txt: "x", correct: false }
+            ],
+            feed: "¡Brillante! Operando paso a paso e invirtiendo fracciones llegas al resultado correcto."
+        },
+        {
+            lvl: 3,
+            title: "Fase 3: Demolición Controlada. <br>Usa maquinaria pesada (Baskara y Cubos) para reducir escombros.",
+            math: "\\frac{x^2 - 5x + 6}{x^3 - 8} =",
+            opts: [
+                { txt: "\\frac{x-3}{x^2+2x+4}", correct: true },
+                { txt: "\\frac{x-3}{x^2-4}", correct: false },
+                { txt: "\\frac{x+2}{x^2+4}", correct: false }
+            ],
+            feed: "¡Potente! El factor (x-2) se encuentra arriba y abajo, permitiendo su eliminación."
+        },
+        {
+            lvl: 3,
+            title: "Fase 3: Alineación de Ejes. <br>Los términos están girados. Gira uno (factor -1) para encajarlos.",
+            math: "\\frac{3x - 3}{1 - x} =",
+            opts: [
+                { txt: "-3", correct: true },
+                { txt: "3", correct: false },
+                { txt: "\\frac{3}{x}", correct: false }
+            ],
+            feed: "¡Maestra! Al sacar factor común -1 abajo, logras que los términos sean idénticos y se cancelen."
+        }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function initSystem() {
+        loadQuestion(currentIdx);
+    }
+
+    function loadQuestion(index) {
+        const data = quizData[index];
+        const displayMath = document.getElementById("math-display");
+        const title = document.getElementById("question-text");
+        const optionsDiv = document.getElementById("options-container");
+        const nextBtn = document.getElementById("next-btn");
+        const feedback = document.getElementById("feedback-display");
+        const badge = document.getElementById("level-badge");
+
+        // UI Reset
+        feedback.style.display = "none";
+        nextBtn.style.display = "none";
+        optionsDiv.innerHTML = "";
+        
+        // Texto Info
+        document.getElementById("progress-text").innerText = `EJERCICIO ${index + 1} / ${quizData.length}`;
+        title.innerHTML = data.title;
+        
+        // Badge
+        badge.className = `level-indicator level-${data.lvl}`;
+        if(data.lvl === 1) badge.innerText = "NIVEL 1: CIMIENTOS";
+        if(data.lvl === 2) badge.innerText = "NIVEL 2: ESTRUCTURA";
+        if(data.lvl === 3) badge.innerText = "NIVEL 3: ACABADOS FINALES";
+
+        // RENDERIZADO MATEMÁTICO LIMPIO (Sin texto basura)
+        // Usamos katex.render directamente para control total
+        katex.render(data.math, displayMath, {
+            throwOnError: false,
+            displayMode: true // Esto centra y agranda la ecuación
+        });
+
+        // Generar Botones
+        const letters = ['A', 'B', 'C'];
+        data.opts.forEach((opt, i) => {
+            const btn = document.createElement("button");
+            btn.className = "btn-option";
+            
+            // Creamos estructura para el botón
+            const letterSpan = document.createElement("span");
+            letterSpan.className = "opt-letter";
+            letterSpan.innerText = letters[i];
+            
+            const mathSpan = document.createElement("span");
+            mathSpan.className = "opt-math";
+            
+            btn.appendChild(letterSpan);
+            btn.appendChild(mathSpan);
+            
+            // Renderizamos la matemática dentro del span específico
+            // Aquí usamos renderString para inline math
+            katex.render(opt.txt, mathSpan, {
+                throwOnError: false,
+                displayMode: false
+            });
+
+            btn.onclick = () => evaluate(btn, opt.correct, data.feed);
+            optionsDiv.appendChild(btn);
+        });
+    }
+
+    function evaluate(btn, isCorrect, explanation) {
+        const feedback = document.getElementById("feedback-display");
+        const nextBtn = document.getElementById("next-btn");
+        const allBtns = document.querySelectorAll(".btn-option");
+
+        allBtns.forEach(b => b.disabled = true);
+        feedback.style.display = "block";
+        nextBtn.style.display = "block";
+
+        if (isCorrect) {
+            btn.style.borderColor = "var(--success)";
+            btn.style.background = "#1e3b2a";
+            btn.querySelector(".opt-letter").style.background = "var(--success)";
+            btn.querySelector(".opt-letter").style.color = "white";
+            
+            feedback.innerHTML = `<strong style="color:var(--success)">✅ ESTRUCTURA ESTABLE</strong><br>${explanation}`;
+            feedback.className = "feedback-panel success-msg";
+            score++;
+        } else {
+            btn.style.borderColor = "var(--error)";
+            btn.style.background = "#3b1e1e";
+            btn.querySelector(".opt-letter").style.background = "var(--error)";
+            btn.querySelector(".opt-letter").style.color = "white";
+
+            feedback.innerHTML = `<strong style="color:var(--error)">⚠️ FALLO ESTRUCTURAL</strong><br>Revisa los cálculos e intenta en la próxima fase.`;
+            feedback.className = "feedback-panel error-msg";
+        }
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if (currentIdx < quizData.length) {
+            loadQuestion(currentIdx);
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        const panel = document.getElementById("quiz-panel");
+        const percentage = Math.round((score / quizData.length) * 100);
+        
+        let msg = "";
+        let color = "";
+
+        if (percentage >= 80) {
+            msg = "OBRA APROBADA: LISTA PARA HABITAR";
+            color = "var(--success)";
+        } else if (percentage >= 50) {
+            msg = "OBRA EN REVISIÓN: REQUIERE REFUERZOS";
+            color = "#f39c12";
+        } else {
+            msg = "OBRA CLAUSURADA: REPASAR PLANOS";
+            color = "var(--error)";
+        }
+
+        panel.innerHTML = `
+            <div style="text-align:center; padding: 40px;">
+                <h2 style="color:${color}; font-family:'Oswald'; margin-bottom:10px;">${msg}</h2>
+                <div class="final-score">${percentage}%</div>
+                <p style="color:#aaa; font-size:1.2rem;">${score} de ${quizData.length} cálculos correctos</p>
+                <div style="margin-top:40px; border-top:2px dashed #555; padding-top:20px;">
+                    <button class="btn-next" style="display:block" onclick="location.reload()">INICIAR NUEVA OBRA ↺</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Arrancar sistema al cargar la página
+    window.onload = initSystem;
+    // Opcional: renderizar math si quedara algo suelto en el body
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body);
+    });
+
+</script>
+</body>
+</html>
