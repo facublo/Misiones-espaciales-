@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SIMULADOR ESTRUCTURAL: INGENIERÍA CIVIL</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- ESTILO GENERAL --- */
+        :root {
+            --bg-color: #1a2530;
+            --card-bg: #2c3e50;
+            --yellow: #f1c40f;
+            --orange: #e67e22;
+            --white: #ecf0f1;
+            --green: #27ae60;
+            --red: #c0392b;
+            --blue: #3498db;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--white);
+            font-family: 'Roboto Mono', monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- CABECERA --- */
+        .site-header {
+            width: 100%;
+            background: #2c3e50;
+            border-bottom: 4px solid var(--yellow);
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            z-index: 10;
+        }
+        
+        .site-title {
+            font-family: 'Oswald', sans-serif;
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--yellow);
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* --- EL CANVAS (EL JUEGO) --- */
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            height: 300px; /* Un poco más alto para ver mejor */
+            background: radial-gradient(circle at center, #2c3e50 0%, #0f151b 100%);
+            position: relative;
+            overflow: hidden;
+            border-bottom: 4px solid #34495e;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Capa de UI sobre el canvas */
+        .ui-overlay {
+            position: absolute;
+            top: 10px; left: 10px;
+            color: var(--yellow);
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 15px;
+            border-radius: 4px;
+            border: 1px solid var(--yellow);
+            font-weight: bold;
+            z-index: 5;
+        }
+
+        /* --- CONTENEDOR DE PREGUNTAS --- */
+        .blueprint-container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border: 2px solid #34495e;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 30px;
+            position: relative;
+            margin-bottom: 50px;
+            margin-top: -4px;
+        }
+
+        .level-header {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-left: 5px solid var(--yellow);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .level-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.4rem;
+            color: var(--yellow);
+        }
+        
+        .math-display {
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 25px 0;
+            padding: 25px;
+            background: #1a2530;
+            border: 1px solid var(--yellow);
+            color: var(--yellow);
+            overflow-x: auto;
+            border-radius: 4px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .btn-option {
+            width: 100%;
+            background: #34495e;
+            border: 2px solid transparent;
+            color: var(--white);
+            padding: 18px;
+            margin-bottom: 12px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .btn-option:hover:not(:disabled) {
+            border-color: var(--yellow);
+            background: #3e5871;
+            transform: translateX(5px);
+        }
+
+        .opt-letter {
+            background: var(--yellow);
+            color: #2c3e50;
+            font-weight: bold;
+            width: 35px; height: 35px;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+            border-radius: 4px;
+        }
+
+        .btn-next {
+            background: var(--orange);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 20px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.3rem;
+            margin-top: 25px;
+            cursor: pointer;
+            display: none;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4);
+            transition: background 0.3s;
+        }
+        .btn-next:hover { background: #d35400; }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .modal-content {
+            background: #2c3e50;
+            border: 4px solid var(--yellow);
+            padding: 50px;
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 0 50px rgba(241, 196, 15, 0.2);
+            animation: zoomIn 0.4s ease;
+        }
+        
+        @keyframes zoomIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+
+        .modal-btn {
+            background: var(--green);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        /* Feedback y Animaciones */
+        .feedback-panel { padding: 20px; margin-top: 20px; display: none; border-radius: 4px; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from {opacity:0; transform: translateY(-10px);} to {opacity:1; transform: translateY(0);} }
+        
+        .success-msg { border-left: 6px solid var(--green); background: rgba(39, 174, 96, 0.15); }
+        .error-msg { border-left: 6px solid var(--red); background: rgba(192, 57, 43, 0.15); }
+
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="module-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="font-size:4rem; margin-bottom:10px;">🚧</div>
+            <h2 style="color:var(--yellow); font-family:'Oswald'; font-size:2.5rem; margin:0;" id="modal-title">INICIANDO OBRA</h2>
+            <hr style="border:0; border-top:1px solid #555; margin:20px 0;">
+            <p style="font-size:1.2rem; line-height:1.6; color:#ecf0f1;" id="modal-desc">
+                Preparando el terreno para la construcción.
+            </p>
+            <button class="modal-btn" onclick="closeModal()">COMENZAR FASE</button>
+        </div>
+    </div>
+
+    <header class="site-header">
+        <h1 class="site-title">INGENIERÍA CIVIL</h1>
+        <span style="color:#bdc3c7; font-size:0.9rem; letter-spacing: 1px;">SIMULADOR DE CÁLCULO ESTRUCTURAL</span>
+    </header>
+
+    <div id="game-container">
+        <div class="ui-overlay">VIGAS COLOCADAS: <span id="beam-count" style="color:#fff; font-size:1.1rem;">0</span> / 20</div>
+        <canvas id="bridgeCanvas"></canvas>
+    </div>
+
+    <div class="blueprint-container" id="quiz-panel">
+        
+        <div class="level-header">
+            <div>
+                <span class="level-title" id="module-name">MÓDULO X</span>
+                <div style="font-size:0.9rem; color:#95a5a6; margin-top:5px;" id="module-desc">Descripción...</div>
+            </div>
+            <div style="text-align:right; font-size:0.9rem; color:var(--yellow); font-weight:bold;">
+                <span id="current-q">1</span> / 20
+            </div>
+        </div>
+
+        <div id="question-text" style="margin-bottom:15px; color:#ecf0f1; font-size:1.1rem;"></div>
+        <div class="math-display" id="math-display"></div>
+
+        <div id="options-container"></div>
+        <div class="feedback-panel" id="feedback-display"></div>
+        <button class="btn-next" id="next-btn" onclick="nextQuestion()">SIGUIENTE FASE ➜</button>
+    </div>
+
+<script>
+    /* --- LÓGICA DEL CANVAS (EL PUENTE MEJORADO) --- */
+    const canvas = document.getElementById('bridgeCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let beams = [];
+    let fallingBeam = null;
+    let engineerX = 20;
+    let targetEngineerX = 20;
+    let totalQuestions = 20;
+    
+    // Ajustar tamaño del canvas
+    function resizeCanvas() {
+        // Obtenemos el tamaño real del contenedor
+        const container = document.getElementById('game-container');
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); // Llamar al inicio
+
+    class Beam {
+        constructor(index, status) {
+            this.index = index;
+            this.status = status; 
+            this.width = canvas.width / totalQuestions;
+            this.x = this.index * this.width;
+            this.y = canvas.height - 60; // Piso
+            this.height = 50; // Altura de la estructura
+        }
+
+        draw() {
+            // Dibujar piso sólido
+            ctx.fillStyle = this.status === 'correct' ? '#27ae60' : '#c0392b';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.status === 'correct' ? '#2ecc71' : '#e74c3c';
+            ctx.fillRect(this.x, this.y, this.width - 2, 12);
+            ctx.shadowBlur = 0;
+            
+            // Dibujar estructura metálica (Truss)
+            ctx.strokeStyle = this.status === 'correct' ? '#ecf0f1' : '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            // Triángulo de soporte
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x + this.width/2, this.y - this.height);
+            ctx.lineTo(this.x + this.width, this.y);
+            
+            // Barra superior conectora (si no es el primero)
+            if(this.index > 0) {
+                 ctx.moveTo(this.x, this.y - this.height);
+                 ctx.lineTo(this.x - this.width/2, this.y - this.height); 
+            }
+            ctx.stroke();
+
+            // Remaches (Detalle visual)
+            ctx.fillStyle = '#f1c40f';
+            [this.x, this.x + this.width, this.x + this.width/2].forEach((rx, i) => {
+                let ry = i === 2 ? this.y - this.height : this.y;
+                ctx.beginPath(); ctx.arc(rx, ry, 3, 0, Math.PI*2); ctx.fill();
+            });
+        }
+    }
+
+    class FallingBeam {
+        constructor(index, status) {
+            this.index = index;
+            this.status = status;
+            this.targetWidth = canvas.width / totalQuestions;
+            this.targetX = index * this.targetWidth;
+            this.targetY = canvas.height - 60;
+            this.y = -100;
+            this.vy = 0;
+            this.gravity = 0.5; // Caída más lenta para ver mejor
+            this.landed = false;
+        }
+
+        update() {
+            if(this.landed) return;
+
+            this.vy += this.gravity;
+            this.y += this.vy;
+
+            if (this.y >= this.targetY) {
+                this.y = this.targetY;
+                this.landed = true;
+                this.vy = 0;
+                
+                if(this.status === 'correct') {
+                    createSparks(this.targetX + this.targetWidth/2, this.targetY);
+                    beams.push(new Beam(this.index, 'correct'));
+                    targetEngineerX = (this.index + 1) * this.targetWidth + 20; 
+                } else {
+                    createDebris(this.targetX + this.targetWidth/2, this.targetY);
+                    beams.push(new Beam(this.index, 'wrong'));
+                    // Efecto temblor
+                    document.getElementById('quiz-panel').classList.add('shake'); 
+                    setTimeout(() => document.getElementById('quiz-panel').classList.remove('shake'), 500);
+                }
+                fallingBeam = null;
+            }
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.targetX, this.y);
+            
+            // Viga cayendo
+            ctx.fillStyle = this.status === 'correct' ? '#3498db' : '#e74c3c';
+            ctx.fillRect(0, 0, this.targetWidth - 2, 12);
+            
+            // Estructura colgando
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(this.targetWidth/2, -50);
+            ctx.lineTo(this.targetWidth, 0);
+            ctx.stroke();
+
+            // Cable de grúa
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(this.targetWidth/2, -50);
+            ctx.lineTo(this.targetWidth/2, -600);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.restore();
+        }
+    }
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.vx = (Math.random() - 0.5) * 12;
+            this.vy = (Math.random() - 1) * 12;
+            this.life = 1.0;
+            this.color = color;
+            this.size = Math.random() * 4 + 2;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += 0.8;
+            this.life -= 0.02;
+        }
+        draw() {
+            ctx.globalAlpha = this.life;
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    function createSparks(x, y) {
+        for(let i=0; i<30; i++) particles.push(new Particle(x, y, '#f1c40f'));
+    }
+
+    function createDebris(x, y) {
+        for(let i=0; i<20; i++) particles.push(new Particle(x, y, '#95a5a6'));
+    }
+
+    function drawGhostBridge() {
+        // Dibuja el contorno gris del puente completo para que no se vea vacío
+        let w = canvas.width / totalQuestions;
+        let y = canvas.height - 60;
+        let h = 50;
+        
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 2;
+        
+        for(let i=0; i<totalQuestions; i++) {
+            let x = i * w;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + w, y); // Piso
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + w/2, y - h); // Triangulo subida
+            ctx.lineTo(x + w, y); // Triangulo bajada
+            if(i < totalQuestions-1) {
+                ctx.moveTo(x + w/2, y - h);
+                ctx.lineTo(x + w + w/2, y - h); // Conector superior
+            }
+            ctx.stroke();
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Dibujar Estructura Fantasma (Fondo)
+        drawGhostBridge();
+
+        // 2. Dibujar Vigas Reales
+        beams.forEach(beam => beam.draw());
+
+        // 3. Viga Cayendo
+        if(fallingBeam) {
+            fallingBeam.update();
+            fallingBeam.draw();
+        }
+
+        // 4. Partículas
+        particles.forEach((p, index) => {
+            p.update();
+            p.draw();
+            if(p.life <= 0) particles.splice(index, 1);
+        });
+
+        // 5. El Ingeniero (Más grande)
+        if(engineerX < targetEngineerX) engineerX += 3;
+        
+        // Cuerpo
+        ctx.fillStyle = '#e67e22';
+        ctx.fillRect(engineerX - 8, canvas.height - 85, 16, 25);
+        // Cabeza/Casco
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath(); 
+        ctx.arc(engineerX, canvas.height - 90, 10, 0, Math.PI, true); // Casco semicirculo
+        ctx.fill();
+        ctx.fillStyle = '#f1c40f'; // Relleno cara simple
+        ctx.beginPath(); ctx.arc(engineerX, canvas.height - 85, 8, 0, Math.PI*2); ctx.fill();
+
+        requestAnimationFrame(animate);
+    }
+    
+    // Iniciar loop de animación
+    animate();
+
+
+    /* --- LÓGICA DEL CUESTIONARIO --- */
+    
+    const moduleInfo = {
+        1: { name: "MÓDULO 1: SUELOS (Números Reales)", desc: "Objetivo: Dominar el orden de operaciones, reglas de signos y supresión de paréntesis." },
+        2: { name: "MÓDULO 2: HORMIGÓN (Fracciones)", desc: "Objetivo: Manejo de MCM, simplificación y operaciones con fracciones complejas." },
+        3: { name: "MÓDULO 3: CARGAS (Potencias y Raíces)", desc: "Objetivo: Aplicación correcta de propiedades de potencias y raíces." },
+        4: { name: "MÓDULO 4: PLANOS (Álgebra)", desc: "Objetivo: Introducción a variables, factor común y productos notables." }
+    };
+
+    const quizData = [
+        // MOD 1
+        { lvl: 1, title: "Control de Temperaturas", math: "-8 + 5 - (-3) + 1 =", opts: [{t:"1",c:true},{t:"-1",c:false},{t:"15",c:false}], feed: "$-8 + 5 + 3 + 1 = 1$." },
+        { lvl: 1, title: "Jerarquía de Obra", math: "4 \\cdot 3 - 20 \\div 5 =", opts: [{t:"8",c:true},{t:"-1.6",c:false},{t:"4",c:false}], feed: "$12 - 4 = 8$." },
+        { lvl: 1, title: "Capas de Aislamiento", math: "2 - [ 5 - (3 - 1) ] =", opts: [{t:"-1",c:true},{t:"1",c:false},{t:"-5",c:false}], feed: "$2 - [5-2] = 2-3 = -1$." },
+        { lvl: 1, title: "Resistencia Base Negativa", math: "(-2)^3 - 2^2 + (-1)^4 =", opts: [{t:"-11",c:true},{t:"-5",c:false},{t:"13",c:false}], feed: "$-8 - 4 + 1 = -11$." },
+        { lvl: 1, title: "Prueba de Carga Final", math: "-3(4 - 6) + 15 \\div (-3) - 1 =", opts: [{t:"0",c:true},{t:"-10",c:false},{t:"6",c:false}], feed: "$6 - 5 - 1 = 0$." },
+        // MOD 2
+        { lvl: 2, title: "Mezcla de Concreto", math: "\\frac{1}{2} - \\frac{2}{3} + \\frac{5}{6} =", opts: [{t:"\\frac{2}{3}",c:true},{t:"\\frac{4}{11}",c:false},{t:"1",c:false}], feed: "MCM 6: $3/6 - 4/6 + 5/6 = 4/6$." },
+        { lvl: 2, title: "Corte de Materiales", math: "\\frac{10}{9} \\cdot \\frac{3}{5} =", opts: [{t:"\\frac{2}{3}",c:true},{t:"\\frac{50}{27}",c:false},{t:"\\frac{3}{2}",c:false}], feed: "Simplificando cruzado: $2/3 \\cdot 1/1 = 2/3$." },
+        { lvl: 2, title: "Inversión de Planos", math: "\\left( \\frac{2}{3} \\right)^{-1} \\div \\frac{9}{4} =", opts: [{t:"\\frac{2}{3}",c:true},{t:"\\frac{27}{8}",c:false},{t:"\\frac{3}{2}",c:false}], feed: "$3/2 \\cdot 4/9 = 12/18 = 2/3$." },
+        { lvl: 2, title: "Montaje Prioritario", math: "\\frac{3}{4} - \\frac{1}{2} \\cdot \\frac{4}{5} =", opts: [{t:"\\frac{7}{20}",c:true},{t:"\\frac{1}{4}",c:false},{t:"\\frac{1}{5}",c:false}], feed: "$3/4 - 2/5 = 15/20 - 8/20 = 7/20$." },
+        { lvl: 2, title: "Edificio de Altura", math: "\\frac{1 + \\frac{1}{2}}{1 - \\frac{1}{4}} =", opts: [{t:"2",c:true},{t:"\\frac{1}{2}",c:false},{t:"1",c:false}], feed: "$3/2 \\div 3/4 \\rightarrow 3/2 \\cdot 4/3 = 2$." },
+        // MOD 3
+        { lvl: 3, title: "Refuerzo Estructural", math: "x^3 \\cdot x^2 \\cdot x =", opts: [{t:"x^6",c:true},{t:"x^5",c:false},{t:"3x^6",c:false}], feed: "Suma de exponentes: $3+2+1=6$." },
+        { lvl: 3, title: "Distribución de Cargas", math: "\\frac{(a^4)^3}{a^{10}} =", opts: [{t:"a^2",c:true},{t:"a^6",c:false},{t:"a^{-2}",c:false}], feed: "$a^{12} / a^{10} = a^2$." },
+        { lvl: 3, title: "Unión de Materiales", math: "\\sqrt{2} \\cdot \\sqrt{8} =", opts: [{t:"4",c:true},{t:"\\sqrt{10}",c:false},{t:"2\\sqrt{2}",c:false}], feed: "$\\sqrt{16} = 4$." },
+        { lvl: 3, title: "¡ALERTA DE SEGURIDAD!", math: "\\sqrt{100 - 36} =", opts: [{t:"8",c:true},{t:"4",c:false},{t:"64",c:false}], feed: "$\\sqrt{64} = 8$. Nunca distribuir en resta." },
+        { lvl: 3, title: "Optimización Energética", math: "\\frac{2^5 \\cdot 2^3}{2^6} + 3^0 =", opts: [{t:"5",c:true},{t:"4",c:false},{t:"3",c:false}], feed: "$2^2 + 1 = 5$." },
+        // MOD 4
+        { lvl: 4, title: "Inventario de Obra", math: "3x + 2y - 5x + y =", opts: [{t:"-2x + 3y",c:true},{t:"-2x + y",c:false},{t:"xy",c:false}], feed: "Agrupando semejantes: $(3-5)x + (2+1)y$." },
+        { lvl: 4, title: "Expansión del Terreno", math: "2(x - 3) - 3(x + 1) =", opts: [{t:"-x - 9",c:true},{t:"-x - 3",c:false},{t:"5x - 9",c:false}], feed: "$2x - 6 - 3x - 3 = -x - 9$." },
+        { lvl: 4, title: "Cimientos Cuadrados", math: "(x + 4)^2 =", opts: [{t:"x^2 + 8x + 16",c:true},{t:"x^2 + 16",c:false},{t:"x^2 + 4x + 16",c:false}], feed: "Trinomio: $x^2 + 2(4)(x) + 4^2$." },
+        { lvl: 4, title: "Piezas Prefabricadas", math: "(x - 3)(x + 3) =", opts: [{t:"x^2 - 9",c:true},{t:"x^2 - 6x + 9",c:false},{t:"x^2 + 9",c:false}], feed: "Diferencia de Cuadrados: $x^2 - 3^2$." },
+        { lvl: 4, title: "Reciclaje de Material", math: "5x^2 - 10x =", opts: [{t:"5x(x - 2)",c:true},{t:"5(x^2 - 2)",c:false},{t:"x(5x - 10)",c:false}], feed: "Factor Común $5x$ en ambos términos." }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    window.onload = function() {
+        showModuleModal(1);
+    };
+
+    function showModuleModal(lvl) {
+        const modal = document.getElementById("module-modal");
+        const title = document.getElementById("modal-title");
+        const desc = document.getElementById("modal-desc");
+        
+        title.innerText = moduleInfo[lvl].name;
+        desc.innerText = moduleInfo[lvl].desc;
+        modal.style.display = "flex";
+        
+        document.getElementById("module-name").innerText = moduleInfo[lvl].name;
+        document.getElementById("module-desc").innerText = moduleInfo[lvl].desc;
+    }
+
+    function closeModal() {
+        document.getElementById("module-modal").style.display = "none";
+        loadQuestion(currentIdx);
+    }
+
+    function loadQuestion(index) {
+        const data = quizData[index];
+        
+        document.getElementById("feedback-display").style.display = "none";
+        document.getElementById("next-btn").style.display = "none";
+        document.getElementById("current-q").innerText = index + 1;
+        document.getElementById("question-text").innerHTML = data.title;
+        
+        const display = document.getElementById("math-display");
+        katex.render(data.math, display, { throwOnError: false, displayMode: true });
+
+        const container = document.getElementById("options-container");
+        container.innerHTML = "";
+        
+        const letters = ["A", "B", "C"];
+        data.opts.forEach((opt, i) => {
+            const btn = document.createElement("button");
+            btn.className = "btn-option";
+            
+            const letter = document.createElement("span");
+            letter.className = "opt-letter";
+            letter.innerText = letters[i];
+            
+            const txtSpan = document.createElement("span");
+            txtSpan.style.marginLeft = "10px";
+            
+            btn.appendChild(letter);
+            btn.appendChild(txtSpan);
+            
+            katex.render(opt.t, txtSpan, { throwOnError: false });
+            
+            btn.onclick = () => checkAnswer(btn, opt.c, data.feed);
+            container.appendChild(btn);
+        });
+    }
+
+    // CONFIGURACIÓN DE RENDERIZADO PARA DETECTAR SIGNOS DE PESOS ($)
+    const renderOptions = {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+        ],
+        throwOnError: false
+    };
+
+    function checkAnswer(btn, isCorrect, feedbackText) {
+        const allBtns = document.querySelectorAll(".btn-option");
+        allBtns.forEach(b => b.disabled = true);
+        
+        const feedPanel = document.getElementById("feedback-display");
+        const nextBtn = document.getElementById("next-btn");
+        
+        // Trigger Canvas Animation
+        fallingBeam = new FallingBeam(currentIdx, isCorrect ? 'correct' : 'wrong');
+        
+        if(isCorrect) {
+            score++;
+            document.getElementById('beam-count').innerText = score;
+            btn.style.background = "#1e8449";
+            btn.style.borderColor = "#2ecc71";
+            feedPanel.className = "feedback-panel success-msg";
+            feedPanel.innerHTML = `<strong>✅ VIGA INSTALADA</strong><br>${feedbackText}`;
+        } else {
+            btn.style.background = "#922b21";
+            btn.style.borderColor = "#e74c3c";
+            feedPanel.className = "feedback-panel error-msg";
+            feedPanel.innerHTML = `<strong>⚠️ FALLO ESTRUCTURAL</strong><br>Revisa el cálculo.`;
+        }
+        
+        // Renderizar Matemáticas en el Feedback con la configuración correcta
+        renderMathInElement(feedPanel, renderOptions);
+        
+        feedPanel.style.display = "block";
+        nextBtn.style.display = "block";
+    }
+
+    function nextQuestion() {
+        const currentLvl = quizData[currentIdx].lvl;
+        currentIdx++;
+        
+        if (currentIdx < quizData.length) {
+            const nextLvl = quizData[currentIdx].lvl;
+            if (nextLvl > currentLvl) {
+                showModuleModal(nextLvl);
+            } else {
+                loadQuestion(currentIdx);
+            }
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        const panel = document.getElementById("quiz-panel");
+        const percentage = Math.round((score / quizData.length) * 100);
+        
+        let title = "";
+        let color = "";
+        let msg = "";
+
+        if (percentage === 100) {
+            title = "🏆 OBRA MAESTRA";
+            color = "#f1c40f";
+            msg = "Puente perfecto. ¡Felicitaciones Ingeniera!";
+            triggerConfetti();
+        } else if (percentage >= 50) {
+            title = "✅ OBRA APROBADA";
+            color = "#27ae60";
+            msg = "Estructura sólida y funcional.";
+        } else {
+            title = "⚠️ OBRA CLAUSURADA";
+            color = "#c0392b";
+            msg = "Estructura inestable. Se requiere reforzar conocimientos.";
+        }
+
+        panel.innerHTML = `
+            <div style="text-align:center; padding: 40px;">
+                <h2 style="color:${color}; font-family:'Oswald'; font-size:2.5rem; margin-bottom:10px;">${title}</h2>
+                <div style="font-size:5rem; font-weight:bold; color:#ecf0f1;">${percentage}%</div>
+                <p style="color:#bdc3c7; font-size:1.2rem; margin-top:10px;">${score} de ${quizData.length} aciertos</p>
+                <p style="margin: 20px 0; font-size:1.1rem;">${msg}</p>
+                <button class="btn-next" style="display:inline-block; width:auto; padding:15px 40px;" onclick="location.reload()">NUEVO PROYECTO ↺</button>
+            </div>
+        `;
+    }
+
+    function triggerConfetti() {
+        const colors = ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6'];
+        for (let i = 0; i < 200; i++) {
+            const el = document.createElement('div');
+            el.style.position = 'fixed';
+            el.style.width = '10px'; el.style.height = '10px';
+            el.style.background = colors[Math.floor(Math.random() * colors.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.top = '-10px';
+            el.style.zIndex = '9999';
+            el.style.transform = `rotate(${Math.random()*360}deg)`;
+            el.style.transition = `top ${Math.random()*2+2}s ease-in, transform 3s linear`;
+            document.body.appendChild(el);
+            setTimeout(() => {
+                el.style.top = '110vh';
+                el.style.transform = `rotate(${Math.random()*720}deg)`;
+            }, 100);
+        }
+    }
+</script>
+</body>
+</html>
