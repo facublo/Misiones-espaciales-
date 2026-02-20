@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exploradores de Números - Infografía</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #f4f7f6; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #2980b9; margin-top: 30px; display: flex; align-items: center; }
+        h2::before { content: '🚀'; margin-right: 10px; }
+        .box { background: #e8f4fd; border-left: 5px solid #3498db; padding: 15px; margin: 15px 0; border-radius: 0 10px 10px 0; }
+        .highlight { font-weight: bold; color: #e67e22; }
+        .math { font-family: "Courier New", Courier, monospace; background: #eee; padding: 2px 5px; border-radius: 4px; }
+        .footer-challenge { background: #2c3e50; color: white; padding: 20px; border-radius: 10px; margin-top: 40px; }
+        .footer-challenge h2 { color: #f1c40f; }
+        .footer-challenge h2::before { content: '👾'; }
+        .step { background: rgba(255,255,255,0.1); padding: 10px; margin: 10px 0; border-radius: 5px; }
+        @media print { body { background: white; } .card { box-shadow: none; border: 1px solid #ddd; } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Exploradores de Números: De lo Natural a lo Entero</h1>
+
+    <h2>1. El Concepto de Número</h2>
+    <p><strong>Los Números Naturales (ℕ): "Los de contar"</strong><br>
+    Son los que el ser humano inventó por necesidad física.</p>
+    <ul>
+        <li><strong>Origen:</strong> ¿Cuántas ovejas tengo? ¿Cuántas piedras hay?</li>
+        <li><span class="highlight">Limitación:</span> Con los naturales solo puedes ir hacia adelante. Si tienes 3 manzanas, no puedes quitarle 5. Ahí es donde los naturales "se quedan cortos".</li>
+    </ul>
+
+    <p><strong>Los Números Enteros (ℤ): "La realidad completa"</strong><br>
+    La palabra "Entero" viene del latín <em>integer</em>, que significa intacto. Aquí incluimos los <strong>Negativos</strong>.</p>
+    <div class="box">
+        <strong>¿Por qué existen?</strong> Para representar situaciones opuestas:
+        <ul>
+            <li><strong>Altura vs. Profundidad:</strong> +100m sobre el nivel del mar vs. -100m bajo el mar.</li>
+            <li><strong>Temperatura:</strong> Calor (+30°C) vs. Frío extremo (-10°C).</li>
+            <li><strong>Economía:</strong> Tener dinero (+) vs. Deberle al banco (-).</li>
+        </ul>
+    </div>
+
+    <h2>2. La Suma y Resta: El juego de las fuerzas</h2>
+    <p>Usaremos la <strong>Lógica de Movimiento en la Recta:</strong></p>
+    
+    <p><strong>A. Signos Iguales: "Se ayudan"</strong><br>
+    Cuando dos números tienen el mismo signo, corren hacia el mismo lado.</p>
+    <ul>
+        <li><em>Ejemplo (+5) + (+2):</em> Estoy en +5 y camino 2 pasos a la derecha. Llego al <strong>+7</strong>.</li>
+        <li><em>Ejemplo (-5) - (+2):</em> Estoy en -5 (debo 5) y me quitan 2 más. Llego al <strong>-7</strong>.</li>
+    </ul>
+    <p class="highlight">Conclusión: Si los signos son iguales, sumamos los valores y dejamos el mismo signo.</p>
+
+    <p><strong>B. Signos Distintos: "La Pelea"</strong><br>
+    Es una lucha de fuerzas. El que tiene más "fuerza" (valor absoluto) gana.</p>
+    <p><em>Ejemplo -10 + 4:</em> Imagina una cuerda. Los negativos tiran con 10 personas y los positivos con 4. ¿Quién gana? Los negativos. ¿Por cuánto? Por 6. Resultado: <strong>-6</strong>.</p>
+    <p class="highlight">Conclusión: Si los signos son diferentes, restamos el mayor menos el menor y ponemos el signo del que tiene mayor valor absoluto.</p>
+
+    <h2>3. Multiplicación y División</h2>
+    <p>La multiplicación es una repetición o una escala. Usamos la <strong>Lógica del "Opuesto":</strong></p>
+    <ul>
+        <li><span class="math">2 x 3 = 6</span>: Dos veces el tres positivo es seis positivo.</li>
+        <li><span class="math">2 x (-3) = -6</span>: Dos veces una deuda de 3 es una deuda de 6.</li>
+        <li><span class="math">-2 x (-3) = 6</span>: ¡El truco! Multiplicar por un negativo es <strong>"hacer lo opuesto"</strong>. Lo opuesto de una deuda repetida es un beneficio.</li>
+    </ul>
+    <p><strong>IMPORTANTE:</strong> La regla de signos se aplica igual para la división.</p>
+
+    <h2>4. El Orden de las Operaciones (Jerarquía)</h2>
+    <div class="box">
+        <ol>
+            <li><strong>Paréntesis y Corchetes:</strong> Son "VIP". Se resuelven primero.</li>
+            <li><strong>Potencias y Raíces:</strong> (Próxima clase).</li>
+            <li><strong>Multiplicación y División:</strong> De izquierda a derecha.</li>
+            <li><strong>Suma y Resta:</strong> Se dejan para el final. Son los "cimientos".</li>
+        </ol>
+    </div>
+    <p><strong>Error común:</strong> <span class="math">5 + 2 x 10</span><br>
+    ❌ Mal: 5+2=7 y 7x10=<strong>70</strong>.<br>
+    ✅ Bien: 2x10=20 y 5+20=<strong>25</strong>.</p>
+
+    <h2>5. Propiedades para "Hacerse la vida fácil"</h2>
+    <ul>
+        <li><strong>Asociativa:</strong> En sumas como (10 + 5 + 20), puedes sumar primero 10+20 si te es más cómodo.</li>
+        <li><strong>Elemento Absorbente:</strong> Cualquier número por 0 es 0. ¡Agujero negro matemático!</li>
+        <li><strong>Propiedad Distributiva:</strong> "El número de afuera es el cartero, entrega la carta a todos los de adentro".<br>
+        <span class="math">a · (b + c) = a · b + a · c</span></li>
+    </ul>
+
+    <div class="footer-challenge">
+        <h2>Desafío Final: El Monstruo de las Operaciones</h2>
+        <p style="text-align:center; font-size: 1.5em;" class="math">[(-4 + 2) · (-3)] + [15 ÷ (-5)]</p>
+        <div class="step">1. Primer paréntesis: (-4 + 2) = <strong>-2</strong>.</div>
+        <div class="step">2. Multiplicamos: (-2) · (-3) = <strong>6</strong> (menos por menos es más).</div>
+        <div class="step">3. Segundo bloque: 15 ÷ (-5) = <strong>-3</strong>.</div>
+        <div class="step">4. Unimos todo: 6 + (-3) = <strong>3</strong>.</div>
+    </div>
+</div>
+
+</body>
+</html>
