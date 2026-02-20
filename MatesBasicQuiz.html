@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math-Lab: Ensamblaje Numérico</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- VARIABLES --- */
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 50%, #f8fafc, #e2e8f0, #94a3b8);
+            --card-bg: rgba(255, 255, 255, 0.90);
+            --primary: #2563eb;       
+            --secondary: #0891b2;     
+            --accent: #f59e0b;        
+            --text-main: #0f172a; 
+            --text-light: #475569;
+            --success: #10b981;
+            --error: #ef4444;
+            --glass-border: 1px solid rgba(0, 0, 0, 0.1);
+            --shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.15);
+            --tag-bg: rgba(30, 41, 59, 0.05); 
+            --tag-text: #1e293b;
+            
+            /* Colores Espuma/Manchas */
+            --chem-1: #22d3ee; --chem-2: #818cf8; --chem-3: #34d399; --chem-4: #f472b6; --chem-5: #fbbf24;
+            
+            /* Colores Flotantes */
+            --float-color-1: rgba(37, 99, 235, 0.25);
+            --float-color-2: rgba(16, 185, 129, 0.25);
+            --float-color-3: rgba(245, 158, 11, 0.25);
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: radial-gradient(circle at 50% 50%, #1e293b, #0f172a, #020617);
+            --card-bg: rgba(30, 41, 59, 0.90);
+            --primary: #60a5fa;
+            --secondary: #22d3ee;
+            --accent: #fbbf24;
+            --text-main: #f1f5f9;
+            --text-light: #cbd5e1;
+            --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+            --shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
+            --tag-bg: rgba(255, 255, 255, 0.15); 
+            --tag-text: #f1f5f9;
+
+            --float-color-1: rgba(34, 211, 238, 0.15);
+            --float-color-2: rgba(129, 140, 248, 0.15);
+            --float-color-3: rgba(52, 211, 153, 0.15);
+        }
+
+        * { box-sizing: border-box; transition: background 0.4s, color 0.3s, border-color 0.3s; }
+
+        body {
+            background: var(--bg-gradient); background-attachment: fixed;
+            color: var(--text-main); font-family: 'Inter', sans-serif;
+            margin: 0; min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-x: hidden; position: relative;
+        }
+
+        /* --- FONDO --- */
+        .bubbles-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .bubble {
+            position: absolute; bottom: -50px;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.1));
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;
+            animation: rise linear infinite;
+        }
+
+        /* --- ELEMENTOS FLOTANTES --- */
+        .lab-elements-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .interactive-float {
+            position: absolute; font-size: 2rem; opacity: 1; pointer-events: auto; cursor: pointer;
+            animation: floatMove ease-in-out infinite alternate; display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s;
+        }
+        .interactive-float:hover { transform: scale(1.2); filter: drop-shadow(0 0 10px currentColor); }
+        .pop-anim { animation: popOut 0.3s forwards !important; }
+        @keyframes popOut { 0% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+        @keyframes rise { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 0.5; } 90% { opacity: 0.5; } 100% { transform: translateY(-120vh); opacity: 0; } }
+        @keyframes floatMove { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(-20px) rotate(10deg); } }
+
+        /* --- UI PRINCIPAL --- */
+        .top-bar {
+            width: 100%; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center;
+            backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.1); border-bottom: 1px solid var(--glass-border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .brand { font-weight: 800; font-size: 1.4rem; display: flex; align-items: center; gap: 10px; }
+        .brand i { color: var(--secondary); }
+        .icon-btn {
+            background: rgba(125,125,125,0.1); border: 1px solid var(--glass-border); color: var(--text-main);
+            width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .controls { display: flex; gap: 12px; }
+
+        .quiz-wrapper {
+            width: 95%; max-width: 950px; margin: 30px auto;
+            background: var(--card-bg); border-radius: 30px;
+            border: var(--glass-border); box-shadow: var(--shadow);
+            backdrop-filter: blur(25px); padding: 40px;
+            position: relative; overflow: visible; z-index: 10;
+            display: grid; grid-template-columns: 80px 1fr; gap: 30px;
+        }
+
+        @media (max-width: 768px) { .quiz-wrapper { grid-template-columns: 1fr; padding: 20px; } .chemistry-flask-container { display: none; } }
+
+        /* --- PROBETA DESTRUCTIBLE --- */
+        .chemistry-flask-container {
+            display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; position: relative;
+        }
+
+        .graduated-cylinder {
+            width: 50px; height: 350px;
+            border: 4px solid var(--text-light); border-top: none;
+            border-radius: 0 0 25px 25px; position: relative;
+            background: rgba(125,125,125,0.1); overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+            transition: transform 0.1s, border-color 0.3s;
+        }
+
+        .graduated-cylinder::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(to bottom, transparent, transparent 19px, var(--text-light) 20px);
+            opacity: 0.3; pointer-events: none; z-index: 2;
+        }
+
+        /* --- SISTEMA DE GRIETAS (SVG DATA URIs) --- */
+        .crack-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 5; opacity: 0;
+            background-repeat: no-repeat; background-position: center; background-size: cover;
+            transition: opacity 0.2s;
+        }
+
+        /* Nivel 1: Fisura leve */
+        .damage-1 { 
+            opacity: 0.6;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='300' viewBox='0 0 100 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 50 L40 100 L30 150' stroke='rgba(255,255,255,0.5)' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+        }
+        /* Nivel 2: Telaraña */
+        .damage-2 { 
+            opacity: 0.8;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='300' viewBox='0 0 100 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 50 L40 100 L30 150 L60 180 M40 100 L70 90 M30 150 L10 200' stroke='rgba(255,255,255,0.7)' stroke-width='3' fill='none'/%3E%3C/svg%3E");
+        }
+        /* Nivel 3: Destrucción */
+        .damage-3 { 
+            opacity: 1;
+            background-color: rgba(255,0,0,0.1); 
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='300' viewBox='0 0 100 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 50 L40 100 L30 150 L60 180 L80 250 M40 100 L90 80 M30 150 L5 200 M60 180 L90 220' stroke='white' stroke-width='4' fill='none'/%3E%3Ccircle cx='40' cy='100' r='5' fill='rgba(255,255,255,0.5)'/%3E%3C/svg%3E");
+            border-left: 2px solid red; border-right: 2px solid red;
+            animation: pulse-danger 1s infinite;
+        }
+        @keyframes pulse-danger { 0% { box-shadow: inset 0 0 10px red; } 50% { box-shadow: inset 0 0 30px red; } 100% { box-shadow: inset 0 0 10px red; } }
+
+        .shake-anim { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+
+        /* LÍQUIDO Y ESPUMA */
+        .liquid {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+            background: var(--error); transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.8s;
+            box-shadow: 0 0 20px currentColor; z-index: 1;
+        }
+        
+        .foam-cap {
+            position: absolute; bottom: 0%; left: 0; width: 100%; height: 20px;
+            background: white; border-radius: 50% 50% 0 0;
+            transform: translateY(-50%); opacity: 0; transition: opacity 0.5s, bottom 0.8s;
+            z-index: 2; box-shadow: 0 0 15px white;
+        }
+
+        .liquid-bubble {
+            position: absolute; bottom: -10px; background: rgba(255,255,255,0.7); border-radius: 50%;
+            animation: bubbleUp 1.5s infinite linear;
+        }
+        @keyframes bubbleUp { 0% {bottom: -10px; opacity:0;} 50%{opacity:1;} 100%{bottom: 110%; opacity:0;} }
+
+        /* --- EXPLOSIÓN DE PANTALLA (SPLATTERS) --- */
+        .explosion-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: hidden; display: none;
+        }
+        
+        .chem-splat {
+            position: absolute; border-radius: 50%; opacity: 0.9;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
+            animation: splatHit 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, dripDown 3s 0.6s linear forwards;
+        }
+        .chem-splat::after {
+            content: ''; position: absolute; width: 100%; height: 100%; background: inherit; border-radius: 50%;
+            transform: scale(0.8) translate(10%, 10%); opacity: 0.7;
+        }
+
+        @keyframes splatHit {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+        @keyframes dripDown {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); opacity: 0; }
+        }
+
+        /* --- PREGUNTAS --- */
+        .quiz-content { display: flex; flex-direction: column; width: 100%; }
+        .hud { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid rgba(125,125,125,0.1); padding-bottom:15px; }
+        .progress-tag { background: var(--tag-bg); color: var(--tag-text); padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; }
+        .streak-counter { font-weight: 800; color: var(--accent); }
+        
+        .question-area h2 { font-size: 1.5rem; line-height: 1.4; margin-bottom: 25px; color: var(--text-main); font-weight: 800; }
+
+        .options-grid { display: grid; gap: 15px; grid-template-columns: 1fr; }
+        @media (min-width: 900px) { .options-grid { grid-template-columns: 1fr 1fr; } }
+
+        .option-card {
+            background: rgba(255,255,255,0.5); border: 2px solid transparent; padding: 20px;
+            border-radius: 16px; cursor: pointer; display: flex; align-items: flex-start; gap: 15px;
+            font-size: 1rem; color: var(--text-main); box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            position: relative; overflow: hidden;
+        }
+        [data-theme="dark"] .option-card { background: rgba(0,0,0,0.2); }
+        .option-card:hover:not(.disabled) { background: rgba(var(--primary), 0.1); border-color: var(--secondary); transform: translateY(-3px); }
+        .option-card.correct { border-color: var(--success); background: rgba(16, 185, 129, 0.15); }
+        .option-card.wrong { border-color: var(--error); background: rgba(239, 68, 68, 0.15); }
+        .option-card.disabled { opacity: 0.6; pointer-events: none; }
+        .option-letter {
+            background: var(--text-main); color: var(--card-bg); width: 28px; height: 28px;
+            display: flex; justify-content: center; align-items: center; border-radius: 8px; font-weight: 800; font-size: 0.9rem; flex-shrink: 0;
+        }
+
+        .feedback-modal {
+            margin-top: 20px; padding: 20px; border-radius: 16px; background: rgba(var(--primary), 0.1);
+            border-left: 5px solid var(--primary); display: none; animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+        
+        .btn-next, .btn-retry, .btn-success {
+            color: white; border: none; width: 100%; padding: 18px; border-radius: 16px; margin-top: 20px;
+            font-weight: 800; cursor: pointer; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s;
+        }
+        .btn-next { background: linear-gradient(135deg, var(--primary), var(--secondary)); display: none; }
+        .btn-retry { background: linear-gradient(135deg, var(--error), #dc2626); box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); }
+        .btn-success { background: linear-gradient(135deg, var(--success), #059669); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+        .btn-next:hover, .btn-retry:hover, .btn-success:hover { transform: scale(1.02); filter: brightness(1.1); }
+
+        /* MODAL APUNTES */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+            z-index: 200; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: var(--card-bg); width: 90%; max-width: 650px; max-height: 80vh;
+            border-radius: 20px; padding: 30px; overflow-y: auto;
+        }
+        .cheat-sheet-item { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+
+    </style>
+</head>
+<body>
+
+    <div class="bubbles-container" id="bubbles-layer"></div>
+    <div class="lab-elements-container" id="interactive-layer"></div>
+    <div class="explosion-container" id="explosion-layer"></div>
+
+    <nav class="top-bar">
+        <div class="brand"><i class="fa-solid fa-calculator"></i> MATH-LAB NUMÉRICO <span style="font-size:0.8rem; opacity:0.7">v7.0</span></div>
+        <div class="controls">
+            <button class="icon-btn" onclick="toggleCheatSheet()"><i class="fa-solid fa-clipboard-list"></i></button>
+            <button class="icon-btn" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
+        </div>
+    </nav>
+
+    <div class="quiz-wrapper">
+        <div class="chemistry-flask-container">
+            <div class="graduated-cylinder" id="the-flask">
+                <div class="crack-overlay" id="flask-cracks"></div>
+                <div class="liquid" id="flask-liquid"></div>
+                <div class="foam-cap" id="flask-foam"></div>
+            </div>
+            <div style="margin-top:10px; font-weight:700; font-size:0.8rem; opacity:0.7">EFICIENCIA</div>
+        </div>
+
+        <div class="quiz-content">
+            <div class="hud">
+                <span class="progress-tag">DESAFÍO <span id="current-q">1</span> / 10</span>
+                <div class="streak-counter" id="streak-display"><i class="fa-solid fa-fire"></i> 0</div>
+            </div>
+
+            <div class="question-area">
+                <h2 id="question-text">Analizando parámetros...</h2>
+                <div class="options-grid" id="options-container"></div>
+            </div>
+
+            <div class="feedback-modal" id="feedback-area">
+                <h3 id="feedback-title" style="margin:0 0 5px 0;"></h3>
+                <p id="feedback-text" style="margin:0; opacity:0.9;"></p>
+            </div>
+
+            <button class="btn-next" id="next-btn" onclick="nextQuestion()">SIGUIENTE PASO <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="cheat-modal">
+        <div class="modal-content">
+            <span style="float:right; cursor:pointer; font-size:1.5rem;" onclick="toggleCheatSheet()">&times;</span>
+            <h2 style="margin-top:0; color:var(--primary)"><i class="fa-solid fa-sitemap"></i> Manual de Ingeniería Numérica</h2>
+            
+            <div class="cheat-sheet-item">
+                <h4>➕➖ 1. El Juego de las Fuerzas (Suma/Resta)</h4>
+                <p><strong>Signos Iguales:</strong> "Se ayudan". Suman sus valores y dejan el mismo signo. Ej: $(-5) - 2 = -7$.</p>
+                <p><strong>Signos Distintos:</strong> "La Pelea". Gana el equipo con más fuerza. Ej: $-10 + 4 = -6$.</p>
+            </div>
+            <div class="cheat-sheet-item">
+                <h4>✖️➗ 2. El Cambio de Naturaleza (Mult/Div)</h4>
+                <p>Multiplicar por un negativo es <strong>"hacer lo opuesto"</strong>. Lo opuesto de una deuda es un beneficio: $(-2) \times (-3) = +6$.</p>
+            </div>
+            <div class="cheat-sheet-item">
+                <h4>🏗️ 3. Jerarquía (El Orden Manda)</h4>
+                <p>1º VIPs (Paréntesis/Corchetes) <br>2º Tecnología (Potencias) <br>3º Estructura (Multiplicar/Dividir) <br>4º Cimientos (Sumar/Restar).</p>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- ESTADO DEL JUEGO ---
+    let currentIdx = 0; 
+    let score = 0; 
+    let streak = 0;
+    let wrongCount = 0; 
+
+    // --- LÓGICA DE LA PROBETA (v6.1) ---
+    function updateFlask(score, total, isCorrect) {
+        const percentage = (score / total) * 100;
+        const liquid = document.getElementById('flask-liquid');
+        const foam = document.getElementById('flask-foam');
+        const flask = document.getElementById('the-flask');
+        const cracks = document.getElementById('flask-cracks');
+
+        if(isCorrect) {
+            liquid.style.height = percentage + '%';
+            foam.style.bottom = percentage + '%';
+            foam.style.opacity = 1;
+            
+            if (percentage < 30) {
+                liquid.style.background = "var(--error)"; 
+                liquid.style.boxShadow = "0 0 20px var(--error)";
+            } else if (percentage < 70) {
+                liquid.style.background = "var(--accent)";
+                liquid.style.boxShadow = "0 0 20px var(--accent)";
+            } else {
+                liquid.style.background = "#10b981";
+                liquid.style.boxShadow = "0 0 30px #10b981";
+            }
+
+            for(let i=0; i<12; i++) {
+                const b = document.createElement('div');
+                b.className = 'liquid-bubble';
+                b.style.left = Math.random() * 90 + '%';
+                b.style.width = Math.random() * 8 + 4 + 'px';
+                b.style.height = b.style.width;
+                b.style.animationDuration = Math.random() * 1 + 0.5 + 's'; 
+                liquid.appendChild(b);
+                setTimeout(() => b.remove(), 1500);
+            }
+        } 
+        
+        if(!isCorrect) {
+            wrongCount++;
+            flask.classList.remove('shake-anim');
+            void flask.offsetWidth; 
+            flask.classList.add('shake-anim');
+
+            cracks.classList.remove('damage-1', 'damage-2', 'damage-3'); 
+            if(wrongCount === 1) cracks.classList.add('damage-1');
+            else if(wrongCount === 2) cracks.classList.add('damage-2');
+            else if(wrongCount >= 3) cracks.classList.add('damage-3');
+        }
+    }
+
+    function triggerExplosion() {
+        const container = document.getElementById('explosion-layer');
+        container.style.display = 'block';
+        const colors = ['var(--chem-1)', 'var(--chem-2)', 'var(--chem-3)', 'var(--chem-4)', 'var(--chem-5)'];
+        for(let i=0; i<60; i++) {
+            const p = document.createElement('div');
+            p.className = 'chem-splat';
+            const size = Math.random() * 150 + 50 + 'px'; 
+            const color = `var(--chem-${Math.floor(Math.random() * 5) + 1})`;
+            const x = Math.random() * 100 + '%';
+            const y = Math.random() * 100 + '%';
+            p.style.width = size; p.style.height = size;
+            p.style.backgroundColor = color;
+            p.style.left = x; p.style.top = y;
+            p.style.animationDelay = Math.random() * 0.5 + 's'; 
+            container.appendChild(p);
+        }
+    }
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'correct') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(400, now);
+            osc.frequency.linearRampToValueAtTime(800, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.start(); osc.stop(now + 0.3);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(); osc.stop(now + 0.1);
+        } else if (type === 'explosion') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(200, now);
+            osc.frequency.linearRampToValueAtTime(600, now + 1.5);
+            gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 2);
+            osc.start(); osc.stop(now + 2);
+        }
+    }
+
+    // --- NUEVAS PREGUNTAS: TEMARIO DE ENTEROS ---
+    const quizData = [
+        {
+            q: "Si tienes 3 manzanas, no puedes quitarle 5. ¿Qué conjunto numérico se inventó para representar esta 'realidad completa'?",
+            options: [
+                { txt: "Números Naturales ($\\mathbb{N}$).", correct: false },
+                { txt: "Números Enteros ($\\mathbb{Z}$).", correct: true },
+                { txt: "Números Fraccionarios.", correct: false }
+            ],
+            feedback: "Correcto. Los Enteros ($\\mathbb{Z}$) incluyen a los negativos y nos permiten representar situaciones de deuda o posiciones bajo cero."
+        },
+        {
+            q: "En el 'juego de las fuerzas', ¿qué ocurre cuando sumas dos números con el mismo signo, como $(-5) - 2$?",
+            options: [
+                { txt: "Se restan porque hay un signo negativo.", correct: false },
+                { txt: "Se ayudan, sumando valores y manteniendo su signo ($-7$).", correct: true },
+                { txt: "Gana el más grande y queda positivo ($+7$).", correct: false }
+            ],
+            feedback: "Exacto. Al tener el mismo signo, corren hacia el mismo lado y unen sus fuerzas."
+        },
+        {
+            q: "Imagina una batalla de la cuerda: $-10 + 4$. ¿Quién gana y cuál es el resultado?",
+            options: [
+                { txt: "Ganan los negativos por 6. Resultado: $-6$.", correct: true },
+                { txt: "Ganan los positivos. Resultado: $+6$.", correct: false },
+                { txt: "Se suman las fuerzas. Resultado: $-14$.", correct: false }
+            ],
+            feedback: "¡Bien deducido! El equipo negativo es más fuerte (10 > 4), así que la cuerda se mueve hacia ellos por 6 espacios."
+        },
+        {
+            q: "¿Cuál es la lógica oculta detrás de la regla de signos en la operación $(-2) \\times (-3)$?",
+            options: [
+                { txt: "Es como juntar dos deudas, da $-5$.", correct: false },
+                { txt: "Multiplicar por negativo es 'hacer lo opuesto'. Lo opuesto de una deuda es beneficio ($+6$).", correct: true },
+                { txt: "Da cero porque los signos chocan entre sí.", correct: false }
+            ],
+            feedback: "¡Perfecto! El segundo número nos dice el valor (deuda de 3) y el primer signo negativo nos ordena hacer lo opuesto (beneficio)."
+        },
+        {
+            q: "Sabiendo que la división es simplemente multiplicar por el inverso, ¿cuál es el resultado de $15 \\div (-5)$?",
+            options: [
+                { txt: "$+3$", correct: false },
+                { txt: "$-3$", correct: true },
+                { txt: "$-10$", correct: false }
+            ],
+            feedback: "Correcto. La regla 'más por menos es menos' aplica exactamente igual para la división."
+        },
+        {
+            q: "En la jerarquía de las matemáticas, ¿qué operación representa a los 'VIPs' que deben resolverse primero?",
+            options: [
+                { txt: "Suma y Resta.", correct: false },
+                { txt: "Multiplicación y División.", correct: false },
+                { txt: "Paréntesis y Corchetes.", correct: true }
+            ],
+            feedback: "Así es. Los paréntesis son muros que deben eliminarse primero resolviendo lo que hay dentro de ellos."
+        },
+        {
+            q: "Un alumno distraído resuelve $5 + 2 \\times 10$ haciendo primero la suma. ¿Qué hace el alumno profesional?",
+            options: [
+                { txt: "Resuelve $2 \\times 10 = 20$, y luego $5 + 20 = 25$.", correct: true },
+                { txt: "Confirma que el resultado es $70$.", correct: false },
+                { txt: "Resuelve de derecha a izquierda: $10 \\times 2 + 5$.", correct: false }
+            ],
+            feedback: "¡Excelente! La multiplicación siempre tiene un nivel jerárquico superior a los 'cimientos' que son las sumas."
+        },
+        {
+            q: "Si tienes la expresión $(10 + 5 + 20)$, la Propiedad Asociativa te permite 'hacerte la vida fácil' de esta forma:",
+            options: [
+                { txt: "Absorbiendo todo con un cero.", correct: false },
+                { txt: "Agrupando primero $(10+20)$ si te resulta más rápido.", correct: true },
+                { txt: "Repartiendo el 10 entre los otros números.", correct: false }
+            ],
+            feedback: "Correcto. En una fila de puras sumas, el orden de agrupación no altera el resultado."
+        },
+        {
+            q: "En la Propiedad Distributiva $a \\cdot (b + c)$, el número '$a$' actúa como un 'cartero'. ¿Qué significa esto?",
+            options: [
+                { txt: "Que le entrega la carta (multiplicación) a todos: $a \\cdot b + a \\cdot c$.", correct: true },
+                { txt: "Que solo multiplica a '$b$' porque está más cerca.", correct: false },
+                { txt: "Que suma su valor con los que están adentro.", correct: false }
+            ],
+            feedback: "¡Exacto! El cartero no puede ignorar a ningún habitante de la casa (paréntesis)."
+        },
+        {
+            q: "¡Desafío del monstruo! Resuelve: $[(-4 + 2) \\cdot (-3)] + [15 \\div (-5)]$",
+            options: [
+                { txt: "$-9$", correct: false },
+                { txt: "$+3$", correct: true },
+                { txt: "$0$", correct: false }
+            ],
+            feedback: "¡Felicidades, Héroe Numérico! Primer bloque: $(-2)\\times(-3) = 6$. Segundo bloque: $-3$. Unido: $6 + (-3) = 3$."
+        }
+    ];
+
+    function initGame() {
+        wrongCount = 0;
+        initInteractiveElements();
+        loadQuestion(0);
+        updateFlask(0, quizData.length, false);
+    }
+
+    function loadQuestion(idx) {
+        const data = quizData[idx];
+        document.getElementById("current-q").innerText = idx + 1;
+        document.getElementById("question-text").innerHTML = data.q;
+        renderMathInElement(document.getElementById("question-text"), {delimiters: [{left: "$", right: "$", display: false}]});
+        
+        const container = document.getElementById("options-container");
+        container.innerHTML = "";
+        document.getElementById("next-btn").style.display = "none";
+        document.getElementById("feedback-area").style.display = "none";
+
+        const letters = ["A", "B", "C"];
+        data.options.forEach((opt, i) => {
+            const div = document.createElement("div");
+            div.className = "option-card";
+            div.innerHTML = `<div class="option-letter">${letters[i]}</div><div>${opt.txt}</div>`;
+            div.onclick = () => checkAnswer(div, opt.correct, data.feedback);
+            container.appendChild(div);
+        });
+        // Renderizamos las matemáticas en las opciones ANTES de mostrarlas
+        renderMathInElement(container, {delimiters: [{left: "$", right: "$", display: false}]});
+    }
+
+    function checkAnswer(card, isCorrect, feedback) {
+        if(card.classList.contains("disabled")) return;
+        document.querySelectorAll(".option-card").forEach(c => c.classList.add("disabled"));
+        
+        const feedbackArea = document.getElementById("feedback-area");
+        feedbackArea.style.display = "block";
+        document.getElementById("feedback-text").innerText = feedback;
+        
+        // RE-RENDER: Aseguramos que el texto de feedback procese las matemáticas
+        renderMathInElement(feedbackArea, {delimiters: [{left: "$", right: "$", display: false}]});
+
+        document.getElementById("next-btn").style.display = "block";
+        const title = document.getElementById("feedback-title");
+
+        if(isCorrect) {
+            playSound('correct');
+            card.classList.add("correct");
+            card.querySelector(".option-letter").style.background = "var(--success)";
+            title.innerText = "¡Cálculo Correcto!"; title.style.color = "var(--success)";
+            score++; streak++;
+            updateFlask(score, quizData.length, true);
+        } else {
+            playSound('wrong');
+            card.classList.add("wrong");
+            card.querySelector(".option-letter").style.background = "var(--error)";
+            title.innerText = "¡Falla en el Sistema!"; title.style.color = "var(--error)";
+            streak = 0;
+            updateFlask(score, quizData.length, false);
+        }
+        document.getElementById("streak-display").innerHTML = `<i class="fa-solid fa-fire"></i> ${streak}`;
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if(currentIdx < quizData.length) loadQuestion(currentIdx);
+        else showResults();
+    }
+
+    function showResults() {
+        const percent = Math.round((score/quizData.length)*100);
+        const wrapper = document.querySelector(".quiz-content");
+        
+        let title, msg, icon, color, btnClass, btnText;
+
+        if(percent >= 90) {
+            playSound('explosion');
+            triggerExplosion();
+        }
+
+        if(percent < 50) {
+            title = "⚠️ ¡Alerta de Cálculo!";
+            msg = "El procesamiento falló. Te recomiendo repasar el manual de ingeniería numérica (las reglas de signos).";
+            icon = "fa-triangle-exclamation"; color = "var(--error)"; btnClass = "btn-retry"; btnText = "Reiniciar Sistema";
+        } else if (percent < 70) {
+            title = "⚠️ Proceso Estable";
+            msg = "Hay algunas fugas lógicas. Ten mucho cuidado con la pelea de signos y la jerarquía.";
+            icon = "fa-calculator"; color = "var(--accent)"; btnClass = "btn-retry"; btnText = "Mejorar Eficiencia";
+        } else if (percent < 90) {
+            title = "✅ ¡Cálculos Precisos!";
+            msg = "Dominas bastante bien la recta numérica. ¡Excelente trabajo estructurando tus ecuaciones!";
+            icon = "fa-square-check"; color = "var(--success)"; btnClass = "btn-success"; btnText = "Nuevo Test";
+        } else {
+            title = "💎 ¡Ingeniero Matemático!";
+            msg = "¡Simplemente perfecto! Eres el amo absoluto de los números enteros y la jerarquía de operaciones.";
+            icon = "fa-gem"; color = "#3b82f6"; btnClass = "btn-success"; btnText = "Nuevo Test";
+        }
+
+        wrapper.innerHTML = `
+            <div style="text-align:center; padding:40px 20px;">
+                <div style="width:100px; height:100px; background:${color}20; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto;">
+                    <i class="fa-solid ${icon}" style="font-size:3.5rem; color:${color};"></i>
+                </div>
+                <h2 style="margin:0; font-size:1.8rem; color:${color};">${title}</h2>
+                <h1 style="font-size:5rem; margin:10px 0; color:var(--text-main); font-weight:800;">${percent}%</h1>
+                <p style="font-size:1.1rem; color:var(--text-main); line-height:1.6; margin-bottom:30px;">${msg}</p>
+                <button class="${btnClass}" style="display:inline-block; width:auto; padding:18px 50px;" onclick="location.reload()">
+                    <i class="fa-solid fa-rotate-right"></i> ${btnText}
+                </button>
+            </div>
+        `;
+    }
+
+    function toggleTheme() { document.body.setAttribute("data-theme", document.body.getAttribute("data-theme") === "dark" ? "light" : "dark"); }
+    function toggleCheatSheet() { const modal = document.getElementById("cheat-modal"); modal.style.display = modal.style.display === "flex" ? "none" : "flex"; }
+    
+    function initInteractiveElements() {
+        const container = document.getElementById('interactive-layer');
+        // Íconos y símbolos cambiados a temática matemática/ciencia
+        const icons = ['fa-calculator', 'fa-square-root-variable', 'fa-chart-pie', 'fa-infinity', 'fa-bolt'];
+        const formulas = ['+', '-', '\\times', '\\div', '(', ')', '\\mathbb{Z}', '\\neq'];
+        const colorVars = ['var(--float-color-1)', 'var(--float-color-2)', 'var(--float-color-3)'];
+        for(let i=0; i<25; i++) {
+            const el = document.createElement('div');
+            el.className = 'interactive-float';
+            if(Math.random() > 0.5) {
+                const icon = icons[Math.floor(Math.random() * icons.length)];
+                el.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+            } else {
+                const form = formulas[Math.floor(Math.random() * formulas.length)];
+                el.innerHTML = `\\(${form}\\)`;
+            }
+            el.style.left = Math.random() * 95 + '%';
+            el.style.top = Math.random() * 95 + '%';
+            el.style.color = colorVars[Math.floor(Math.random() * colorVars.length)];
+            el.style.animationDuration = (Math.random() * 15 + 15) + 's';
+            el.style.fontSize = (Math.random() * 1.5 + 1) + 'rem';
+            el.onclick = function() { this.classList.add('pop-anim'); setTimeout(()=> this.classList.remove('pop-anim'), 300); };
+            container.appendChild(el);
+        }
+        renderMathInElement(container, {delimiters: [{left: "\\(", right: "\\)", display: false}]});
+    }
+    window.onload = initGame;
+</script>
+</body>
+</html>
