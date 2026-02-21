@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misión Orbital: Hackeo Numérico</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        /* --- VARIABLES DE TEMA --- */
+        :root {
+            /* Tema Oscuro (Por defecto) */
+            --bg-grad-1: #0b0f19;
+            --bg-grad-2: #111a2e;
+            --panel-bg: rgba(26, 34, 53, 0.85);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --neon-cyan: #00f0ff;
+            --neon-green: #39ff14;
+            --neon-red: #ff003c;
+            --border-color: #2a3752;
+            --btn-bg: rgba(0, 0, 0, 0.5);
+            --modal-bg: rgba(11, 15, 25, 0.95);
+        }
+
+        [data-theme="light"] {
+            /* Tema Claro */
+            --bg-grad-1: #f8fafc;
+            --bg-grad-2: #e2e8f0;
+            --panel-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --neon-cyan: #0284c7; /* Azul más oscuro para lectura clara */
+            --neon-green: #16a34a;
+            --neon-red: #e11d48;
+            --border-color: #cbd5e1;
+            --btn-bg: rgba(241, 245, 249, 0.8);
+            --modal-bg: rgba(255, 255, 255, 0.98);
+        }
+
+        * { box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s, color 0.3s; }
+
+        body {
+            background-color: var(--bg-grad-1);
+            background-image: 
+                radial-gradient(circle at center, var(--bg-grad-2) 0%, var(--bg-grad-1) 100%),
+                radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px; /* Fondo de cuadrícula/estrellas */
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Evita que el contenido se corte arriba en móviles */
+            /* PADDING CLAVE: 80px arriba evita que los botones tapen el título */
+            padding: 80px 15px 40px 15px; 
+            overflow-x: hidden;
+            overflow-y: auto; /* Permite scroll en celulares pequeños */
+            position: relative;
+        }
+
+        /* Centrar verticalmente solo si la pantalla es alta (PC/Tablets) */
+        @media (min-height: 750px) {
+            body { justify-content: center; padding-top: 40px; }
+        }
+
+        /* --- CONTROLES LATERALES (Tema y Apuntes) --- */
+        .side-controls {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: row; /* Fila horizontal para no ocupar espacio hacia abajo */
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .icon-btn {
+            background: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            width: clamp(40px, 10vw, 50px);
+            height: clamp(40px, 10vw, 50px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1rem, 4vw, 1.2rem);
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .icon-btn:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); transform: scale(1.05); }
+
+        /* --- UI PRINCIPAL --- */
+        .header { text-align: center; margin-bottom: 25px; z-index: 10; width: 100%; max-width: 600px; }
+        .header h1 { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan); text-shadow: 0 0 10px rgba(2, 132, 199, 0.4); font-size: clamp(1.4rem, 5vw, 2.5rem); margin: 0; line-height: 1.2; word-wrap: break-word; }
+        .subtitle { font-family: 'Orbitron', sans-serif; color: var(--text-muted); font-size: clamp(0.75rem, 3vw, 1rem); letter-spacing: 1px; margin-top: 5px; }
+
+        .game-console {
+            background: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%; /* Ocupa el ancho disponible */
+            max-width: 600px;
+            padding: clamp(15px, 5vw, 35px); /* Padding dinámico */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        /* Barra de Energía */
+        .energy-bar-container { width: 100%; height: 12px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 20px; overflow: hidden; }
+        .energy-bar { height: 100%; width: 0%; background: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-cyan); transition: width 0.5s ease-out; }
+
+        /* Preguntas */
+        .question-text { font-size: clamp(1.1rem, 4vw, 1.4rem); font-weight: 700; margin-bottom: 20px; text-align: center; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+        
+        .options-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+        /* Pone 2 botones por fila solo si la pantalla es mayor a 480px */
+        @media (min-width: 480px) { .options-grid { grid-template-columns: 1fr 1fr; } }
+        
+        .btn-option {
+            background: var(--btn-bg);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            padding: 15px 10px;
+            border-radius: 12px;
+            font-size: clamp(1rem, 3.5vw, 1.1rem);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+        .btn-option:hover:not(:disabled) { border-color: var(--neon-cyan); background: rgba(2, 132, 199, 0.1); transform: translateY(-2px); }
+        .btn-option:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        .correct { border-color: var(--neon-green) !important; background: rgba(22, 163, 74, 0.1) !important; color: var(--neon-green) !important; box-shadow: 0 0 15px rgba(22, 163, 74, 0.3); }
+        .wrong { border-color: var(--neon-red) !important; background: rgba(225, 29, 72, 0.1) !important; color: var(--neon-red) !important; box-shadow: 0 0 15px rgba(225, 29, 72, 0.3); }
+
+        /* Feedback y Siguiente */
+        #feedback-box { margin-top: 20px; padding: 15px; border-radius: 10px; display: none; font-size: 0.95rem; text-align: center; font-weight: 600; border: 2px dashed; }
+        #btn-next {
+            width: 100%; padding: 16px; margin-top: 20px; border: none; border-radius: 12px;
+            background: var(--neon-cyan); color: #fff; font-family: 'Orbitron', sans-serif; font-weight: 900;
+            font-size: 1rem; cursor: pointer; display: none; text-transform: uppercase; letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        #btn-next:hover { filter: brightness(1.2); box-shadow: 0 0 15px var(--neon-cyan); }
+
+        /* Pantalla Final */
+        #end-screen { display: none; text-align: center; }
+        .huge-score { font-size: clamp(3rem, 10vw, 5rem); color: var(--neon-cyan); font-family: 'Orbitron', sans-serif; margin: 20px 0; }
+
+        /* --- MODAL DE APUNTES --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            z-index: 200; display: none; justify-content: center; align-items: center; padding: 15px;
+        }
+        .modal-content {
+            background: var(--modal-bg); border: 2px solid var(--border-color); border-radius: 20px;
+            width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; padding: 25px;
+            position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+        .modal-content h2 { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan); margin-top: 0; font-size: 1.5rem; }
+        .rule-box { background: var(--btn-bg); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--neon-cyan); font-size: 0.95rem; }
+
+        /* --- NAVES ESPACIALES (Fondo interactivo) --- */
+        #space-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
+        .spaceship {
+            position: absolute; font-size: clamp(1.5rem, 5vw, 2.5rem); pointer-events: auto; cursor: crosshair;
+            user-select: none; transition: transform 0.1s;
+            animation: fly linear forwards;
+        }
+        .spaceship:active { transform: scale(0.9); }
+        .explosion { animation: popOut 0.4s forwards; }
+        
+        @keyframes fly {
+            0% { transform: translateX(-15vw) rotate(15deg); }
+            100% { transform: translateX(115vw) rotate(15deg); }
+        }
+        @keyframes popOut {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(2); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        /* Efecto de temblor al fallar */
+        .glitch { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+    </style>
+</head>
+<body>
+
+    <div id="space-layer"></div>
+
+    <div class="side-controls">
+        <button class="icon-btn" onclick="toggleTheme()" title="Modo Día/Noche"><i class="fa-solid fa-moon" id="theme-icon"></i></button>
+        <button class="icon-btn" onclick="toggleNotes()" title="Base de Datos"><i class="fa-solid fa-book-journal-whills"></i></button>
+    </div>
+
+    <div class="header">
+        <h1>SISTEMA TERMINAL v3.0</h1>
+        <div class="subtitle">Hackeo de Multiplicación y División</div>
+    </div>
+
+    <div class="game-console" id="console">
+        <div id="quiz-screen">
+            <div style="display: flex; justify-content: space-between; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; margin-bottom: 8px; color: var(--neon-cyan);">
+                <span>ENERGÍA NÚCLEO</span>
+                <span id="q-counter">NIVEL 1/5</span>
+            </div>
+            <div class="energy-bar-container">
+                <div class="energy-bar" id="energy"></div>
+            </div>
+
+            <div class="question-text" id="q-text">Cargando datos...</div>
+            <div class="options-grid" id="options-box"></div>
+
+            <div id="feedback-box"></div>
+            <button id="btn-next" onclick="nextQuestion()">Siguiente Nivel <i class="fa-solid fa-forward-step"></i></button>
+        </div>
+
+        <div id="end-screen">
+            <h2 id="end-title" style="font-family: 'Orbitron'; margin:0;">ANÁLISIS COMPLETADO</h2>
+            <div class="huge-score" id="end-score">100%</div>
+            <p id="end-msg" style="font-size: 1.1rem; margin-bottom: 30px;">Has dominado el sistema.</p>
+            <button id="btn-next" style="display:block;" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> REINICIAR SISTEMA</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="notes-modal">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark close-btn" onclick="toggleNotes()"></i>
+            <h2><i class="fa-solid fa-user-secret"></i> Base de Datos</h2>
+            <p style="color: var(--text-muted);">Reglas para hackear el sistema numérico:</p>
+            
+            <div class="rule-box">
+                <strong>⚔️ Ley de Signos (Mult. y Div.)</strong><br>
+                $(+) \times (+) = +$ (Amigos)<br>
+                $(-) \times (-) = +$ (Enemigo de enemigo = Amigo)<br>
+                $(+) \times (-) = -$ (Deuda)<br>
+                $(-) \times (+) = -$ (Deuda)
+            </div>
+            <div class="rule-box">
+                <strong>🕳️ El Agujero Negro (El Cero)</strong><br>
+                Multiplicar por cero: $5 \times 0 = 0$<br>
+                Dividir por cero: $5 \div 0 = \text{ERROR}$ (¡Imposible!)
+            </div>
+            <div class="rule-box">
+                <strong>🔄 Truco Jedi (Inversa)</strong><br>
+                Si te trabas en $56 \div 8$, piensa: ¿Qué número multiplicado por 8 da 56?
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- LÓGICA DE AUDIO (Sintetizador Web para efectos Retro) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSfx(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'hit') { 
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.setValueAtTime(880, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'damage') { 
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'explode') { 
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(10, now + 0.4);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now); osc.stop(now + 0.4);
+        }
+    }
+
+    // --- SISTEMA DE NAVES ESPACIALES INTERACTIVAS ---
+    function spawnShip() {
+        const layer = document.getElementById('space-layer');
+        const ship = document.createElement('div');
+        ship.className = 'spaceship';
+        
+        // Aleatorizar el tipo de nave o asteroide
+        const emojis = ['🛸', '🚀', '👾', '☄️'];
+        ship.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        // Posición Vertical Aleatoria (del 10% al 85% de la pantalla)
+        ship.style.top = Math.floor(Math.random() * 75 + 10) + 'vh';
+        
+        // Velocidad aleatoria
+        const duration = Math.random() * 6 + 4; 
+        ship.style.animationDuration = duration + 's';
+        
+        // Dirección (50% de probabilidad de venir de derecha a izquierda)
+        if(Math.random() > 0.5) {
+            ship.style.animationDirection = 'reverse';
+            ship.style.transform = 'scaleX(-1)';
+        }
+
+        layer.appendChild(ship);
+
+        // Explosión al tocar/hacer clic
+        ship.onmousedown = ship.ontouchstart = (e) => {
+            e.preventDefault(); // Evita scroll o zoom accidental al tocar rápido en celular
+            ship.innerHTML = '💥';
+            ship.classList.add('explosion');
+            ship.style.animationPlayState = 'paused';
+            playSfx('explode');
+            setTimeout(() => ship.remove(), 400);
+        };
+
+        // Eliminar del código cuando sale de la pantalla
+        setTimeout(() => { if(ship.parentNode) ship.remove(); }, duration * 1000);
+    }
+    // Aparece una nave nueva cada 2.5 segundos
+    setInterval(spawnShip, 2500);
+
+    // --- TEMA CLARO/OSCURO ---
+    function toggleTheme() {
+        const body = document.body;
+        const icon = document.getElementById('theme-icon');
+        if (body.getAttribute('data-theme') === 'light') {
+            body.removeAttribute('data-theme');
+            icon.className = 'fa-solid fa-moon';
+        } else {
+            body.setAttribute('data-theme', 'light');
+            icon.className = 'fa-solid fa-sun';
+        }
+    }
+
+    // --- MODAL DE APUNTES ---
+    function toggleNotes() {
+        const modal = document.getElementById('notes-modal');
+        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        renderMath(); 
+    }
+
+    // --- PREGUNTAS DEL JUEGO ---
+    const questions = [
+        {
+            q: "Hackea este código: $(-8) \\times 4$",
+            opt: ["$-32$", "$32$", "$-4$", "$12$"],
+            ans: 0,
+            fb: "¡Bien! Deuda repetida sigue siendo deuda (Menos por Más = Menos)."
+        },
+        {
+            q: "Desbloquea el cortafuegos: $(-200) \\div (-5)$",
+            opt: ["$-40$", "$40$", "$-1000$", "ERROR"],
+            ans: 1,
+            fb: "¡Hackeo limpio! En división, signos iguales siempre dan positivo."
+        },
+        {
+            q: "Anula la trampa: $(-6) \\times (-7)$",
+            opt: ["$-42$", "$42$", "$-13$", "$13$"],
+            ans: 1,
+            fb: "¡Excelente! Quitar una deuda es una ganancia (Menos por Menos = Más)."
+        },
+        {
+            q: "Resuelve usando la técnica Jedi: $56 \\div (-8)$",
+            opt: ["$-7$", "$7$", "$-64$", "$-8$"],
+            ans: 0,
+            fb: "¡Acceso concedido! Pregúntate: ¿Qué número por -8 da 56? Es el -7."
+        },
+        {
+            q: "Evita el agujero negro: $15 \\div 0$",
+            opt: ["$15$", "$0$", "ERROR", "$-15$"],
+            ans: 2,
+            fb: "¡Perfecto! Repartir entre cero personas es un error matemático."
+        }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+
+    function renderMath() {
+        renderMathInElement(document.body, {
+            delimiters: [{left: "$", right: "$", display: false}],
+            throwOnError: false
+        });
+    }
+
+    function loadQuestion() {
+        const data = questions[currentQ];
+        document.getElementById('q-counter').innerText = `NIVEL ${currentQ + 1}/${questions.length}`;
+        document.getElementById('q-text').innerText = data.q;
+        
+        const box = document.getElementById('options-box');
+        box.innerHTML = '';
+        document.getElementById('feedback-box').style.display = 'none';
+        document.getElementById('btn-next').style.display = 'none';
+
+        data.opt.forEach((text, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-option';
+            btn.innerText = text;
+            btn.onclick = () => checkAnswer(btn, i === data.ans, data.fb);
+            box.appendChild(btn);
+        });
+        
+        renderMath();
+    }
+
+    function checkAnswer(btn, isCorrect, feedback) {
+        if(document.querySelector('.btn-option:disabled')) return; 
+        
+        const btns = document.querySelectorAll('.btn-option');
+        btns.forEach(b => b.disabled = true);
+
+        const fbBox = document.getElementById('feedback-box');
+        fbBox.style.display = 'block';
+        fbBox.innerText = feedback;
+        document.getElementById('btn-next').style.display = 'block';
+
+        if(isCorrect) {
+            playSfx('hit');
+            btn.classList.add('correct');
+            fbBox.style.borderColor = 'var(--neon-green)';
+            fbBox.style.color = 'var(--neon-green)';
+            score++;
+            
+            const energy = (score / questions.length) * 100;
+            const energyBar = document.getElementById('energy');
+            energyBar.style.width = energy + '%';
+            if(energy === 100) energyBar.style.boxShadow = '0 0 20px var(--neon-green)';
+        } else {
+            playSfx('damage');
+            btn.classList.add('wrong');
+            fbBox.style.borderColor = 'var(--neon-red)';
+            fbBox.style.color = 'var(--neon-red)';
+            document.getElementById('console').classList.add('glitch');
+            setTimeout(() => document.getElementById('console').classList.remove('glitch'), 300);
+            
+            btns[questions[currentQ].ans].classList.add('correct');
+        }
+        renderMath();
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        if(currentQ < questions.length) {
+            loadQuestion();
+        } else {
+            showEndScreen();
+        }
+    }
+
+    function showEndScreen() {
+        document.getElementById('quiz-screen').style.display = 'none';
+        const endScreen = document.getElementById('end-screen');
+        endScreen.style.display = 'block';
+        
+        const finalScore = Math.round((score / questions.length) * 100);
+        const scoreEl = document.getElementById('end-score');
+        const titleEl = document.getElementById('end-title');
+        const msgEl = document.getElementById('end-msg');
+        
+        scoreEl.innerText = finalScore + '%';
+
+        if(finalScore === 100) {
+            titleEl.innerText = "¡SISTEMA HACKEADO!";
+            scoreEl.style.color = "var(--neon-green)";
+            scoreEl.style.textShadow = "0 0 20px rgba(57, 255, 20, 0.5)";
+            msgEl.innerText = "Eres un maestro de la división y multiplicación.";
+        } else if(finalScore >= 60) {
+            titleEl.innerText = "HACKEO PARCIAL";
+            msgEl.innerText = "Buen intento, pero dejaste rastros. Revisa tus apuntes.";
+        } else {
+            titleEl.innerText = "SISTEMA BLOQUEADO";
+            titleEl.style.color = "var(--neon-red)";
+            scoreEl.style.color = "var(--neon-red)";
+            scoreEl.style.textShadow = "0 0 20px rgba(255, 0, 60, 0.5)";
+            msgEl.innerText = "Te ha detectado el cortafuegos. Estudia la base de datos.";
+        }
+    }
+
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
