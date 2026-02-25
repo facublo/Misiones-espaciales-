@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Examen de Simulacro - Asistente IA EVA</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root[data-theme="dark"] {
+            --bg-base: #050a10; --bg-panel: rgba(10, 25, 40, 0.85);
+            --text-main: #00e5ff; --text-dim: #4da8da;
+            --accent-amber: #ffb300; --accent-crimson: #ff1744; 
+            --accent-green: #00ff00;
+            --border-color: #008b8b; --text-white: #ffffff;
+            --grid-color: rgba(0, 229, 255, 0.05);
+        }
+
+        :root[data-theme="light"] {
+            --bg-base: #e0e6ed; --bg-panel: rgba(240, 245, 250, 0.95);
+            --text-main: #005f73; --text-dim: #0a9396;
+            --accent-amber: #ca6702; --accent-crimson: #ae2012; 
+            --accent-green: #10b981;
+            --border-color: #94d2bd; --text-white: #001219;
+            --grid-color: rgba(0, 95, 115, 0.05);
+        }
+
+        * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
+
+        body {
+            background-color: var(--bg-base); color: var(--text-main);
+            font-family: 'Consolas', 'Courier New', monospace;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            min-height: 100vh; line-height: 1.6; overflow-x: hidden;
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* OVERLAY DE INICIO */
+        #init-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #000000; z-index: 99999;
+            display: flex; justify-content: center; align-items: center; flex-direction: column; cursor: pointer;
+        }
+        .blinking-text {
+            color: var(--text-main); font-size: 1.5rem; font-weight: bold;
+            animation: blink 1.5s infinite; text-align: center;
+            padding: 20px; border: 2px dashed var(--text-main); box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+        }
+
+        .crt-off { animation: turn-off 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; pointer-events: none; background-color: #000 !important; }
+        @keyframes turn-off { 0% { transform: scale(1, 1); filter: brightness(1); } 60% { transform: scale(1, 0.005); filter: brightness(10); } 100% { transform: scale(0, 0.0001); filter: brightness(0); } }
+
+        .ai-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.05; font-size: 1.1rem; color: var(--text-dim); pointer-events: none; padding: 20px; line-height: 4; user-select: none; }
+
+        .top-controls { position: fixed; top: 15px; left: 20px; display: flex; gap: 10px; z-index: 200; }
+        .top-btn { background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main); padding: 5px 15px; font-size: 0.85rem; cursor: pointer; font-weight: bold; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+        .top-btn:hover { background: var(--text-main); color: var(--bg-base); }
+
+        .main-layout { display: flex; gap: 30px; max-width: 1200px; width: 100%; justify-content: center; align-items: flex-start; margin-top: 20px; margin-bottom: 10px; z-index: 10; position: relative; }
+
+        /* ====== DISEÑO DEL ROBOT EVA ====== */
+        .assistant-panel {
+            width: 320px; flex-shrink: 0;
+            background: linear-gradient(180deg, rgba(0, 229, 255, 0.05) 0%, rgba(10, 25, 40, 0.8) 100%);
+            border: 1px solid var(--border-color); border-top: 4px solid var(--text-white);
+            padding: 20px; display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.1); position: sticky; top: 60px;
+            border-radius: 20px; z-index: 50;
+        }
+
+        #eve-container { width: 200px; height: 250px; animation: float 4s ease-in-out infinite; filter: drop-shadow(0 15px 10px rgba(0,0,0,0.5)); transition: all 0.3s; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
+
+        .eve-eyes { fill: #00e5ff; transition: fill 0.3s, filter 0.3s; filter: drop-shadow(0 0 8px #00e5ff); }
+        .speaking .eve-eyes { fill: #ffffff; filter: drop-shadow(0 0 15px #00e5ff); animation: speak-eyes 0.3s infinite alternate; }
+        @keyframes speak-eyes { 0% { transform: scaleY(1); } 100% { transform: scaleY(0.6) translateY(10px); } }
+
+        #eve-head { transform-origin: 100px 90px; }
+        .state-correct .eve-eyes { fill: var(--accent-green) !important; filter: drop-shadow(0 0 20px var(--accent-green)) !important; }
+        .state-correct #eve-head { animation: nod-head 0.6s ease-in-out 2; }
+        @keyframes nod-head { 0%, 100% { transform: translateY(0) rotateX(0deg); } 50% { transform: translateY(12px) rotate(3deg); } }
+
+        .state-wrong .eve-eyes { fill: var(--accent-crimson) !important; filter: drop-shadow(0 0 20px var(--accent-crimson)) !important; }
+        .state-wrong #eve-head { animation: shake-head 0.4s ease-in-out 2; }
+        @keyframes shake-head { 0%, 100% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(-10px) rotate(-8deg); } 75% { transform: translateX(10px) rotate(8deg); } }
+
+        .assistant-status { margin-top: 15px; font-weight: bold; font-size: 0.9rem; color: var(--text-dim); width: 100%; text-align: center; border-top: 1px dashed var(--border-color); padding-top: 10px; letter-spacing: 1px; }
+        .assistant-status.speaking { color: var(--text-white); text-shadow: 0 0 8px var(--text-main); }
+
+        /* ====== TERMINAL SCADA ====== */
+        #terminal-container { width: 100%; flex-grow: 1; display: flex; flex-direction: column; gap: 15px; }
+        .scada-box { background: var(--bg-panel); border-top: 4px solid var(--text-main); border-bottom: 4px solid var(--text-main); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 30px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        .creator-signature { text-align: center; font-weight: bold; font-size: 0.85rem; color: var(--accent-amber); padding: 15px; border: 1px dashed var(--accent-amber); background: rgba(255, 179, 0, 0.05); text-transform: uppercase; letter-spacing: 2px; }
+        .creator-contact { font-size: 0.9rem; color: var(--text-white); display: block; margin-top: 5px; }
+
+        .greeble { position: absolute; font-size: 0.65rem; color: var(--text-dim); font-weight: bold; letter-spacing: 1px; }
+        .g-top-left { top: 5px; left: 10px; } .g-top-right { top: 5px; right: 10px; cursor: crosshair; } .g-bottom-right { bottom: 5px; right: 10px; }
+
+        h1, h2, h3 { color: var(--text-white); margin-top: 0; }
+        .amber-text { color: var(--accent-amber); } .crimson-text { color: var(--accent-crimson); } .success-text { color: var(--accent-green); }
+
+        #sidebar { position: fixed; right: -100%; top: 60px; width: 350px; height: calc(100% - 80px); background: var(--bg-panel); border: 1px solid var(--border-color); border-right: none; padding: 20px; z-index: 150; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.3); border-left: 3px solid var(--accent-amber); }
+        #sidebar.open { right: 0; }
+
+        .btn-industrial { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 12px 15px; font-family: inherit; font-size: 1rem; cursor: pointer; width: 100%; text-align: left; margin-bottom: 10px; border-left: 4px solid var(--text-main); transition: all 0.2s; }
+        .btn-industrial:hover:not(:disabled) { background: rgba(0, 229, 255, 0.1); padding-left: 20px; }
+        .btn-abort { border-color: var(--accent-crimson); color: var(--accent-crimson); border-left-color: var(--accent-crimson); text-align: center; margin-top: 20px; }
+        .btn-abort:hover { background: rgba(255, 23, 68, 0.1); color: var(--text-white); }
+
+        .hud { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px; font-size: 0.9rem; font-weight: bold; }
+
+        .options-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .option-btn { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--border-color); padding: 15px; cursor: pointer; background: transparent; color: var(--text-white); font-family: inherit; text-align: left; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); transition: all 0.2s; word-wrap: break-word; }
+        .option-btn.disabled { opacity: 0.5; pointer-events: none; }
+        .option-btn.correct { background: rgba(0, 255, 0, 0.15) !important; border-color: var(--accent-green) !important; color: var(--accent-green) !important; opacity: 1 !important; }
+        .option-btn.wrong { background: rgba(255, 23, 68, 0.1) !important; border-color: var(--accent-crimson) !important; color: var(--accent-crimson) !important; opacity: 1 !important; text-decoration: line-through; }
+        .option-letter { font-weight: bold; color: var(--text-main); padding-right: 10px; min-width: 30px; }
+
+        #feedback-area { margin-top: 20px; padding: 20px; border: 1px solid var(--accent-amber); display: none; background: rgba(255, 179, 0, 0.05); color: var(--text-white); border-left: 5px solid var(--accent-amber); animation: fadeIn 0.3s; }
+        #btn-next { display: none; margin-top: 20px; text-align: center; font-weight: bold; border-style: dashed; }
+        .cursor { display: inline-block; width: 10px; height: 1.2em; background-color: var(--text-main); vertical-align: bottom; animation: blink 1s infinite; }
+        .hidden { display: none !important; }
+        
+        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 900px) {
+            body { padding: 10px; }
+            .main-layout { flex-direction: column; align-items: center; margin-top: 40px; }
+            .assistant-panel { width: 100%; top: 45px; position: sticky; z-index: 100; flex-direction: row; justify-content: space-between; padding: 10px 20px; margin-bottom: 10px; background: var(--bg-panel); border-radius: 10px; backdrop-filter: blur(10px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+            #eve-container { width: 60px; height: 75px; animation: none; filter: none; }
+            .assistant-status { margin-top: 0; border-top: none; border-left: 1px dashed var(--border-color); padding-left: 15px; display: flex; align-items: center; font-size: 0.8rem; width: auto; flex-grow: 1;}
+            #terminal-container { padding: 0; margin-top: 5px; width: 100%; }
+            .scada-box { padding: 20px 15px; }
+            .top-controls { background: var(--bg-base); width: 100%; top: 0; left: 0; padding: 10px; justify-content: space-around; border-bottom: 1px solid var(--border-color); }
+            #sidebar { width: 90%; right: -100%; top: 50px; height: calc(100% - 50px);}
+        }
+    </style>
+</head>
+<body>
+
+    <div id="init-overlay" onclick="bootSystem()">
+        <div class="blinking-text">[ INICIAR SISTEMA IA Y SCADA ]</div>
+        <p style="color:var(--text-dim); margin-top:20px; text-align: center;">*Autorización de Hardware Requerida*</p>
+    </div>
+
+    <div class="ai-bg">
+        \[ 4Fe + 3O_2 \rightarrow 2Fe_2O_3 \quad | \quad \text{Masa}_{reactivos} = \text{Masa}_{productos} \]
+        <br><br><br>
+        \[ H^+ + OH^- \rightleftharpoons H_2O \quad | \quad N_2 + 3H_2 \rightleftharpoons 2NH_3 \]
+    </div>
+
+    <div class="top-controls">
+        <button class="top-btn" onclick="toggleTheme()">[ TEMA ]</button>
+        <button class="top-btn" onclick="toggleSidebar()" style="color: var(--accent-amber); border-color: var(--accent-amber);">[ DB_APUNTES ]</button>
+    </div>
+
+    <div id="sidebar">
+        <button onclick="toggleSidebar()" style="background:none; color:var(--accent-crimson); border:none; width:100%; text-align:right; cursor:pointer; font-weight:bold;">[ CERRAR X ]</button>
+        <h3 class="amber-text">[ MANUAL DE PROTOCOLOS ]</h3>
+        <p><b>> Regla de Oro (Nomenclatura):</b> Electroneutralidad. La suma de cargas positivas y negativas debe dar exactamente cero.</p>
+        <p><b>> Ley de Lavoisier:</b> La materia no se crea ni se destruye, solo se transforma. La masa de los reactivos DEBE ser igual a la masa de los productos.</p>
+        <p><b>> El Balanceo:</b> Si entran 2 átomos de Hidrógeno, DEBEN salir 2 átomos de Hidrógeno. Agrega coeficientes grandes adelante de las moléculas, nunca alteres los subíndices.</p>
+        <p><b>> Cálculo Energético:</b> Calcula tu TMB en papel. Súmale el Gasto por Digestión/Actividad para obtener el <b>Requerimiento Total</b>. Compáralo con las Kcal Ingeridas.</p>
+    </div>
+
+    <div class="main-layout">
+        
+        <div class="assistant-panel" id="assistant-box">
+            <div id="eve-container">
+                <svg viewBox="0 0 200 250" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="bodyGlow" cx="50%" cy="50%" r="50%">
+                            <stop offset="80%" stop-color="#ffffff" />
+                            <stop offset="100%" stop-color="#cccccc" />
+                        </radialGradient>
+                    </defs>
+                    <path d="M 40,110 C 40,240 160,240 160,110 C 160,50 40,50 40,110 Z" fill="url(#bodyGlow)"/>
+                    <g id="eve-head">
+                        <path d="M 45,65 C 45,10 155,10 155,65 C 155,100 45,100 45,65 Z" fill="#ffffff" />
+                        <path d="M 52,62 C 52,25 148,25 148,62 C 148,90 52,90 52,62 Z" fill="#080c11" />
+                        <g class="eve-eyes">
+                            <path d="M 68,58 Q 80,48 92,58 Q 80,62 68,58 Z" />
+                            <path d="M 108,58 Q 120,48 132,58 Q 120,62 108,58 Z" />
+                        </g>
+                    </g>
+                    <path d="M 30,105 C 15,145 25,185 35,185 C 42,185 45,145 42,105 Z" fill="#ffffff" />
+                    <path d="M 170,105 C 185,145 175,185 165,185 C 158,185 155,145 158,105 Z" fill="#ffffff" />
+                </svg>
+            </div>
+            <div class="assistant-status" id="eve-status">SISTEMA APAGADO</div>
+        </div>
+
+        <div id="terminal-container">
+            <div class="scada-box">
+                <div class="greeble g-top-left">[SYS_RDY]</div>
+                <div class="greeble g-top-right" onclick="triggerEasterEgg()" title="Versión">SCADA_V.15</div>
+                <div class="greeble g-bottom-right">[EXAMEN_SIMULACRO_ACTIVO]</div>
+                
+                <div id="screen-menu">
+                    <h1 style="color: var(--accent-amber); border-bottom: 2px dashed var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">> EXAMEN DE SIMULACRO</h1>
+                    <h3 id="menu-title" style="color: var(--text-main); font-weight: normal; font-size: 1rem;"></h3>
+                    <div id="menu-options" class="hidden">
+                        <button class="btn-industrial" onclick="startModule('bloque1')">>> [BLOQUE 1] NUTRICIÓN Y MACROMOLÉCULAS</button>
+                        <button class="btn-industrial" onclick="startModule('bloque2')">>> [BLOQUE 2] TMB Y BALANCE ENERGÉTICO</button>
+                        <button class="btn-industrial" onclick="startModule('bloque3')">>> [BLOQUE 3] UNIONES QUÍMICAS (TEORÍA)</button>
+                        <button class="btn-industrial" onclick="startModule('bloque4')">>> [BLOQUE 4] ESTRUCTURAS DE LEWIS</button>
+                        <button class="btn-industrial" onclick="startModule('bloque5')">>> [BLOQUE 5] LÍNEA DE ENSAMBLAJE (FAMILIAS)</button>
+                        <button class="btn-industrial" onclick="startModule('bloque6')">>> [BLOQUE 6] NOMENCLATURA (FÓRMULA A NOMBRE)</button>
+                        <button class="btn-industrial" onclick="startModule('bloque7')">>> [BLOQUE 7] NOMENCLATURA (NOMBRE A FÓRMULA)</button>
+                        <button class="btn-industrial" onclick="startModule('bloque8')" style="border-color: var(--accent-amber); color: var(--accent-amber); border-left-color: var(--accent-amber);">>> [BLOQUE 8] BALANCEO Y LEY DE LAVOISIER</button>
+                    </div>
+                </div>
+
+                <div id="screen-quiz" class="hidden">
+                    <div class="hud">
+                        <span>MÓDULO ACTIVO | NODO: <span id="current-q">1</span>/<span id="total-q"></span></span>
+                        <span id="progress-bar" class="amber-text">ESTADO: [ ESTABLE ]</span>
+                    </div>
+                    
+                    <h3 id="question-text" style="min-height: 40px;"></h3>
+                    <div id="math-container" class="math-container" style="margin-bottom: 20px; font-weight: bold; color: var(--text-white); font-size: 1.5rem;"></div>
+                    <div class="options-grid" id="options-container"></div>
+
+                    <div id="feedback-area">
+                        <h3 id="feedback-title" style="margin-top:0;"></h3>
+                        <p id="feedback-text" style="margin:0; font-family: 'Consolas', monospace;"></p>
+                    </div>
+
+                    <button class="btn-industrial" id="btn-next" onclick="nextQuestion()">>> AVANZAR AL SIGUIENTE NODO</button>
+                    <button class="btn-industrial btn-abort" onclick="returnToMenu()">[X] ABORTAR Y VOLVER AL MENÚ</button>
+                </div>
+
+                <div id="screen-result" class="hidden">
+                    <h1 style="color:var(--text-white)">> DIAGNÓSTICO DEL MÓDULO</h1>
+                    <p id="result-text" style="font-size: 1.1rem; line-height: 2; font-weight: bold;"></p>
+                    <br>
+                    <button class="btn-industrial" onclick="returnToMenu()" style="text-align:center; margin-top: 10px; border-color:var(--text-main);">>> VOLVER AL MENÚ PRINCIPAL</button>
+                </div>
+            </div>
+
+            <div class="creator-signature">
+                MÓDULO DE EVALUACIÓN CREADO Y DISEÑADO POR: FACUNDO BARROJO
+                <span class="creator-contact">LÍNEA DE SOPORTE Y TUTORÍAS: +54 9 381 5690147</span>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    // --- 1. MOTOR DE AUDIO ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+    let synth = window.speechSynthesis;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'tick') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(800, now);
+            gain.gain.setValueAtTime(0.015, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+            osc.start(); osc.stop(now + 0.02);
+        } else if (type === 'correct') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, now);
+            osc.frequency.linearRampToValueAtTime(1400, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.start(); osc.stop(now + 0.3);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(); osc.stop(now + 0.3);
+        } else if (type === 'boot') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(400, now);
+            osc.frequency.linearRampToValueAtTime(800, now + 1);
+            gain.gain.setValueAtTime(0.05, now); gain.gain.linearRampToValueAtTime(0, now + 1);
+            osc.start(); osc.stop(now + 1);
+        }
+    }
+
+    let isTyping = false;
+    let typeWriterInterval = null;
+
+    // --- 2. VOZ FEMENINA Y SINCRONIZACIÓN ---
+    function eveSpeakAndType(textToSpeak, textToType, htmlElement, callback) {
+        if(synth.speaking) synth.cancel();
+        clearInterval(typeWriterInterval);
+        
+        let utterance = new SpeechSynthesisUtterance(textToSpeak);
+        let voices = synth.getVoices();
+        
+        let voice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Female') || v.name.includes('Monica') || v.name.includes('Paulina') || v.name.includes('Sabina') || v.name.includes('Elena') || v.name.includes('Google')));
+        if(!voice) voice = voices.find(v => v.lang.startsWith('es')); 
+        
+        if(voice) utterance.voice = voice;
+        utterance.pitch = 1.3; 
+        utterance.rate = 1.1; 
+        
+        const robotImg = document.getElementById('eve-container');
+        const robotStatus = document.getElementById('eve-status');
+        
+        let estimatedTimeMs = (textToSpeak.length / 14) * 1000 / utterance.rate;
+        let typingSpeed = estimatedTimeMs / textToType.length;
+        if(typingSpeed < 20) typingSpeed = 20; 
+        if(typingSpeed > 70) typingSpeed = 70;
+
+        isTyping = true;
+        let charIndex = 0;
+        let currentString = "";
+        
+        typeWriterInterval = setInterval(() => {
+            if (charIndex < textToType.length) {
+                let char = textToType.charAt(charIndex);
+                if (char === '\n') currentString += "<br>"; else currentString += char;
+                htmlElement.innerHTML = currentString + '<span class="cursor"></span>';
+                if (charIndex % 3 === 0 && char !== ' ' && char !== '\n') playSound('tick');
+                charIndex++;
+            } else {
+                clearInterval(typeWriterInterval);
+            }
+        }, typingSpeed);
+
+        utterance.onstart = function() {
+            robotImg.classList.add('speaking');
+            robotStatus.innerText = "[ COMUNICANDO... ]";
+            robotStatus.classList.add('speaking');
+        };
+        
+        utterance.onend = function() {
+            clearInterval(typeWriterInterval);
+            htmlElement.innerHTML = textToType.replace(/\n/g, "<br>");
+            isTyping = false;
+            
+            robotImg.classList.remove('speaking');
+            robotStatus.innerText = "[ EN ESPERA ]";
+            robotStatus.classList.remove('speaking');
+            if(callback) callback();
+        };
+
+        synth.speak(utterance);
+    }
+
+    function typeTextSilent(element, text, speed, callback) {
+        clearInterval(typeWriterInterval);
+        isTyping = true;
+        let i = 0; let currentString = "";
+        typeWriterInterval = setInterval(() => {
+            if (i < text.length) {
+                let char = text.charAt(i);
+                if (char === '\n') currentString += "<br>"; else currentString += char;
+                element.innerHTML = currentString + '<span class="cursor"></span>';
+                if (i % 2 === 0 && char !== ' ') playSound('tick');
+                i++;
+            } else {
+                clearInterval(typeWriterInterval);
+                element.innerHTML = currentString; 
+                isTyping = false;
+                if(callback) callback();
+            }
+        }, speed);
+    }
+
+    // --- BASE DE DATOS QUÍMICA: LOS 8 BLOQUES ---
+    const quizData = {
+        bloque1: [
+            {
+                q: "Nivel Fácil: Selecciona el orden correcto de macronutrientes para los siguientes alimentos: Aceite de oliva, Pechuga de pollo, Fideos de trigo.",
+                math: "",
+                options: [
+                    { txt: "Carbohidrato, Proteína, Lípido", correct: false },
+                    { txt: "Lípido, Proteína, Carbohidrato", correct: true },
+                    { txt: "Proteína, Lípido, Carbohidrato", correct: false }
+                ],
+                feedback: "El aceite de oliva es grasa pura (lípido), el pollo es estructural (proteína), y los fideos son energéticos (carbohidratos)."
+            },
+            {
+                q: "Nivel Fácil: ¿Cuál de los tres macronutrientes tiene como función principal ser el 'ladrillo' estructural para construir músculos y reparar tejidos?",
+                math: "",
+                options: [
+                    { txt: "Lípidos", correct: false },
+                    { txt: "Hidratos de Carbono", correct: false },
+                    { txt: "Proteínas", correct: true }
+                ],
+                feedback: "Las proteínas actúan como bloques de construcción del cuerpo, fundamentales para el mantenimiento muscular."
+            },
+            {
+                q: "Nivel Medio: Si necesitas energía rápida e inmediata para correr una carrera en 10 minutos, ¿qué macronutriente debes consumir?",
+                math: "",
+                options: [
+                    { txt: "Hidratos de Carbono (Simples)", correct: true },
+                    { txt: "Grasas saturadas", correct: false },
+                    { txt: "Proteínas de alto valor biológico", correct: false }
+                ],
+                feedback: "Los carbohidratos se digieren rápido y elevan la glucosa en sangre, otorgando la energía explosiva necesaria al instante."
+            }
+        ],
+        bloque2: [
+            {
+                q: "Caso Martín (15 años | 62 kg | 168 cm). Kcal ingeridas: 2000 kcal | Gasto extra por Actividad y Digestión: 400 kcal. \n(Calcula su TMB en papel, suma el gasto extra y determina su balance).",
+                math: "",
+                options: [
+                    { txt: "Exceso Energético", correct: false },
+                    { txt: "Déficit Energético", correct: false },
+                    { txt: "Balance Equilibrado", correct: true }
+                ],
+                feedback: "Su TMB calculada ronda las 1600 kcal. Requerimiento Total = 1600 + 400 = 2000 kcal. Como ingirió 2000 kcal, su balance es exactamente Equilibrado."
+            },
+            {
+                q: "Caso Camila (16 años | 55 kg | 158 cm). Kcal ingeridas: 1400 kcal | Gasto extra por Actividad y Digestión: 350 kcal. \n(Calcula el requerimiento total comparado con su ingesta).",
+                math: "",
+                options: [
+                    { txt: "Balance Equilibrado", correct: false },
+                    { txt: "Déficit Energético", correct: true },
+                    { txt: "Exceso Energético", correct: false }
+                ],
+                feedback: "Su TMB ronda las 1350 kcal. Requerimiento Total = 1350 + 350 = 1700 kcal. Al ingerir solo 1400 kcal, se encuentra en Déficit (-300 kcal)."
+            },
+            {
+                q: "Caso Roberto (54 años | 92 kg | 175 cm). Kcal ingeridas: 2800 kcal | Gasto extra por Actividad y Digestión: 500 kcal.",
+                math: "",
+                options: [
+                    { txt: "Déficit Energético", correct: false },
+                    { txt: "Balance Equilibrado", correct: false },
+                    { txt: "Exceso Energético", correct: true }
+                ],
+                feedback: "Su TMB es de aprox. 1800 kcal. Requerimiento Total = 1800 + 500 = 2300 kcal. Al comer 2800 kcal, tiene un Exceso (+500 kcal) que almacenará como grasa."
+            },
+            {
+                q: "Caso Julieta (14 años | 68 kg | 162 cm). Kcal ingeridas: 2350 kcal | Gasto extra por Actividad y Digestión: 400 kcal. \nIndica su balance y qué pasará termodinámicamente:",
+                math: "",
+                options: [
+                    { txt: "Exceso (+500 kcal). Se almacenará en el tejido adiposo.", correct: true },
+                    { txt: "Déficit (-500 kcal). El cuerpo quemará grasa.", correct: false },
+                    { txt: "Exceso (+850 kcal). Se eliminará por la orina.", correct: false }
+                ],
+                feedback: "Su TMB es ~1450 kcal. Requerimiento Total = 1450 + 400 = 1850 kcal. 2350 (ingeridas) - 1850 (requeridas) = Exceso de 500 kcal. La energía no se destruye, se almacena."
+            },
+            {
+                q: "Caso Tomás (71 años | 75 kg | 178 cm). Kcal ingeridas: 1600 kcal | Gasto extra por Actividad y Digestión: 400 kcal. \nSi mantiene esta dieta un mes, ¿qué ocurrirá?",
+                math: "",
+                options: [
+                    { txt: "Exceso (+300 kcal). Subirá de peso en forma de grasa.", correct: false },
+                    { txt: "Déficit (-300 kcal). Usará sus reservas de tejido para funcionar y perderá peso.", correct: true },
+                    { txt: "Equilibrio (0 kcal). Su metabolismo se apagará por la edad.", correct: false }
+                ],
+                feedback: "Su TMB es ~1500 kcal. Requerimiento Total = 1500 + 400 = 1900 kcal. 1600 - 1900 = -300 kcal. El déficit obligará a su cuerpo a usar reservas propias."
+            },
+            {
+                q: "Jefe Final: Florencia (17 años | 60 kg | 165 cm). Ingiere 1850 kcal. Su TMB es exactamente 1400 kcal y gasta 450 kcal extra por digestión y ejercicio. Calcula e indica su balance final:",
+                math: "",
+                options: [
+                    { txt: "Requerimiento Total: 1400 kcal | Balance: Exceso Energético", correct: false },
+                    { txt: "Requerimiento Total: 1850 kcal | Balance: Equilibrado", correct: true },
+                    { txt: "Requerimiento Total: 2300 kcal | Balance: Déficit Energético", correct: false }
+                ],
+                feedback: "Requerimiento Total = TMB (1400) + Extra (450) = 1850 kcal. Como ingiere exactamente 1850 kcal, la ecuación da cero. El balance es perfecto."
+            }
+        ],
+        bloque3: [
+            {
+                q: "V/F: La regla del octeto dice que todos los elementos tienden a llenar su último nivel de energía con 8 electrones.",
+                math: "",
+                options: [
+                    { txt: "Verdadero (Salvo excepciones como H y He)", correct: true },
+                    { txt: "Falso, buscan tener 10 electrones.", correct: false }
+                ],
+                feedback: "Verdadero. Buscan la configuración estable del gas noble más cercano, llegando a 8 electrones en su capa de valencia."
+            },
+            {
+                q: "V/F: Las uniones iónicas se producen exclusivamente por la unión de dos no metales.",
+                math: "",
+                options: [
+                    { txt: "Verdadero", correct: false },
+                    { txt: "Falso", correct: true }
+                ],
+                feedback: "Falso. Las uniones iónicas se dan entre un Metal (que cede electrones) y un No Metal (que recibe electrones)."
+            },
+            {
+                q: "V/F: En una unión covalente doble, los átomos involucrados están compartiendo un total de 4 electrones.",
+                math: "",
+                options: [
+                    { txt: "Falso, comparten 2.", correct: false },
+                    { txt: "Verdadero", correct: true }
+                ],
+                feedback: "Verdadero. Cada enlace (línea) representa un par (2 electrones). Si es doble, son 2 pares = 4 electrones compartidos."
+            }
+        ],
+        bloque4: [
+            {
+                q: "Identifica el tipo de unión en la estructura de Lewis del Cloro gaseoso (Cl2):",
+                math: "",
+                options: [
+                    { txt: "Enlace Iónico (Transferencia total)", correct: false },
+                    { txt: "Enlace Covalente simple (Comparten 1 par)", correct: true },
+                    { txt: "Enlace Metálico", correct: false }
+                ],
+                feedback: "Al ser dos no metales iguales, comparten electrones equitativamente. Ambos están en el grupo 17, por lo que comparten solo 1 par para llegar a 8."
+            },
+            {
+                q: "Identifica cómo se dibujaría la estructura del Cloruro de Sodio (NaCl):",
+                math: "",
+                options: [
+                    { txt: "Con líneas uniendo el Na y el Cl.", correct: false },
+                    { txt: "El Na cede su electrón al Cl, formando iones [Na]+ y [Cl]-", correct: true },
+                    { txt: "Se comparten 2 pares de electrones.", correct: false }
+                ],
+                feedback: "Es un enlace iónico. NO se dibujan líneas. Se usan corchetes para indicar la transferencia y las cargas resultantes (+ y -)."
+            },
+            {
+                q: "En la molécula de Dióxido de Carbono (CO2), el Carbono central necesita llegar a 8 electrones. ¿Cómo se enlaza con los oxígenos?",
+                math: "",
+                options: [
+                    { txt: "Mediante dos enlaces covalentes simples.", correct: false },
+                    { txt: "Mediante enlaces iónicos.", correct: false },
+                    { txt: "Mediante dos enlaces covalentes dobles (O=C=O).", correct: true }
+                ],
+                feedback: "El Carbono (grupo 14) necesita 4 electrones. Cada Oxígeno (grupo 16) necesita 2. Al formar dobles enlaces, todos completan su octeto."
+            }
+        ],
+        bloque5: [
+            {
+                q: "La combinación de un METAL con OXÍGENO forma un...",
+                math: "",
+                options: [
+                    { txt: "Óxido Básico", correct: true },
+                    { txt: "Óxido Ácido (Anhídrido)", correct: false },
+                    { txt: "Hidróxido", correct: false }
+                ],
+                feedback: "Ese es el primer paso de la 'Línea de ensamblaje metálica'. Ejemplo: Hierro + Oxígeno = Óxido Férrico."
+            },
+            {
+                q: "La combinación de un NO METAL con OXÍGENO forma un...",
+                math: "",
+                options: [
+                    { txt: "Hidrácido", correct: false },
+                    { txt: "Óxido Ácido (Anhídrido)", correct: true },
+                    { txt: "Hidruro", correct: false }
+                ],
+                feedback: "Es el primer paso de la 'Línea no metálica'. Ejemplo: Carbono + Oxígeno = Anhídrido Carbónico."
+            },
+            {
+                q: "La unión de un Óxido Básico más Agua forma un...",
+                math: "",
+                options: [
+                    { txt: "Oxácido", correct: false },
+                    { txt: "Hidróxido (Base)", correct: true },
+                    { txt: "Sal binaria", correct: false }
+                ],
+                feedback: "El final de la ruta de los metales. Al mojar el óxido básico, se obtiene un compuesto alcalino con el grupo (OH)."
+            }
+        ],
+        bloque6: [
+            {
+                q: "Nivel Fácil: Decodifica el nombre de la fórmula CaO.",
+                math: "\\[CaO\\]",
+                options: [
+                    { txt: "Óxido de calcio", correct: true },
+                    { txt: "Hidruro cálcico", correct: false },
+                    { txt: "Dióxido de carbono", correct: false }
+                ],
+                feedback: "El Calcio tiene valencia única (+2). Se nombra directamente sin sufijos."
+            },
+            {
+                q: "Nivel Medio: Decodifica la fórmula Fe(OH)2 sabiendo que el Hierro tiene valencias 2 y 3.",
+                math: "\\[Fe(OH)_2\\]",
+                options: [
+                    { txt: "Hidróxido férrico", correct: false },
+                    { txt: "Óxido ferroso", correct: false },
+                    { txt: "Hidróxido ferroso", correct: true }
+                ],
+                feedback: "El subíndice 2 fuera del paréntesis indica que usó su valencia menor (+2), por lo que termina en -oso."
+            },
+            {
+                q: "Jefe Final: Es un ácido con Oxígeno. El Bromo usa su valencia MÁXIMA (+7). Decodifica:",
+                math: "\\[HBrO_4\\]",
+                options: [
+                    { txt: "Ácido bromhídrico", correct: false },
+                    { txt: "Ácido perbrómico", correct: true },
+                    { txt: "Anhídrido brómico", correct: false }
+                ],
+                feedback: "La valencia +7 de los halógenos lleva el prefijo Per- y el sufijo -ico. (Per-bróm-ico)."
+            }
+        ],
+        bloque7: [
+            {
+                q: "Construye la fórmula: Sulfuro de Hidrógeno (Gas puro, sin agua).",
+                math: "",
+                options: [
+                    { txt: "H₂SO₄", correct: false },
+                    { txt: "H₂S", correct: true },
+                    { txt: "HS₂", correct: false }
+                ],
+                feedback: "Terminación -uro significa sin oxígeno (Hidruro no metálico). El Azufre usa su valencia negativa (-2) y el Hidrógeno (+1)."
+            },
+            {
+                q: "Construye la fórmula: Óxido Auroso (Valencias Au: 1 y 3).",
+                math: "",
+                options: [
+                    { txt: "AuO", correct: false },
+                    { txt: "Au₂O", correct: true },
+                    { txt: "Au₂O₃", correct: false }
+                ],
+                feedback: "Terminación -oso implica valencia menor (+1). Al cruzar con el Oxígeno (-2) queda Au₂O."
+            },
+            {
+                q: "Jefe Final: Construye la fórmula del Ácido fosfórico (¡Cuidado con la excepción!).",
+                math: "",
+                options: [
+                    { txt: "H₂PO₃", correct: false },
+                    { txt: "HPO₄", correct: false },
+                    { txt: "H₃PO₄", correct: true }
+                ],
+                feedback: "El Fósforo (P) es la gran excepción. Aunque su valencia (+5) es impar, SIEMPRE exige 3 hidrógenos de base para estabilizarse."
+            }
+        ],
+        bloque8: [
+            {
+                q: "Balancea la ecuación usando coeficientes grandes: H₂ + Cl₂ → HCl",
+                math: "\\[H_2 + Cl_2 \\rightarrow HCl\\]",
+                options: [
+                    { txt: "2 H₂ + 2 Cl₂ → 2 HCl", correct: false },
+                    { txt: "H₂ + Cl₂ → 2 HCl", correct: true },
+                    { txt: "H₂ + Cl₂ → H₂Cl₂", correct: false }
+                ],
+                feedback: "Colocando un 2 delante del HCl logras tener 2 Hidrógenos y 2 Cloros a ambos lados de la balanza."
+            },
+            {
+                q: "Balancea la ecuación: N₂ + H₂ → NH₃",
+                math: "\\[N_2 + H_2 \\rightarrow NH_3\\]",
+                options: [
+                    { txt: "N₂ + 3 H₂ → 2 NH₃", correct: true },
+                    { txt: "2 N₂ + H₂ → 2 NH₃", correct: false },
+                    { txt: "N₂ + H₂ → N₂H₃", correct: false }
+                ],
+                feedback: "1(N₂) + 3(H₂) = 2(NH₃). Entran 2 Nitrógenos y 6 Hidrógenos, salen exactamente los mismos."
+            },
+            {
+                q: "Jefe Final (Lavoisier): Balancea y selecciona los coeficientes correctos para Ca(OH)₂ + HCl → CaCl₂ + H₂O",
+                math: "\\[Ca(OH)_2 + HCl \\rightarrow CaCl_2 + H_2O\\]",
+                options: [
+                    { txt: "1, 2, 1, 2", correct: true },
+                    { txt: "1, 1, 1, 1", correct: false },
+                    { txt: "2, 1, 2, 1", correct: false }
+                ],
+                feedback: "El orden correcto de coeficientes es 1 Ca(OH)₂ + 2 HCl -> 1 CaCl₂ + 2 H₂O. ¡La balanza es perfecta!"
+            }
+        ]
+    };
+
+    let currentPhase = '';
+    let currentQIndex = 0;
+    let score = 0;
+
+    function toggleTheme() { document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+    // --- 3. FLUJO DEL PROGRAMA ---
+    function bootSystem() {
+        document.getElementById('init-overlay').style.display = 'none';
+        initAudio();
+        
+        const bootTextType = `> INICIALIZANDO KERNEL SCADA... [OK]\n> VERIFICANDO RELES... [OK]\n> SINCRONISMO... [ESTABLE: 50.00 Hz]\n> ASISTENTE IA EVA... [ONLINE]\n\n>> USUARIO: THIAGO\n> ESTADO: AGUARDANDO SELECCIÓN DE MÓDULO...`;
+        const bootTextSpeak = "Hola Thiago. Soy Eva, tu asistente virtual. He iniciado el sistema y los módulos de tu examen de simulacro están estables. Por favor, selecciona el bloque que deseas evaluar hoy.";
+        
+        eveSpeakAndType(bootTextSpeak, bootTextType, document.getElementById('menu-title'), () => {
+            document.getElementById('menu-options').classList.remove('hidden');
+        });
+    }
+
+    function startModule(moduleName) {
+        playSound('boot');
+        currentPhase = moduleName;
+        currentQIndex = 0; score = 0;
+        
+        document.getElementById('screen-menu').classList.add('hidden');
+        document.getElementById('screen-result').classList.add('hidden');
+        document.getElementById('screen-quiz').classList.remove('hidden');
+        
+        let speechMsg = "Cargando el bloque seleccionado. Concéntrate, lee atentamente y elige la respuesta correcta en el panel principal.";
+        let typeMsg = `> INICIANDO MÓDULO: ${moduleName.toUpperCase()}...\n> CARGANDO PREGUNTAS DE SIMULACRO...\n> PREPARANDO INTERFAZ TÁCTIL...`;
+
+        eveSpeakAndType(speechMsg, typeMsg, document.getElementById('question-text'), () => {
+            loadQuestion();
+        });
+    }
+
+    function loadQuestion() {
+        let qList = quizData[currentPhase];
+        if (currentQIndex >= qList.length) { endModule(); return; }
+
+        let qData = qList[currentQIndex];
+        
+        document.getElementById('current-q').innerText = currentQIndex + 1;
+        document.getElementById('total-q').innerText = qList.length;
+        document.getElementById('progress-bar').innerText = "ESTADO: [ ESPERANDO INPUT ]";
+        document.getElementById('progress-bar').className = "amber-text";
+        
+        document.getElementById('options-container').innerHTML = "";
+        document.getElementById('math-container').innerHTML = "";
+        document.getElementById('feedback-area').style.display = "none";
+        document.getElementById('btn-next').style.display = "none";
+
+        typeTextSilent(document.getElementById('question-text'), "> " + qData.q, 25, () => {
+            if(qData.math !== "") document.getElementById('math-container').innerHTML = qData.math;
+            const letters = ["A", "B", "C"]; let optionsHtml = "";
+            qData.options.forEach((opt, idx) => {
+                let correctClass = opt.correct ? "is-correct-option" : "";
+                optionsHtml += `<button class="option-btn ${correctClass}" onclick="checkAnswer(this, ${opt.correct})">
+                                    <span class="option-letter">[${letters[idx]}]</span>
+                                    <span>${opt.txt}</span>
+                                </button>`;
+            });
+            document.getElementById('options-container').innerHTML = optionsHtml;
+            MathJax.typesetPromise();
+        });
+    }
+
+    function checkAnswer(btn, isCorrect) {
+        if (isTyping || btn.classList.contains("disabled")) return;
+        document.querySelectorAll(".option-btn").forEach(b => b.classList.add("disabled"));
+
+        const feedback = quizData[currentPhase][currentQIndex].feedback;
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackText = document.getElementById('feedback-text');
+        const progBar = document.getElementById('progress-bar');
+        const eveContainer = document.getElementById('eve-container');
+
+        eveContainer.classList.remove('state-correct', 'state-wrong');
+        void eveContainer.offsetWidth; 
+
+        if (isCorrect) {
+            playSound('correct'); 
+            btn.classList.add("correct");
+            
+            eveContainer.classList.add('state-correct');
+            setTimeout(() => eveContainer.classList.remove('state-correct'), 1500);
+
+            feedbackTitle.innerText = "[ VALIDACIÓN EXITOSA ]"; feedbackTitle.style.color = "var(--accent-green)";
+            feedbackArea.style.borderColor = "var(--accent-green)"; feedbackArea.style.borderLeftColor = "var(--accent-green)";
+            progBar.innerText = "ESTADO: [ SINCRONIZADO ]"; progBar.style.color = "var(--accent-green)";
+            score++;
+        } else {
+            playSound('wrong'); 
+            btn.classList.add("wrong");
+            const correctBtn = document.querySelector(".is-correct-option");
+            if(correctBtn) correctBtn.classList.add("correct");
+
+            eveContainer.classList.add('state-wrong');
+            setTimeout(() => eveContainer.classList.remove('state-wrong'), 1500);
+
+            feedbackTitle.innerText = "[ ERROR DEL SISTEMA ]"; feedbackTitle.style.color = "var(--accent-crimson)";
+            feedbackArea.style.borderColor = "var(--accent-crimson)"; feedbackArea.style.borderLeftColor = "var(--accent-crimson)";
+            progBar.innerText = "ESTADO: [ FALLA CRÍTICA ]"; progBar.style.color = "var(--accent-crimson)";
+
+            const panel = document.getElementById('terminal-container');
+            panel.style.boxShadow = "0 0 40px rgba(255, 23, 68, 0.6)";
+            setTimeout(() => panel.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)", 200);
+        }
+
+        feedbackText.innerHTML = feedback;
+        feedbackArea.style.display = "block";
+        document.getElementById('btn-next').style.display = "block";
+        MathJax.typesetPromise();
+    }
+
+    function nextQuestion() { currentQIndex++; loadQuestion(); }
+
+    function endModule() {
+        document.getElementById('screen-quiz').classList.add('hidden');
+        document.getElementById('screen-result').classList.remove('hidden');
+        
+        let totalQ = quizData[currentPhase].length;
+        let percentage = (score / totalQ);
+        let passed = percentage >= 0.5; 
+        
+        let typeMsg = `=======================================\n> MÓDULO TERMINADO : ${currentPhase.toUpperCase()}\n> ACIERTOS         : ${score} / ${totalQ}\n=======================================\n\n`;
+
+        let speechMsg = "";
+
+        if (passed) {
+            typeMsg += `[ STATUS: APROBADO ]\nExcelente trabajo Thiago. Continúa con el siguiente bloque.`;
+            document.getElementById('result-text').className = 'success-text';
+            speechMsg = `Módulo completado Thiago. Aprobaste con éxito, lograste ${score} aciertos. Muy buen trabajo entendiendo los principios fundamentales.`;
+        } else {
+            typeMsg += `[ STATUS: DESAPROBADO ]\nFalla en la validación. Revisa el manual de protocolos e intenta nuevamente.`;
+            document.getElementById('result-text').className = 'crimson-text';
+            speechMsg = `Módulo completado Thiago. Lamentablemente hubo fallas durante los cálculos. Es necesario que repases los apuntes del panel lateral e intentes de nuevo.`;
+        }
+            
+        eveSpeakAndType(speechMsg, typeMsg, document.getElementById('result-text'));
+    }
+
+    function returnToMenu() {
+        synth.cancel(); clearInterval(typeWriterInterval); playSound('boot');
+        document.getElementById('screen-quiz').classList.add('hidden');
+        document.getElementById('screen-result').classList.add('hidden');
+        document.getElementById('screen-menu').classList.remove('hidden');
+        
+        eveSpeakAndType("Sistema en espera. Selecciona tu siguiente bloque de estudio.", ">> USUARIO: THIAGO\n> ESTADO: AGUARDANDO SELECCIÓN...", document.getElementById('menu-title'));
+    }
+
+    let eggClicks = 0;
+    function triggerEasterEgg() {
+        eggClicks++;
+        if (eggClicks === 3) {
+            playSound('correct');
+            eveSpeakAndType("Mensaje clasificado. Éxitos en tu parcial Thiago, vas a rendir espectacular.", "ACCESO CLASIFICADO", document.getElementById('result-text'), () => {
+                 alert("¡Muchos éxitos en tu examen Thiago!\nVas a aprobar sin ningún problema, confía en lo que aprendiste.\n\nAtte: Tu tutor, Facundo.");
+            });
+            eggClicks = 0;
+        }
+        setTimeout(() => { if(eggClicks > 0 && eggClicks < 3) eggClicks = 0; }, 1500);
+    }
+</script>
+</body>
+</html>

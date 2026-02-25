@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel SCADA & Asistente IA EVA</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root[data-theme="dark"] {
+            --bg-base: #050a10; --bg-panel: rgba(10, 25, 40, 0.85);
+            --text-main: #00e5ff; --text-dim: #4da8da;
+            --accent-amber: #ffb300; --accent-crimson: #ff1744; 
+            --accent-green: #00ff00;
+            --border-color: #008b8b; --text-white: #ffffff;
+            --grid-color: rgba(0, 229, 255, 0.05);
+        }
+
+        :root[data-theme="light"] {
+            --bg-base: #e0e6ed; --bg-panel: rgba(240, 245, 250, 0.95);
+            --text-main: #005f73; --text-dim: #0a9396;
+            --accent-amber: #ca6702; --accent-crimson: #ae2012; 
+            --accent-green: #10b981;
+            --border-color: #94d2bd; --text-white: #001219;
+            --grid-color: rgba(0, 95, 115, 0.05);
+        }
+
+        * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
+
+        body {
+            background-color: var(--bg-base); color: var(--text-main);
+            font-family: 'Consolas', 'Courier New', monospace;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            min-height: 100vh; line-height: 1.6; overflow-x: hidden;
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* OVERLAY DE INICIO */
+        #init-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #000000; z-index: 99999;
+            display: flex; justify-content: center; align-items: center; flex-direction: column; cursor: pointer;
+        }
+        .blinking-text {
+            color: var(--text-main); font-size: 1.5rem; font-weight: bold;
+            animation: blink 1.5s infinite; text-align: center;
+            padding: 20px; border: 2px dashed var(--text-main); box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+        }
+
+        .crt-off { animation: turn-off 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; pointer-events: none; background-color: #000 !important; }
+        @keyframes turn-off { 0% { transform: scale(1, 1); filter: brightness(1); } 60% { transform: scale(1, 0.005); filter: brightness(10); } 100% { transform: scale(0, 0.0001); filter: brightness(0); } }
+
+        .ai-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.05; font-size: 1.1rem; color: var(--text-dim); pointer-events: none; padding: 20px; line-height: 4; user-select: none; }
+
+        .top-controls { position: fixed; top: 15px; left: 20px; display: flex; gap: 10px; z-index: 200; }
+        .top-btn { background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main); padding: 5px 15px; font-size: 0.85rem; cursor: pointer; font-weight: bold; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+        .top-btn:hover { background: var(--text-main); color: var(--bg-base); }
+
+        .main-layout { display: flex; gap: 30px; max-width: 1200px; width: 100%; justify-content: center; align-items: flex-start; margin-top: 20px; margin-bottom: 10px; z-index: 10; position: relative; }
+
+        /* ====== DISEÑO DEL ROBOT EVA (SVG) ====== */
+        .assistant-panel {
+            width: 320px; flex-shrink: 0;
+            background: linear-gradient(180deg, rgba(0, 229, 255, 0.05) 0%, rgba(10, 25, 40, 0.8) 100%);
+            border: 1px solid var(--border-color); border-top: 4px solid var(--text-white);
+            padding: 20px; display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.1); position: sticky; top: 60px;
+            border-radius: 20px; z-index: 50;
+        }
+
+        #eve-container {
+            width: 200px; height: 250px;
+            animation: float 4s ease-in-out infinite;
+            filter: drop-shadow(0 15px 10px rgba(0,0,0,0.5));
+            transition: all 0.3s;
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
+
+        /* --- Ojos de EVA --- */
+        .eve-eyes { fill: #00e5ff; transition: fill 0.3s, filter 0.3s; filter: drop-shadow(0 0 8px #00e5ff); }
+        
+        /* Animación Hablando */
+        .speaking .eve-eyes {
+            fill: #ffffff; filter: drop-shadow(0 0 15px #00e5ff);
+            animation: speak-eyes 0.3s infinite alternate;
+        }
+        @keyframes speak-eyes { 0% { transform: scaleY(1); } 100% { transform: scaleY(0.6) translateY(10px); } }
+
+        /* --- ESTADOS DE RESPUESTA (MOVIMIENTO DE CABEZA Y OJOS) --- */
+        #eve-head { transform-origin: 100px 90px; }
+
+        /* Acierto (Asiente / Verde) */
+        .state-correct .eve-eyes { fill: var(--accent-green) !important; filter: drop-shadow(0 0 20px var(--accent-green)) !important; }
+        .state-correct #eve-head { animation: nod-head 0.6s ease-in-out 2; }
+        
+        @keyframes nod-head {
+            0%, 100% { transform: translateY(0) rotateX(0deg); }
+            50% { transform: translateY(12px) rotate(3deg); }
+        }
+
+        /* Fallo (Niega / Rojo) */
+        .state-wrong .eve-eyes { fill: var(--accent-crimson) !important; filter: drop-shadow(0 0 20px var(--accent-crimson)) !important; }
+        .state-wrong #eve-head { animation: shake-head 0.4s ease-in-out 2; }
+
+        @keyframes shake-head {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-10px) rotate(-8deg); }
+            75% { transform: translateX(10px) rotate(8deg); }
+        }
+
+        .assistant-status { margin-top: 15px; font-weight: bold; font-size: 0.9rem; color: var(--text-dim); width: 100%; text-align: center; border-top: 1px dashed var(--border-color); padding-top: 10px; letter-spacing: 1px; }
+        .assistant-status.speaking { color: var(--text-white); text-shadow: 0 0 8px var(--text-main); }
+
+        /* ====== TERMINAL SCADA ====== */
+        #terminal-container { width: 100%; flex-grow: 1; display: flex; flex-direction: column; gap: 15px; }
+        .scada-box { background: var(--bg-panel); border-top: 4px solid var(--text-main); border-bottom: 4px solid var(--text-main); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 30px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        /* FIRMA DEL CREADOR (ABAJO) */
+        .creator-signature {
+            text-align: center; font-weight: bold; font-size: 0.85rem; color: var(--accent-amber);
+            padding: 15px; border: 1px dashed var(--accent-amber); background: rgba(255, 179, 0, 0.05);
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .creator-contact { font-size: 0.9rem; color: var(--text-white); display: block; margin-top: 5px; }
+
+        .greeble { position: absolute; font-size: 0.65rem; color: var(--text-dim); font-weight: bold; letter-spacing: 1px; }
+        .g-top-left { top: 5px; left: 10px; } .g-top-right { top: 5px; right: 10px; cursor: crosshair; } .g-bottom-right { bottom: 5px; right: 10px; }
+
+        h1, h2, h3 { color: var(--text-white); margin-top: 0; }
+        .amber-text { color: var(--accent-amber); } .crimson-text { color: var(--accent-crimson); } .success-text { color: var(--accent-green); }
+
+        #sidebar { position: fixed; right: -100%; top: 60px; width: 350px; height: calc(100% - 80px); background: var(--bg-panel); border: 1px solid var(--border-color); border-right: none; padding: 20px; z-index: 150; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.3); border-left: 3px solid var(--accent-amber); }
+        #sidebar.open { right: 0; }
+
+        .btn-industrial { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 12px 15px; font-family: inherit; font-size: 1rem; cursor: pointer; width: 100%; text-align: left; margin-bottom: 10px; border-left: 4px solid var(--text-main); transition: all 0.2s; }
+        .btn-industrial:hover:not(:disabled) { background: rgba(0, 229, 255, 0.1); padding-left: 20px; }
+        .btn-abort { border-color: var(--accent-crimson); color: var(--accent-crimson); border-left-color: var(--accent-crimson); text-align: center; margin-top: 20px; }
+        .btn-abort:hover { background: rgba(255, 23, 68, 0.1); color: var(--text-white); }
+
+        .hud { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px; font-size: 0.9rem; font-weight: bold; }
+
+        .options-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .option-btn { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--border-color); padding: 15px; cursor: pointer; background: transparent; color: var(--text-white); font-family: inherit; text-align: left; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); transition: all 0.2s; word-wrap: break-word; }
+        .option-btn.disabled { opacity: 0.5; pointer-events: none; }
+        .option-btn.correct { background: rgba(0, 255, 0, 0.15) !important; border-color: var(--accent-green) !important; color: var(--accent-green) !important; opacity: 1 !important; }
+        .option-btn.wrong { background: rgba(255, 23, 68, 0.1) !important; border-color: var(--accent-crimson) !important; color: var(--accent-crimson) !important; opacity: 1 !important; text-decoration: line-through; }
+        .option-letter { font-weight: bold; color: var(--text-main); padding-right: 10px; min-width: 30px; }
+
+        #feedback-area { margin-top: 20px; padding: 20px; border: 1px solid var(--accent-amber); display: none; background: rgba(255, 179, 0, 0.05); color: var(--text-white); border-left: 5px solid var(--accent-amber); animation: fadeIn 0.3s; }
+        #btn-next { display: none; margin-top: 20px; text-align: center; font-weight: bold; border-style: dashed; }
+        .cursor { display: inline-block; width: 10px; height: 1.2em; background-color: var(--text-main); vertical-align: bottom; animation: blink 1s infinite; }
+        .hidden { display: none !important; }
+        
+        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ADAPTACIÓN MÓVIL (100% Responsiva) */
+        @media (max-width: 900px) {
+            body { padding: 10px; }
+            .main-layout { flex-direction: column; align-items: center; margin-top: 40px; }
+            .assistant-panel { 
+                width: 100%; top: 45px; position: sticky; z-index: 100;
+                flex-direction: row; justify-content: space-between; padding: 10px 20px; 
+                margin-bottom: 10px; background: var(--bg-panel); border-radius: 10px;
+                backdrop-filter: blur(10px); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            }
+            #eve-container { width: 60px; height: 75px; animation: none; filter: none; }
+            .assistant-status { margin-top: 0; border-top: none; border-left: 1px dashed var(--border-color); padding-left: 15px; display: flex; align-items: center; font-size: 0.8rem; width: auto; flex-grow: 1;}
+            
+            #terminal-container { padding: 0; margin-top: 5px; width: 100%; }
+            .scada-box { padding: 20px 15px; }
+            .top-controls { background: var(--bg-base); width: 100%; top: 0; left: 0; padding: 10px; justify-content: space-around; border-bottom: 1px solid var(--border-color); }
+            
+            #sidebar { width: 90%; right: -100%; top: 50px; height: calc(100% - 50px);}
+            .hud { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .math-container { font-size: 0.9rem; overflow-x: auto; }
+            .creator-signature { font-size: 0.75rem; margin-top: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="init-overlay" onclick="bootSystem()">
+        <div class="blinking-text">[ INICIAR SISTEMA IA Y SCADA ]</div>
+        <p style="color:var(--text-dim); margin-top:20px; text-align: center;">*Autorización de Hardware Requerida*</p>
+    </div>
+
+    <div class="ai-bg">
+        \[ 4Fe + 3O_2 \rightarrow 2Fe_2O_3 \quad | \quad \text{Masa}_{reactivos} = \text{Masa}_{productos} \]
+        <br><br><br>
+        \[ H^+ + OH^- \rightleftharpoons H_2O \quad | \quad N_2 + 3H_2 \rightleftharpoons 2NH_3 \]
+    </div>
+
+    <div class="top-controls">
+        <button class="top-btn" onclick="toggleTheme()">[ TEMA ]</button>
+        <button class="top-btn" onclick="toggleSidebar()" style="color: var(--accent-amber); border-color: var(--accent-amber);">[ DB_APUNTES ]</button>
+    </div>
+
+    <div id="sidebar">
+        <button onclick="toggleSidebar()" style="background:none; color:var(--accent-crimson); border:none; width:100%; text-align:right; cursor:pointer; font-weight:bold;">[ CERRAR X ]</button>
+        <h3 class="amber-text">[ MANUAL DE PROTOCOLOS ]</h3>
+        <p><b>> Regla de Oro (Nomenclatura):</b> Electroneutralidad. La suma de cargas positivas y negativas debe dar exactamente cero.</p>
+        <p><b>> Ley de Lavoisier:</b> La materia no se crea ni se destruye, solo se transforma. La masa de los reactivos DEBE ser igual a la masa de los productos.</p>
+        <p><b>> El Balanceo:</b> Si entran 2 átomos de Hidrógeno, DEBEN salir 2 átomos de Hidrógeno. Agrega coeficientes grandes adelante de las moléculas, nunca alteres los subíndices.</p>
+    </div>
+
+    <div class="main-layout">
+        
+        <div class="assistant-panel" id="assistant-box">
+            <div id="eve-container">
+                <svg viewBox="0 0 200 250" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="bodyGlow" cx="50%" cy="50%" r="50%">
+                            <stop offset="80%" stop-color="#ffffff" />
+                            <stop offset="100%" stop-color="#cccccc" />
+                        </radialGradient>
+                    </defs>
+                    <path d="M 40,110 C 40,240 160,240 160,110 C 160,50 40,50 40,110 Z" fill="url(#bodyGlow)"/>
+                    
+                    <g id="eve-head">
+                        <path d="M 45,65 C 45,10 155,10 155,65 C 155,100 45,100 45,65 Z" fill="#ffffff" />
+                        <path d="M 52,62 C 52,25 148,25 148,62 C 148,90 52,90 52,62 Z" fill="#080c11" />
+                        <g class="eve-eyes">
+                            <path d="M 68,58 Q 80,48 92,58 Q 80,62 68,58 Z" />
+                            <path d="M 108,58 Q 120,48 132,58 Q 120,62 108,58 Z" />
+                        </g>
+                    </g>
+                    
+                    <path d="M 30,105 C 15,145 25,185 35,185 C 42,185 45,145 42,105 Z" fill="#ffffff" />
+                    <path d="M 170,105 C 185,145 175,185 165,185 C 158,185 155,145 158,105 Z" fill="#ffffff" />
+                </svg>
+            </div>
+            <div class="assistant-status" id="eve-status">SISTEMA APAGADO</div>
+        </div>
+
+        <div id="terminal-container">
+            <div class="scada-box">
+                <div class="greeble g-top-left">[SYS_RDY]</div>
+                <div class="greeble g-top-right" onclick="triggerEasterEgg()" title="Versión">SCADA_V.15</div>
+                <div class="greeble g-bottom-right">[MOD-QUIMICA-GENERAL]</div>
+                
+                <div id="screen-menu">
+                    <h3 id="menu-title" style="color: var(--text-main); font-weight: normal; font-size: 1rem;"></h3>
+                    <div id="menu-options" class="hidden">
+                        <button class="btn-industrial" onclick="startModule('modulo1')">>> [MÓDULO 1] DECODIFICACIÓN (Fórmula -> Nombre)</button>
+                        <button class="btn-industrial" onclick="startModule('modulo2')">>> [MÓDULO 2] INGENIERÍA INVERSA (Nombre -> Fórmula)</button>
+                        <button class="btn-industrial" onclick="startModule('modulo3')" style="border-color: var(--accent-amber); color: var(--accent-amber); border-left-color: var(--accent-amber);">>> [MÓDULO 3] LEY DE LAVOISIER (Conservación de Masa)</button>
+                    </div>
+                </div>
+
+                <div id="screen-quiz" class="hidden">
+                    <div class="hud">
+                        <span>MÓDULO ACTIVO | NODO: <span id="current-q">1</span>/<span id="total-q"></span></span>
+                        <span id="progress-bar" class="amber-text">ESTADO: [ ESTABLE ]</span>
+                    </div>
+                    
+                    <h3 id="question-text" style="min-height: 40px;"></h3>
+                    <div id="math-container" class="math-container" style="margin-bottom: 20px; font-weight: bold; color: var(--text-white); font-size: 1.5rem;"></div>
+                    <div class="options-grid" id="options-container"></div>
+
+                    <div id="feedback-area">
+                        <h3 id="feedback-title" style="margin-top:0;"></h3>
+                        <p id="feedback-text" style="margin:0; font-family: 'Consolas', monospace;"></p>
+                    </div>
+
+                    <button class="btn-industrial" id="btn-next" onclick="nextQuestion()">>> AVANZAR AL SIGUIENTE NODO</button>
+                    <button class="btn-industrial btn-abort" onclick="returnToMenu()">[X] ABORTAR Y VOLVER AL MENÚ</button>
+                </div>
+
+                <div id="screen-result" class="hidden">
+                    <h1 style="color:var(--text-white)">> DIAGNÓSTICO DEL MÓDULO</h1>
+                    <p id="result-text" style="font-size: 1.1rem; line-height: 2; font-weight: bold;"></p>
+                    <br>
+                    <button class="btn-industrial" onclick="returnToMenu()" style="text-align:center; margin-top: 10px; border-color:var(--text-main);">>> VOLVER AL MENÚ PRINCIPAL</button>
+                </div>
+            </div>
+
+            <div class="creator-signature">
+                MÓDULO DE EVALUACIÓN CREADO Y DISEÑADO POR: FACUNDO BARROJO
+                <span class="creator-contact">LÍNEA DE SOPORTE Y TUTORÍAS: +54 9 381 5690147</span>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    // --- 1. MOTOR DE AUDIO ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+    let synth = window.speechSynthesis;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'tick') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(800, now);
+            gain.gain.setValueAtTime(0.015, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+            osc.start(); osc.stop(now + 0.02);
+        } else if (type === 'correct') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(800, now);
+            osc.frequency.linearRampToValueAtTime(1400, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+            osc.start(); osc.stop(now + 0.3);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(); osc.stop(now + 0.3);
+        } else if (type === 'boot') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(400, now);
+            osc.frequency.linearRampToValueAtTime(800, now + 1);
+            gain.gain.setValueAtTime(0.05, now); gain.gain.linearRampToValueAtTime(0, now + 1);
+            osc.start(); osc.stop(now + 1);
+        }
+    }
+
+    let isTyping = false;
+    let typeWriterInterval = null;
+
+    // --- 2. VOZ FEMENINA Y SINCRONIZACIÓN ---
+    function eveSpeakAndType(textToSpeak, textToType, htmlElement, callback) {
+        if(synth.speaking) synth.cancel();
+        clearInterval(typeWriterInterval);
+        
+        let utterance = new SpeechSynthesisUtterance(textToSpeak);
+        let voices = synth.getVoices();
+        
+        let voice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Female') || v.name.includes('Monica') || v.name.includes('Paulina') || v.name.includes('Sabina') || v.name.includes('Elena') || v.name.includes('Google')));
+        if(!voice) voice = voices.find(v => v.lang.startsWith('es')); 
+        
+        if(voice) utterance.voice = voice;
+        utterance.pitch = 1.3; 
+        utterance.rate = 1.1; 
+        
+        const robotImg = document.getElementById('eve-container');
+        const robotStatus = document.getElementById('eve-status');
+        
+        let estimatedTimeMs = (textToSpeak.length / 14) * 1000 / utterance.rate;
+        let typingSpeed = estimatedTimeMs / textToType.length;
+        if(typingSpeed < 20) typingSpeed = 20; 
+        if(typingSpeed > 70) typingSpeed = 70;
+
+        isTyping = true;
+        let charIndex = 0;
+        let currentString = "";
+        
+        typeWriterInterval = setInterval(() => {
+            if (charIndex < textToType.length) {
+                let char = textToType.charAt(charIndex);
+                if (char === '\n') currentString += "<br>"; else currentString += char;
+                htmlElement.innerHTML = currentString + '<span class="cursor"></span>';
+                if (charIndex % 3 === 0 && char !== ' ' && char !== '\n') playSound('tick');
+                charIndex++;
+            } else {
+                clearInterval(typeWriterInterval);
+            }
+        }, typingSpeed);
+
+        utterance.onstart = function() {
+            robotImg.classList.add('speaking');
+            robotStatus.innerText = "[ COMUNICANDO... ]";
+            robotStatus.classList.add('speaking');
+        };
+        
+        utterance.onend = function() {
+            clearInterval(typeWriterInterval);
+            htmlElement.innerHTML = textToType.replace(/\n/g, "<br>");
+            isTyping = false;
+            
+            robotImg.classList.remove('speaking');
+            robotStatus.innerText = "[ EN ESPERA ]";
+            robotStatus.classList.remove('speaking');
+            if(callback) callback();
+        };
+
+        synth.speak(utterance);
+    }
+
+    function typeTextSilent(element, text, speed, callback) {
+        clearInterval(typeWriterInterval);
+        isTyping = true;
+        let i = 0; let currentString = "";
+        typeWriterInterval = setInterval(() => {
+            if (i < text.length) {
+                let char = text.charAt(i);
+                if (char === '\n') currentString += "<br>"; else currentString += char;
+                element.innerHTML = currentString + '<span class="cursor"></span>';
+                if (i % 2 === 0 && char !== ' ') playSound('tick');
+                i++;
+            } else {
+                clearInterval(typeWriterInterval);
+                element.innerHTML = currentString; 
+                isTyping = false;
+                if(callback) callback();
+            }
+        }, speed);
+    }
+
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = () => { synth.getVoices(); };
+    }
+
+    // --- BASE DE DATOS QUÍMICA ---
+    const quizData = {
+        modulo1: [
+            {
+                q: "Nivel 1: Escribe el nombre del compuesto principal. (Pista: Metal del Grupo 1 con oxígeno).",
+                math: "\\[K_2O\\]",
+                options: [
+                    { txt: "Óxido de potasio", correct: true },
+                    { txt: "Peróxido de potasio", correct: false },
+                    { txt: "Anhídrido potásico", correct: false }
+                ],
+                feedback: "El potasio tiene una única valencia (+1), por lo que se nombra directamente como óxido del metal sin necesidad de sufijos especiales."
+            },
+            {
+                q: "Nivel 1: Identifica el nombre de la siguiente base. (Pista: El Aluminio solo tiene valencia 3).",
+                math: "\\[Al(OH)_3\\]",
+                options: [
+                    { txt: "Óxido de aluminio", correct: false },
+                    { txt: "Hidróxido de aluminio", correct: true },
+                    { txt: "Ácido alumínico", correct: false }
+                ],
+                feedback: "La presencia del grupo (OH) indica que es un hidróxido. Al tener el aluminio una valencia fija, su nombre es directo."
+            },
+            {
+                q: "Nivel 2: El cobre (Cu) tiene valencias 1 y 2. ¿Cuál está usando aquí según el cruce de valencias?",
+                math: "\\[Cu(OH)_2\\]",
+                options: [
+                    { txt: "Hidróxido cuproso", correct: false },
+                    { txt: "Óxido cúprico", correct: false },
+                    { txt: "Hidróxido cúprico", correct: true }
+                ],
+                feedback: "El subíndice 2 fuera del paréntesis indica que el cobre cruzó su valencia mayor (+2), por lo que le corresponde el sufijo -ico."
+            },
+            {
+                q: "Nivel 2: El hierro (Fe) tiene valencias 2 y 3. Cruza los números hacia arriba para descubrirlo.",
+                math: "\\[Fe_2O_3\\]",
+                options: [
+                    { txt: "Óxido ferroso", correct: false },
+                    { txt: "Óxido férrico", correct: true },
+                    { txt: "Anhídrido férrico", correct: false }
+                ],
+                feedback: "Al cruzar los subíndices a la inversa, vemos que el hierro actúa con su valencia mayor (+3), tomando la terminación -ico."
+            },
+            {
+                q: "Nivel 2: ¡Cuidado con la simplificación! El Níquel tiene valencias 2 y 3.",
+                math: "\\[NiO\\]",
+                options: [
+                    { txt: "Óxido niquélico", correct: false },
+                    { txt: "Monóxido de diníquel", correct: false },
+                    { txt: "Óxido niqueloso", correct: true }
+                ],
+                feedback: "Originalmente era Ni_2O_2. Al dividirse por 2 (simplificación), obtenemos NiO. Esto prueba que usó la valencia menor (+2)."
+            },
+            {
+                q: "Nivel 3: Es un no metal con oxígeno. El Cloro tiene cuatro valencias: 1, 3, 5, 7.",
+                math: "\\[Cl_2O_5\\]",
+                options: [
+                    { txt: "Anhídrido perclórico", correct: false },
+                    { txt: "Anhídrido clórico", correct: true },
+                    { txt: "Anhídrido cloroso", correct: false }
+                ],
+                feedback: "El cloro está usando la valencia +5 (la tercera en orden ascendente), a la cual le corresponde únicamente la terminación -ico."
+            },
+            {
+                q: "Nivel 3: Ácido con oxígeno. Calcula la valencia del Cloro asumiendo H=+1 y O=-2.",
+                math: "\\[HClO\\]",
+                options: [
+                    { txt: "Ácido clórico", correct: false },
+                    { txt: "Ácido perclórico", correct: false },
+                    { txt: "Ácido hipocloroso", correct: true }
+                ],
+                feedback: "Para que (+1) + Cl + (-2) = 0, el cloro debe valer +1. Al ser la menor de cuatro valencias, lleva el prefijo hipo- y sufijo -oso."
+            },
+            {
+                q: "Nivel 4: No tiene oxígeno. La letra '(g)' significa estado gaseoso (no acuoso).",
+                math: "\\[H_2S_{(g)}\\]",
+                options: [
+                    { txt: "Ácido sulfhídrico", correct: false },
+                    { txt: "Sulfuro de hidrógeno", correct: true },
+                    { txt: "Hidruro de azufre", correct: false }
+                ],
+                feedback: "Al estar en estado gaseoso (puro), se nombra como una sal binaria estándar con la terminación -uro."
+            },
+            {
+                q: "Nivel 4: La abreviatura '(ac)' significa acuoso. F es el símbolo químico del Flúor.",
+                math: "\\[HF_{(ac)}\\]",
+                options: [
+                    { txt: "Fluoruro de hidrógeno", correct: false },
+                    { txt: "Ácido fluorhídrico", correct: true },
+                    { txt: "Ácido fluórico", correct: false }
+                ],
+                feedback: "Cuando un compuesto binario de hidrógeno y un no metal se disuelve en agua, adquiere propiedades ácidas y termina en -hídrico."
+            },
+            {
+                q: "Nivel 5: El Azufre (S) usa valencias 2, 4, 6. Aplica la matemática de electroneutralidad.",
+                math: "\\[H_2SO_3\\]",
+                options: [
+                    { txt: "Ácido sulfúrico", correct: false },
+                    { txt: "Ácido sulfuroso", correct: true },
+                    { txt: "Ácido hiposulfuroso", correct: false }
+                ],
+                feedback: "2(+1) + S + 3(-2) = 0. Resolviendo la ecuación, S debe valer +4. Al ser la valencia intermedia, adopta el sufijo -oso."
+            }
+        ],
+        modulo2: [
+            {
+                q: "Identifica la fórmula correcta para: Óxido de calcio",
+                math: "",
+                options: [
+                    { txt: "Ca₂O", correct: false },
+                    { txt: "CaO", correct: true },
+                    { txt: "CaO₂", correct: false }
+                ],
+                feedback: "El Calcio tiene valencia +2 y el Oxígeno -2. Se cruzan y queda Ca₂O₂, que al simplificarse resulta en CaO."
+            },
+            {
+                q: "Identifica la fórmula correcta para: Hidróxido de sodio",
+                math: "",
+                options: [
+                    { txt: "Na(OH)₂", correct: false },
+                    { txt: "NaOH", correct: true },
+                    { txt: "Na₂OH", correct: false }
+                ],
+                feedback: "El Sodio tiene valencia +1 y el grupo (OH) tiene carga -1. Al cruzar los unos, queda NaOH."
+            },
+            {
+                q: "Identifica la fórmula correcta para: Óxido plúmbico (Pb: 2, 4)",
+                math: "",
+                options: [
+                    { txt: "PbO₂", correct: true },
+                    { txt: "Pb₂O₄", correct: false },
+                    { txt: "PbO", correct: false }
+                ],
+                feedback: "Al terminar en -ico, el Plomo usa +4. Cruzado con Oxígeno (-2) queda Pb₂O₄. ¡Ojo! Al simplificarse a la mitad queda PbO₂."
+            },
+            {
+                q: "Identifica la fórmula correcta para: Ácido sulfúrico (S: 2, 4, 6)",
+                math: "",
+                options: [
+                    { txt: "H₂SO₃", correct: false },
+                    { txt: "H₂SO₄", correct: true },
+                    { txt: "HSO₄", correct: false }
+                ],
+                feedback: "Al terminar en -ico usa la valencia +6. Para neutralizar el O(-2) y el H(+1), la configuración estable requiere 4 oxígenos."
+            },
+            {
+                q: "Identifica la fórmula correcta para: Anhídrido carbónico (C: 2, 4)",
+                math: "",
+                options: [
+                    { txt: "CO₂", correct: true },
+                    { txt: "CO", correct: false },
+                    { txt: "C₂O₄", correct: false }
+                ],
+                feedback: "Valencia mayor (+4). C₂O₄ se simplifica obligatoriamente a CO₂."
+            },
+            {
+                q: "Identifica la fórmula correcta para: Ácido clorhídrico",
+                math: "",
+                options: [
+                    { txt: "HClO", correct: false },
+                    { txt: "HCl(ac)", correct: true },
+                    { txt: "HCl(g)", correct: false }
+                ],
+                feedback: "La terminación -hídrico indica que es un hidrácido (sin oxígeno) disuelto en agua (ac)."
+            },
+            {
+                q: "Identifica la fórmula correcta para: Hidróxido ferroso (Fe: 2, 3)",
+                math: "",
+                options: [
+                    { txt: "Fe(OH)₃", correct: false },
+                    { txt: "Fe(OH)₂", correct: true },
+                    { txt: "FeOH", correct: false }
+                ],
+                feedback: "Terminación -oso indica valencia menor (+2). Al cruzar, el 2 pasa como subíndice de todo el grupo (OH)."
+            },
+            {
+                q: "Identifica la fórmula correcta para: Hidruro de litio",
+                math: "",
+                options: [
+                    { txt: "LiH", correct: true },
+                    { txt: "LiH₂", correct: false },
+                    { txt: "LiOH", correct: false }
+                ],
+                feedback: "Un hidruro metálico binario. Litio (+1) e Hidrógeno (-1). Intercambian unos."
+            },
+            {
+                q: "Identifica la fórmula correcta para: Anhídrido hipocloroso (Cl: 1, 3, 5, 7)",
+                math: "",
+                options: [
+                    { txt: "ClO", correct: false },
+                    { txt: "Cl₂O", correct: true },
+                    { txt: "HClO", correct: false }
+                ],
+                feedback: "Prefijo hipo- y sufijo -oso = valencia mínima (+1). Al cruzar con O(-2) obtenemos Cl₂O."
+            },
+            {
+                q: "Identifica la fórmula correcta para: Ácido nítrico (N: 3, 5)",
+                math: "",
+                options: [
+                    { txt: "HNO₂", correct: false },
+                    { txt: "HNO₃", correct: true },
+                    { txt: "H₂NO₃", correct: false }
+                ],
+                feedback: "Valencia mayor (+5). Para balancear el N(+5) y un H(+1) = +6. Se necesitan 3 átomos de O(-2) para llegar a -6 y dar cero."
+            }
+        ],
+        modulo3: [
+            {
+                q: "¿Qué establece fundamentalmente la Ley de Lavoisier o Ley de Conservación de la Masa?",
+                math: "",
+                options: [
+                    { txt: "Que los gases no tienen masa durante la reacción.", correct: false },
+                    { txt: "Que la masa de los reactivos es siempre igual a la masa de los productos.", correct: true },
+                    { txt: "Que los metales ganan masa al reaccionar con el oxígeno.", correct: false }
+                ],
+                feedback: "La materia no se crea ni se destruye, solo se transforma. Si entran 100g de reactivos a la fábrica, deben salir 100g de productos."
+            },
+            {
+                q: "Reaccionan 12g de Carbono con 32g de Oxígeno puro. ¿Qué masa de Dióxido de Carbono (CO₂) se formará asumiendo reacción completa?",
+                math: "\\[C + O_2 \\rightarrow CO_2\\]",
+                options: [
+                    { txt: "20g", correct: false },
+                    { txt: "44g", correct: true },
+                    { txt: "12g", correct: false }
+                ],
+                feedback: "Masa total reactivos = 12g + 32g = 44g. Según Lavoisier, la masa del producto obligatoriamente debe ser 44g."
+            },
+            {
+                q: "En un reactor cerrado se forman 73g de Ácido Clorhídrico (HCl) usando 71g de Cloro (Cl₂). ¿Cuántos gramos de Hidrógeno (H₂) se utilizaron?",
+                math: "\\[H_2 + Cl_2 \\rightarrow 2HCl\\]",
+                options: [
+                    { txt: "2g", correct: true },
+                    { txt: "144g", correct: false },
+                    { txt: "No se puede saber.", correct: false }
+                ],
+                feedback: "Si Producto = 73g y Cloro = 71g, la diferencia (73 - 71) debe ser la masa del hidrógeno aportado. Masa H₂ = 2g."
+            },
+            {
+                q: "Concepto de Estequiometría: ¿Para qué le agregamos números grandes (coeficientes estequiométricos) adelante a las moléculas en una ecuación?",
+                math: "",
+                options: [
+                    { txt: "Para indicar en qué estado físico están.", correct: false },
+                    { txt: "Para cambiar la identidad del compuesto químico.", correct: false },
+                    { txt: "Para igualar la cantidad de átomos en ambos lados y cumplir la Ley de Lavoisier.", correct: true }
+                ],
+                feedback: "Balanceamos ecuaciones porque un átomo no puede 'desaparecer' mágicamente. Todo lo que entra a la reacción, debe salir."
+            },
+            {
+                q: "Balancea la formación del agua. ¿Cuáles son los coeficientes correctos para que se cumpla la conservación de la masa?",
+                math: "\\[\\_H_2 + \\_O_2 \\rightarrow \\_H_2O\\]",
+                options: [
+                    { txt: "2, 1, 2", correct: true },
+                    { txt: "1, 1, 1", correct: false },
+                    { txt: "2, 2, 2", correct: false }
+                ],
+                feedback: "Correcto: 2(H₂) + 1(O₂) -> 2(H₂O). Entran 4 Hidrógenos y 2 Oxígenos; salen 4 Hidrógenos y 2 Oxígenos. ¡Balanceado!"
+            },
+            {
+                q: "Si descomponemos mediante calor 100g de Carbonato de Calcio (CaCO₃) y obtenemos 56g de Óxido de Calcio sólido (CaO), ¿qué pasó con los 44g restantes?",
+                math: "\\[CaCO_3 \\rightarrow CaO + CO_2\\]",
+                options: [
+                    { txt: "Se transformaron en energía térmica pura.", correct: false },
+                    { txt: "Se destruyeron por el fuego.", correct: false },
+                    { txt: "Se escaparon al ambiente como gas Dióxido de Carbono (CO₂).", correct: true }
+                ],
+                feedback: "La masa faltante (100 - 56 = 44g) corresponde exactamente al gas CO₂ que se liberó. La ley se cumple si el sistema fuera cerrado."
+            },
+            {
+                q: "En un experimento quemamos madera en una fogata abierta. Al final, las cenizas pesan mucho menos que el tronco original. ¿Falló la Ley de Lavoisier?",
+                math: "",
+                options: [
+                    { txt: "Sí, el fuego destruye masa.", correct: false },
+                    { txt: "No, la masa 'perdida' ahora es humo, gases (CO₂, H₂O) y partículas en el aire.", correct: true },
+                    { txt: "Sí, la química clásica falla a altas temperaturas.", correct: false }
+                ],
+                feedback: "La masa no desapareció, simplemente cambió a estado gaseoso y se mezcló con la atmósfera. Si hubieses cerrado todo en una cúpula gigante, pesaría lo mismo."
+            },
+            {
+                q: "Si reaccionan exactamente 16g de Metano (CH₄) con 64g de Oxígeno (O₂) para formar 44g de Dióxido de Carbono (CO₂), ¿cuánta masa de Agua (H₂O) se produjo?",
+                math: "\\[CH_4 + 2O_2 \\rightarrow CO_2 + 2H_2O\\]",
+                options: [
+                    { txt: "36g", correct: true },
+                    { txt: "80g", correct: false },
+                    { txt: "16g", correct: false }
+                ],
+                feedback: "Reactivos = 16 + 64 = 80g. Para que los Productos también sumen 80g, el agua debe pesar: 80 - 44 = 36g."
+            },
+            {
+                q: "Balancea la síntesis del amoníaco. ¿Cuál es la suma matemática de todos los coeficientes balanceados?",
+                math: "\\[\\_N_2 + \\_H_2 \\rightarrow \\_NH_3\\]",
+                options: [
+                    { txt: "Suman 6 (1 + 3 + 2)", correct: true },
+                    { txt: "Suman 3 (1 + 1 + 1)", correct: false },
+                    { txt: "Suman 4 (1 + 2 + 1)", correct: false }
+                ],
+                feedback: "Ecuación balanceada: 1(N₂) + 3(H₂) -> 2(NH₃). Entran 2 Nitrógenos y 6 Hidrógenos, salen exactamente los mismos."
+            },
+            {
+                q: "Regla final del Estudiante de Ingeniería: Durante el balanceo para cumplir a Lavoisier, ¿puedo modificar los números chiquitos (subíndices) de la fórmula, como cambiar H₂O por H₂O₂?",
+                math: "",
+                options: [
+                    { txt: "Sí, si eso ayuda a igualar los números rápido.", correct: false },
+                    { txt: "NUNCA. Alterar el subíndice destruye el 'Chasis' (identidad) de la molécula. Solo agrego coeficientes grandes.", correct: true },
+                    { txt: "A veces, si es un ácido fuerte.", correct: false }
+                ],
+                feedback: "¡Regla de Oro! Cambiar H₂O (Agua) por H₂O₂ (Agua Oxigenada) para balancear un oxígeno es un error fatal. ¡Cambiaste la sustancia!"
+            }
+        ]
+    };
+
+    let currentPhase = '';
+    let currentQIndex = 0;
+    let score = 0;
+
+    function toggleTheme() { document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+    // --- 3. FLUJO DEL PROGRAMA ---
+    function bootSystem() {
+        document.getElementById('init-overlay').style.display = 'none';
+        initAudio();
+        
+        const bootTextType = `> INICIALIZANDO KERNEL SCADA... [OK]\n> VERIFICANDO RELES... [OK]\n> SINCRONISMO... [ESTABLE: 50.00 Hz]\n> ASISTENTE IA EVA... [ONLINE]\n\n>> USUARIO: ESTUDIANTE\n> ESTADO: AGUARDANDO SELECCIÓN DE MÓDULO...`;
+        const bootTextSpeak = "Hola. Soy Eva, tu asistente virtual. He iniciado el sistema y los módulos están estables. Por favor, selecciona la evaluación de Química General que deseas realizar hoy.";
+        
+        eveSpeakAndType(bootTextSpeak, bootTextType, document.getElementById('menu-title'), () => {
+            document.getElementById('menu-options').classList.remove('hidden');
+        });
+    }
+
+    function startModule(moduleName) {
+        playSound('boot');
+        currentPhase = moduleName;
+        currentQIndex = 0; score = 0;
+        
+        document.getElementById('screen-menu').classList.add('hidden');
+        document.getElementById('screen-result').classList.add('hidden');
+        document.getElementById('screen-quiz').classList.remove('hidden');
+        
+        let speechMsg = "";
+        if (moduleName === 'modulo1') speechMsg = "Iniciando decodificación química. Analiza la fórmula.";
+        else if (moduleName === 'modulo2') speechMsg = "Iniciando Ingeniería Inversa. Presta atención a los sufijos.";
+        else if (moduleName === 'modulo3') speechMsg = "Iniciando calibración de balanzas. Analiza la conservación de la masa en las siguientes reacciones.";
+        
+        let typeMsg = `> INICIANDO MÓDULO: ${moduleName.toUpperCase()}...\n> PREPARANDO INTERFAZ DE EXAMEN...`;
+
+        eveSpeakAndType(speechMsg, typeMsg, document.getElementById('question-text'), () => {
+            loadQuestion();
+        });
+    }
+
+    function loadQuestion() {
+        let qList = quizData[currentPhase];
+        if (currentQIndex >= qList.length) { endModule(); return; }
+
+        let qData = qList[currentQIndex];
+        
+        document.getElementById('current-q').innerText = currentQIndex + 1;
+        document.getElementById('total-q').innerText = qList.length;
+        document.getElementById('progress-bar').innerText = "ESTADO: [ ESPERANDO INPUT ]";
+        document.getElementById('progress-bar').className = "amber-text";
+        
+        document.getElementById('options-container').innerHTML = "";
+        document.getElementById('math-container').innerHTML = "";
+        document.getElementById('feedback-area').style.display = "none";
+        document.getElementById('btn-next').style.display = "none";
+
+        typeTextSilent(document.getElementById('question-text'), "> " + qData.q, 25, () => {
+            if(qData.math !== "") document.getElementById('math-container').innerHTML = qData.math;
+            const letters = ["A", "B", "C"]; let optionsHtml = "";
+            qData.options.forEach((opt, idx) => {
+                let correctClass = opt.correct ? "is-correct-option" : "";
+                optionsHtml += `<button class="option-btn ${correctClass}" onclick="checkAnswer(this, ${opt.correct})">
+                                    <span class="option-letter">[${letters[idx]}]</span>
+                                    <span>${opt.txt}</span>
+                                </button>`;
+            });
+            document.getElementById('options-container').innerHTML = optionsHtml;
+            MathJax.typesetPromise();
+        });
+    }
+
+    function checkAnswer(btn, isCorrect) {
+        if (isTyping || btn.classList.contains("disabled")) return;
+        document.querySelectorAll(".option-btn").forEach(b => b.classList.add("disabled"));
+
+        const feedback = quizData[currentPhase][currentQIndex].feedback;
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackText = document.getElementById('feedback-text');
+        const progBar = document.getElementById('progress-bar');
+        const eveContainer = document.getElementById('eve-container');
+
+        eveContainer.classList.remove('state-correct', 'state-wrong');
+        void eveContainer.offsetWidth; 
+
+        if (isCorrect) {
+            playSound('correct'); 
+            btn.classList.add("correct");
+            
+            eveContainer.classList.add('state-correct');
+            setTimeout(() => eveContainer.classList.remove('state-correct'), 1500);
+
+            feedbackTitle.innerText = "[ VALIDACIÓN EXITOSA ]"; feedbackTitle.style.color = "var(--accent-green)";
+            feedbackArea.style.borderColor = "var(--accent-green)"; feedbackArea.style.borderLeftColor = "var(--accent-green)";
+            progBar.innerText = "ESTADO: [ SINCRONIZADO ]"; progBar.style.color = "var(--accent-green)";
+            score++;
+        } else {
+            playSound('wrong'); 
+            btn.classList.add("wrong");
+            const correctBtn = document.querySelector(".is-correct-option");
+            if(correctBtn) correctBtn.classList.add("correct");
+
+            eveContainer.classList.add('state-wrong');
+            setTimeout(() => eveContainer.classList.remove('state-wrong'), 1500);
+
+            feedbackTitle.innerText = "[ ERROR DEL SISTEMA ]"; feedbackTitle.style.color = "var(--accent-crimson)";
+            feedbackArea.style.borderColor = "var(--accent-crimson)"; feedbackArea.style.borderLeftColor = "var(--accent-crimson)";
+            progBar.innerText = "ESTADO: [ FALLA CRÍTICA ]"; progBar.style.color = "var(--accent-crimson)";
+
+            const panel = document.getElementById('terminal-container');
+            panel.style.boxShadow = "0 0 40px rgba(255, 23, 68, 0.6)";
+            setTimeout(() => panel.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)", 200);
+        }
+
+        feedbackText.innerHTML = feedback;
+        feedbackArea.style.display = "block";
+        document.getElementById('btn-next').style.display = "block";
+        MathJax.typesetPromise();
+    }
+
+    function nextQuestion() { currentQIndex++; loadQuestion(); }
+
+    function endModule() {
+        document.getElementById('screen-quiz').classList.add('hidden');
+        document.getElementById('screen-result').classList.remove('hidden');
+        
+        let totalQ = quizData[currentPhase].length;
+        let percentage = (score / totalQ);
+        let passed = percentage >= 0.5; 
+        
+        let moduleTitle = currentPhase === 'modulo3' ? "CONSERVACIÓN MASA" : "NOMENCLATURA INORG.";
+        let typeMsg = `=======================================\n> MÓDULO EVALUADO : ${moduleTitle}\n> ACIERTOS        : ${score} / ${totalQ}\n=======================================\n\n`;
+
+        let speechMsg = "";
+
+        if (passed) {
+            typeMsg += `[ STATUS: APROBADO ]\nExcelente trabajo. La matriz química está balanceada y decodificada.`;
+            document.getElementById('result-text').className = 'success-text';
+            speechMsg = `Módulo completado. Aprobaste con éxito, lograste ${score} aciertos. Muy buen trabajo entendiendo los principios químicos fundamentales.`;
+        } else {
+            typeMsg += `[ STATUS: DESAPROBADO ]\nFalla en la validación. Revisa el manual de protocolos e intenta nuevamente.`;
+            document.getElementById('result-text').className = 'crimson-text';
+            speechMsg = `Módulo completado. Lamentablemente hubo fallas durante los cálculos. Es necesario que repases los apuntes del panel lateral e intentes de nuevo.`;
+        }
+            
+        eveSpeakAndType(speechMsg, typeMsg, document.getElementById('result-text'));
+    }
+
+    function returnToMenu() {
+        synth.cancel(); clearInterval(typeWriterInterval); playSound('boot');
+        document.getElementById('screen-quiz').classList.add('hidden');
+        document.getElementById('screen-result').classList.add('hidden');
+        document.getElementById('screen-menu').classList.remove('hidden');
+        
+        eveSpeakAndType("Sistema en espera. Selecciona tu siguiente paso.", ">> USUARIO: ESTUDIANTE\n> ESTADO: AGUARDANDO SELECCIÓN...", document.getElementById('menu-title'));
+    }
+
+    let eggClicks = 0;
+    function triggerEasterEgg() {
+        eggClicks++;
+        if (eggClicks === 3) {
+            playSound('correct');
+            eveSpeakAndType("Mensaje clasificado de Facundo. Éxitos en tu parcial, vas a rendir espectacular.", "ACCESO CLASIFICADO", document.getElementById('result-text'), () => {
+                 alert("¡Muchos éxitos en tu examen!\nVas a aprobar sin ningún problema, confía en lo que aprendiste.\n\nAtte: Tu tutor, Facundo.");
+            });
+            eggClicks = 0;
+        }
+        setTimeout(() => { if(eggClicks > 0 && eggClicks < 3) eggClicks = 0; }, 1500);
+    }
+</script>
+</body>
+</html>
