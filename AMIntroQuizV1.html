@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UTN FRT - Módulo de Revisión Análisis Matemático I</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        /* --- VARIABLES DE TEMA --- */
+        :root[data-theme="dark"] {
+            --bg-color: #040609; 
+            --primary-accent: #00f2fe; /* Cian Eléctrico */
+            --secondary-accent: #4facfe; /* Azul Energía */
+            --text-main: #f8fafc; 
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(10, 15, 25, 0.8); 
+            --glass-border: rgba(0, 242, 254, 0.15);
+            --btn-hover: rgba(0, 242, 254, 0.1); 
+            --correct-bg: rgba(16, 185, 129, 0.15);
+            --correct-border: #10b981; 
+            --error-bg: rgba(239, 68, 68, 0.15);
+            --error-border: #ef4444;
+            --math-block-bg: rgba(0, 0, 0, 0.6); 
+            --bg-equations-color: rgba(0, 242, 254, 0.04);
+            --input-bg: rgba(0, 0, 0, 0.7);
+            --pcb-lines: rgba(0, 242, 254, 0.03);
+        }
+
+        :root[data-theme="light"] {
+            --bg-color: #e2e8f0; 
+            --primary-accent: #0369a1; 
+            --secondary-accent: #0ea5e9;
+            --text-main: #0f172a; 
+            --text-muted: #475569;
+            --glass-bg: rgba(255, 255, 255, 0.9); 
+            --glass-border: rgba(3, 105, 161, 0.2);
+            --btn-hover: rgba(3, 105, 161, 0.05); 
+            --correct-bg: rgba(16, 185, 129, 0.1);
+            --correct-border: #059669; 
+            --error-bg: rgba(239, 68, 68, 0.1);
+            --error-border: #dc2626;
+            --math-block-bg: rgba(241, 245, 249, 0.95); 
+            --bg-equations-color: rgba(3, 105, 161, 0.06);
+            --input-bg: rgba(255, 255, 255, 1);
+            --pcb-lines: rgba(3, 105, 161, 0.03);
+        }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main);
+            font-family: 'Inter', sans-serif; margin: 0; padding: 0; min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            overflow-x: hidden; position: relative;
+        }
+
+        /* --- DECORADO PCB Y ARCO ELÉCTRICO --- */
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -3; pointer-events: none;
+            background-image: 
+                linear-gradient(var(--pcb-lines) 1px, transparent 1px),
+                linear-gradient(90%, var(--pcb-lines) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.5;
+        }
+
+        /* Orbes estilo Arco Eléctrico con Flicker */
+        .electric-arc {
+            position: fixed; border-radius: 50%; filter: blur(100px); z-index: -2; opacity: 0.4; pointer-events: none;
+            animation: flicker 4s infinite;
+        }
+        #arc-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--primary-accent); }
+        #arc-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: var(--secondary-accent); animation-delay: 1s; }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            5% { opacity: 0.2; transform: scale(0.98); }
+            10% { opacity: 0.45; transform: scale(1.01); }
+            15% { opacity: 0.3; transform: scale(0.99); }
+            50% { opacity: 0.35; transform: scale(1); }
+        }
+
+        /* --- ECUACIONES DE FONDO --- */
+        .bg-equations {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; overflow: hidden; pointer-events: none;
+            color: var(--bg-equations-color); font-size: 2.2rem; font-weight: 700;
+            display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center;
+        }
+        .eq { padding: 30px; transform: rotate(-15deg); transition: color 0.4s; }
+
+        /* --- HEADER --- */
+        .header {
+            position: absolute; top: 0; width: 100%; padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-sizing: border-box; z-index: 10;
+        }
+        .header-title { font-weight: 800; letter-spacing: 1px; color: var(--primary-accent); font-size: 0.9rem; font-family: 'Fira Code', monospace; text-shadow: 0 0 5px var(--primary-accent); }
+        .controls { display: flex; gap: 10px; }
+
+        .icon-btn {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            color: var(--text-main); width: 42px; height: 42px;
+            border-radius: 10px; cursor: pointer; backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.1rem; transition: all 0.3s ease;
+        }
+        .icon-btn:hover { border-color: var(--primary-accent); box-shadow: 0 0 10px var(--btn-hover); color: var(--primary-accent); }
+
+        /* --- PANEL CENTRAL --- */
+        .glass-panel {
+            background: var(--glass-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 40px; width: 92%; max-width: 800px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            position: relative; z-index: 1; margin: 80px 0; box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        h1 { font-size: 1.9rem; margin-bottom: 8px; font-weight: 800; line-height: 1.2; background: linear-gradient(135deg, #fff 0%, var(--primary-accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; font-weight: 500; }
+
+        .input-field {
+            width: 100%; padding: 15px 20px; border-radius: 10px;
+            background: var(--input-bg); border: 1px solid var(--glass-border);
+            color: var(--text-main); font-size: 1rem; font-family: 'Fira Code', monospace;
+            margin-bottom: 25px; box-sizing: border-box; font-weight: 500; text-align: center;
+        }
+        .input-field:focus { outline: none; border-color: var(--primary-accent); box-shadow: 0 0 10px var(--btn-hover); }
+        
+        .question-header { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); font-weight: 700; margin-bottom: 12px; font-family: 'Fira Code', monospace; }
+        .question-text { font-size: 1.2rem; line-height: 1.5; font-weight: 600; margin-bottom: 20px; }
+
+        .math-block {
+            background: var(--math-block-bg); padding: 20px; border-radius: 12px;
+            text-align: center; margin-bottom: 25px; border: 1px solid var(--glass-border);
+            font-size: 1.2rem; font-weight: 600; overflow-x: auto;
+            position: relative;
+            animation: border-pulsate 2s infinite;
+        }
+        @keyframes border-pulsate {
+            0%, 100% { border-color: var(--glass-border); box-shadow: 0 0 0 rgba(0,242,254,0); }
+            50% { border-color: rgba(0, 242, 254, 0.5); box-shadow: 0 0 10px rgba(0,242,254,0.2); }
+        }
+
+        /* --- BOTONES OPCIONES --- */
+        .option-btn {
+            background: transparent; border: 1px solid var(--glass-border);
+            color: var(--text-main); padding: 15px 20px; width: 100%; text-align: left;
+            border-radius: 12px; font-size: 1rem; font-family: 'Inter', sans-serif;
+            margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; font-weight: 500;
+        }
+        .option-btn:hover { background: var(--btn-hover); border-color: var(--primary-accent); transform: translateX(5px); box-shadow: -5px 0 10px var(--btn-hover); }
+        
+        .option-index {
+            color: #000; font-weight: 800; margin-right: 15px;
+            background: var(--primary-accent); width: 32px; height: 32px;
+            display: flex; justify-content: center; align-items: center; border-radius: 6px; flex-shrink: 0;
+            font-size: 0.9rem; font-family: 'Fira Code', monospace; box-shadow: 0 0 5px var(--primary-accent);
+        }
+
+        /* --- FEEDBACK Y BOTONES DE ACCIÓN --- */
+        .feedback-area {
+            margin-top: 20px; padding: 20px; border-radius: 12px; font-size: 0.95rem;
+            line-height: 1.5; display: none; font-weight: 500; border-width: 2px;
+        }
+        
+        .btn-action {
+            background: linear-gradient(135deg, var(--secondary-accent) 0%, var(--primary-accent) 100%); 
+            color: #000; border: none; padding: 16px 24px;
+            border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer;
+            margin-top: 20px; width: 100%; text-transform: uppercase; letter-spacing: 1.5px;
+            box-sizing: border-box; transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'Fira Code', monospace;
+        }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--btn-hover); }
+        .btn-secondary { background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); margin-top: 10px; text-transform: none; letter-spacing: 0; font-family: 'Inter', sans-serif; font-weight: 500; }
+        .btn-secondary:hover { border-color: var(--text-muted); background: rgba(255,255,255,0.05); color: var(--text-main); }
+        
+        /* --- FOOTER --- */
+        .footer-info {
+            position: fixed; bottom: 0; width: 100%; text-align: center;
+            font-size: 0.8rem; color: var(--text-muted); z-index: 10;
+            background: linear-gradient(to top, var(--bg-color) 80%, transparent); padding: 10px 0;
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* --- MODAL APUNTES --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 100; display: none; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: var(--glass-bg); border: 2px solid var(--primary-accent);
+            padding: 30px; border-radius: 20px; max-width: 700px; width: 90%; max-height: 80vh;
+            color: var(--text-main); position: relative; overflow-y: auto; box-sizing: border-box;
+            box-shadow: 0 0 20px var(--btn-hover);
+        }
+        .close-btn {
+            position: absolute; top: 15px; right: 20px; background: var(--error-bg); border: 1px solid var(--error-border);
+            color: var(--error-border); width: 35px; height: 35px; border-radius: 8px; font-size: 1.2rem; cursor: pointer; font-weight: bold;
+        }
+        .modal-content h3 { color: var(--primary-accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; margin-top: 25px; font-size: 1.1rem; font-family: 'Fira Code', monospace; }
+        .modal-content ul { line-height: 1.6; font-weight: 500; padding-left: 20px; font-size: 0.9rem; color: var(--text-muted); }
+        .modal-content li { margin-bottom: 8px; }
+        .modal-content li strong { color: var(--text-main); }
+
+        /* --- ANIMACIONES DE ACIERTO / ERROR --- */
+        @keyframes pulse-correct {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); border-color: var(--correct-border); }
+            70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); border-color: var(--correct-border); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); border-color: var(--glass-border); }
+        }
+        @keyframes shake-error {
+            0%, 100% { transform: translateX(0); border-color: var(--glass-border); }
+            20%, 60% { transform: translateX(-10px); border-color: var(--error-border); box-shadow: 0 0 10px rgba(239,68,68,0.2); }
+            40%, 80% { transform: translateX(10px); border-color: var(--error-border); box-shadow: 0 0 10px rgba(239,68,68,0.2); }
+        }
+        .anim-correct { animation: pulse-correct 0.6s ease-out; }
+        .anim-error { animation: shake-error 0.4s ease-in-out; }
+
+        .hidden { display: none !important; }
+
+        /* --- ADAPTACIÓN RESPONSIVA --- */
+        @media (max-width: 600px) {
+            .glass-panel { padding: 25px 20px; margin-top: 70px; margin-bottom: 60px; border-radius: 15px; }
+            h1 { font-size: 1.5rem; }
+            .question-text { font-size: 1.1rem; }
+            .math-block { font-size: 1.1rem; padding: 15px; }
+            .option-btn { font-size: 0.9rem; padding: 12px 15px; border-radius: 10px; }
+            .option-index { width: 28px; height: 28px; font-size: 0.8rem; margin-right: 10px; }
+            .bg-equations .eq { font-size: 1.5rem; padding: 20px; }
+            .header-title { font-size: 0.8rem; }
+            .icon-btn { width: 38px; height: 38px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="electric-arc" id="arc-1"></div>
+    <div class="electric-arc" id="arc-2"></div>
+
+    <div class="bg-equations" id="bg-math">
+        <div class="eq">$$V = I \cdot Z$$</div>
+        <div class="eq">$$P = V \cdot I \cdot \cos(\theta)$$</div>
+        <div class="eq">$$\oint \mathbf{E} \cdot d\mathbf{a} = \frac{Q_{enc}}{\epsilon_0}$$</div>
+        <div class="eq">$$j\omega L$$</div>
+        <div class="eq">$$\frac{1}{j\omega C}$$</div>
+        <div class="eq">$$E = m \cdot c^2$$</div>
+        <div class="eq">$$\nabla \times \mathbf{B} = \mu_0 \mathbf{J}$$</div>
+        <div class="eq">$$Z = \sqrt{R^2 + X^2}$$</div>
+    </div>
+
+    <header class="header">
+        <div class="header-title">&lt;UTN_FRT_ELECTRICA /&gt;</div>
+        <div class="controls">
+            <button class="icon-btn" onclick="toggleNotes()" title="Manual de Pre-Cálculo">📖</button>
+            <button class="icon-btn" onclick="toggleTheme()" title="Cambiar Tema" id="theme-icon">☀️</button>
+        </div>
+    </header>
+
+    <div class="modal-overlay" id="notes-modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="toggleNotes()">&times;</button>
+            <h2 style="color: var(--primary-accent); margin-top:0; font-family: 'Fira Code', monospace; text-shadow: 0 0 5px var(--primary-accent);">Fascículo Técnico: Pre-Cálculo</h2>
+            
+            <h3>1. Álgebra Operacional</h3>
+            <ul>
+                <li><strong>Diferencia de Cuadrados:</strong> $a^2 - b^2 = (a - b)(a + b)$</li>
+                <li><strong>Trinomio al Cuadrado:</strong> $(a \pm b)^2 = a^2 \pm 2ab + b^2$</li>
+                <li><strong>Ecuación Cuadrática:</strong> $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$</li>
+                <li><strong>Racionalización:</strong> Técnica para eliminar raíces del denominador multiplicando por el conjugado.</li>
+            </ul>
+
+            <h3>2. Funciones y Restricciones</h3>
+            <ul>
+                <li><strong>Dominio Real:</strong> Conjunto de valores de $x$ donde la función existe.</li>
+                <li><strong>Restricción Fraccionaria:</strong> Si $f(x) = \frac{1}{Q(x)}$, entonces $Q(x) \neq 0$.</li>
+                <li><strong>Restricción Radical (índice par):</strong> Si $f(x) = \sqrt{P(x)}$, entonces $P(x) \geq 0$.</li>
+            </ul>
+
+            <h3>3. Valor Absoluto e Inecuaciones</h3>
+            <ul>
+                <li>El valor absoluto $|x|$ es la distancia al origen (siempre $\geq 0$).</li>
+                <li><strong>Inecuación Abierta:</strong> $|x - a| < b \iff -b < x - a < b$.</li>
+            </ul>
+
+            <h3>4. Logaritmos y Exponentes</h3>
+            <ul>
+                <li><strong>Leyes de Exponentes:</strong> $(x^a)^b = x^{ab}$ ; $x^a \cdot x^b = x^{a+b}$ ; $x^{-a} = 1/x^a$.</li>
+                <li><strong>Definición Log:</strong> $\log_b(x) = y \iff b^y = x$.</li>
+                <li><strong>Propiedades Naturales:</strong> $\ln(a) + \ln(b) = \ln(a \cdot b)$ ; $\ln(1) = 0$.</li>
+            </ul>
+
+            <h3>5. Trigonometría Fundamental</h3>
+            <ul>
+                <li><strong>Identidad Pitagórica:</strong> $\sin^2(\theta) + \cos^2(\theta) = 1$.</li>
+                <li><strong>Cociente:</strong> $\tan(\theta) = \frac{\sin(\theta)}{\cos(\theta)}$.</li>
+                <li><strong>Ángulos Notables:</strong> $\tan(45^\circ) = 1$ ; $\cos(60^\circ) = 1/2$.</li>
+                <li><strong>Conversión:</strong> $\pi \text{ rad} = 180^\circ$ (Sistema Sexagesimal).</li>
+            </ul>
+        </div>
+    </div>
+
+    <main class="glass-panel" id="main-panel">
+        <div id="start-screen">
+            <h1 style="text-align: center;">Módulo de Diagnóstico Técnico</h1>
+            <p class="subtitle" style="text-align: center;">
+                Análisis de fundamentos matemáticos para Ingeniería. Ingrese su identificación para iniciar la secuencia de evaluación de 20 consignas.
+            </p>
+            <input type="text" id="student-name" class="input-field" placeholder="ID / Nombre y Apellido" required>
+            <button class="btn-action" onclick="startQuiz()">Iniciar Secuencia</button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div id="q-header" class="question-header"></div>
+            <div id="q-text" class="question-text"></div>
+            <div id="q-math" class="math-block hidden"></div>
+            <div id="options-container"></div>
+            <div id="feedback-msg" class="feedback-area"></div>
+            <button id="next-btn" class="btn-action hidden" onclick="nextQuestion()">Registrar y Continuar</button>
+        </div>
+    </main>
+
+    <div class="footer-info">
+        SYS_STATUS: OK | Facundo Barrojo | Cel: 3815690147
+    </div>
+
+<script>
+    // Sintetizador de audio web para los efectos
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type) {
+        if (!audioCtx) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        if (type === 'correct') {
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(550, audioCtx.currentTime); 
+            oscillator.frequency.exponentialRampToValueAtTime(1100, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        } else {
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(110, audioCtx.currentTime); 
+            oscillator.frequency.setValueAtTime(70, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const icon = document.getElementById('theme-icon');
+        if (html.getAttribute('data-theme') === 'dark') {
+            html.setAttribute('data-theme', 'light'); icon.innerText = '🌙';
+        } else {
+            html.setAttribute('data-theme', 'dark'); icon.innerText = '☀️';
+        }
+    }
+
+    function toggleNotes() {
+        const modal = document.getElementById('notes-modal');
+        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        renderMathInElement(modal, { delimiters: [{left: '$', right: '$', display: false}] });
+    }
+
+    // Base de datos de 20 preguntas (Respuestas aleatorizadas)
+    const questionsDB = [
+        { text: "¿Cuál es el resultado de simplificar la siguiente expresión racional?", math: "$$\\frac{x^2 - 9}{x + 3}$$", options: ["$x + 3$", "$x - 3$", "$x^2 - 3$", "No factorizable."], correctIndex: 1, feedback: "Diferencia de cuadrados: $(x-3)(x+3)/(x+3) = x-3$." },
+        { text: "Resuelve la inecuación con valor absoluto:", math: "$$|x - 2| < 5$$", options: ["$x < 7$", "$-3 < x < 7$", "$x > -3$", "$x < -3 \\text{ ó } x > 7$"], correctIndex: 1, feedback: "Equivale a $-5 < x - 2 < 5$. Sumando 2: $-3 < x < 7$." },
+        { text: "¿A qué es igual la siguiente identidad trigonométrica?", math: "$$\\sin^2(\\theta) + \\cos^2(\\theta)$$", options: ["$0$", "$-1$", "$1$", "$\\tan^2(\\theta)$"], correctIndex: 2, feedback: "Identidad Pitagórica fundamental." },
+        { text: "Si $\\log_b(x) = y$, ¿cuál es su forma exponencial equivalente?", math: null, options: ["$b^y = x$", "$x^y = b$", "$y^b = x$", "$b^x = y$"], correctIndex: 0, feedback: "Definición de logaritmo: la base elevada al resultado da el argumento." },
+        { text: "¿Cuál es la solución de la ecuación cuadrática?", math: "$$x^2 + 5x + 6 = 0$$", options: ["$x = 2, x = 3$", "$x = -2, x = -3$", "$x = -1, x = -6$", "$x = 1, x = 6$"], correctIndex: 1, feedback: "Factorizando: $(x+2)(x+3)=0$." },
+        { text: "¿Cuál es el valor exacto de $\\cos(60^{\\circ})$?", math: null, options: ["$\\sqrt{3}/2$", "$1/2$", "$\\sqrt{2}/2$", "$1$"], correctIndex: 1, feedback: "Valor notable: $\\cos(60^{\\circ}) = 0.5$." },
+        { text: "Simplifica la expresión utilizando leyes de exponentes:", math: "$$(x^3)^2 \\cdot x^{-4}$$", options: ["$x^2$", "$x^1$", "$x^5$", "$x^{-24}$"], correctIndex: 0, feedback: "$(x^3)^2 = x^6$. Multiplicando: $x^6 \\cdot x^{-4} = x^{6-4} = x^2$." },
+        { text: "¿Cuál es el resultado de la siguiente operación?", math: "$$|-15 + 7|$$", options: ["$8$", "$-8$", "$22$", "$-22$"], correctIndex: 0, feedback: "$|-8| = 8$." },
+        { text: "La propiedad $\\ln(a) + \\ln(b)$ es equivalente a:", math: null, options: ["$\\ln(a + b)$", "$\\ln(a \\cdot b)$", "$\\ln(a) / \\ln(b)$", "$e^{a+b}$"], correctIndex: 1, feedback: "Logaritmo de un producto." },
+        { text: "¿Cuál es el valor de $\\tan(45^{\\circ})$?", math: "$$\\tan(45^{\\circ})$$", options: ["$1$", "$0$", "$\\infty$", "$1/2$"], correctIndex: 0, feedback: "$\\tan(45^{\\circ}) = \\sin(45^{\\circ})/\\cos(45^{\\circ}) = 1$." },
+        { text: "Si $f(x) = x^2$, determine el desarrollo de $f(x+h)$:", math: null, options: ["$x^2 + h^2$", "$x^2 + 2xh + h^2$", "$x^2 + h$", "$2x + 2h$"], correctIndex: 1, feedback: "Cuadrado de un binomio: $(x+h)^2$." },
+        { text: "¿Cuál es la pendiente de la recta representada?", math: "$$2y - 4x = 10$$", options: ["$4$", "$2$", "$-4$", "$-2$"], correctIndex: 1, feedback: "Forma $y=mx+b$: $2y = 4x+10 \\Rightarrow y = 2x+5$. Pendiente $m=2$." },
+        { text: "Resuelve para $x$ la ecuación exponencial:", math: "$$2^x = 32$$", options: ["$4$", "$6$", "$5$", "$16$"], correctIndex: 2, feedback: "$2^5 = 32$." },
+        { text: "La suma de los ángulos internos de un triángulo plano es:", math: null, options: ["$180^{\\circ}$ ó $\\pi$ rad", "$90^{\\circ}$", "$360^{\\circ}$", "$270^{\\circ}$"], correctIndex: 0, feedback: "Propiedad euclidiana básica." },
+        { text: "Determine la solución real de:", math: "$$|x| = -3$$", options: ["$x = 3$", "No tiene solución.", "$x = -3$", "$x = 3 \\text{ y } x = -3$"], correctIndex: 1, feedback: "El valor absoluto representa distancia, nunca es negativo." },
+        { text: "¿Cuál es el desarrollo correcto del siguiente binomio?", math: "$$(a - b)^2$$", options: ["$a^2 - b^2$", "$a^2 - 2ab + b^2$", "$a^2 + b^2$", "$a^2 + 2ab + b^2$"], correctIndex: 1, feedback: "Trinomio cuadrado perfecto." },
+        { text: "¿Cuál es el dominio de definición de la expresión?", math: "$$\\frac{1}{x^2 - 4}$$", options: ["$\\mathbb{R} - \\{2\\}$", "$\\mathbb{R} - \\{-2, 2\\}$", "$[2, \\infty)$", "$\\mathbb{R}$"], correctIndex: 1, feedback: "Denominador no nulo: $x^2-4 \\neq 0 \\Rightarrow x \\neq \\pm 2$." },
+        { text: "¿A cuántos grados sexagesimales equivalen $\\pi/2$ radianes?", math: null, options: ["$90^{\\circ}$", "$180^{\\circ}$", "$45^{\\circ}$", "$60^{\\circ}$"], correctIndex: 0, feedback: "$\\pi$ rad = $180^{\\circ}$." },
+        { text: "Racionaliza el denominador de la expresión:", math: "$$\\frac{1}{\\sqrt{2} - 1}$$", options: ["$\\sqrt{2} + 1$", "$\\sqrt{2} - 1$", "$1$", "$\\sqrt{2}$"], correctIndex: 0, feedback: "Multiplicando por el conjugado $(\\sqrt{2}+1)$." },
+        { text: "¿Cuál es el valor del logaritmo natural de la unidad?", math: "$$\\ln(1)$$", options: ["$1$", "$e$", "$0$", "No definido."], correctIndex: 2, feedback: "$e^0 = 1$, por lo tanto $\\ln(1) = 0$." }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let studentName = "";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.getElementById('bg-math'), { delimiters: [{left: '$$', right: '$$', display: true}] });
+    });
+
+    function startQuiz() {
+        const nameInput = document.getElementById('student-name').value.trim();
+        if(nameInput === "") { alert("Ingrese identificación."); return; }
+        studentName = nameInput;
+        initAudio(); 
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('quiz-screen').classList.remove('hidden');
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if (currentQuestion >= questionsDB.length) { finishQuiz(); return; }
+        const q = questionsDB[currentQuestion];
+        
+        const panel = document.getElementById('main-panel');
+        panel.classList.remove('anim-correct', 'anim-error');
+
+        document.getElementById('q-header').innerText = `CONSIGNA ${currentQuestion + 1} // ${questionsDB.length}`;
+        document.getElementById('q-text').innerText = q.text;
+
+        const mathBlock = document.getElementById('q-math');
+        if (q.math) { mathBlock.innerHTML = q.math; mathBlock.classList.remove('hidden'); } 
+        else { mathBlock.classList.add('hidden'); }
+
+        document.getElementById('feedback-msg').style.display = 'none';
+        document.getElementById('next-btn').classList.add('hidden');
+
+        let optionsHTML = "";
+        const letters = ['A', 'B', 'C', 'D'];
+        q.options.forEach((opt, index) => {
+            optionsHTML += `
+                <button class="option-btn" onclick="checkAnswer(${index})">
+                    <div class="option-index">${letters[index]}</div>
+                    <div>${opt}</div>
+                </button>`;
+        });
+        document.getElementById('options-container').innerHTML = optionsHTML;
+
+        renderMathInElement(document.getElementById('quiz-screen'), {
+            delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false
+        });
+    }
+
+    function checkAnswer(selectedIndex) {
+        const q = questionsDB[currentQuestion];
+        const feedback = document.getElementById('feedback-msg');
+        const panel = document.getElementById('main-panel');
+        
+        document.querySelectorAll('.option-btn').forEach(btn => btn.style.pointerEvents = 'none');
+        feedback.style.display = 'block';
+
+        let isCorrect = (selectedIndex === q.correctIndex);
+
+        if (isCorrect) {
+            score++;
+            playSound('correct');
+            panel.classList.add('anim-correct');
+            feedback.style.backgroundColor = 'var(--correct-bg)'; feedback.style.borderColor = 'var(--correct-border)';
+            feedback.innerHTML = `<strong style="color: var(--correct-border);">✓ STATUS: CORRECT</strong><br><br>${q.feedback}`;
+        } else {
+            playSound('error');
+            panel.classList.add('anim-error');
+            feedback.style.backgroundColor = 'var(--error-bg)'; feedback.style.borderColor = 'var(--error-border)';
+            feedback.innerHTML = `<strong style="color: var(--error-border);">✗ STATUS: ERROR</strong><br><br>${q.feedback}`;
+        }
+
+        renderMathInElement(feedback, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}] });
+        document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function nextQuestion() { currentQuestion++; loadQuestion(); }
+
+    function finishQuiz() {
+        const panel = document.getElementById('main-panel');
+        panel.classList.remove('anim-correct', 'anim-error');
+        
+        const percentage = Math.round((score / questionsDB.length) * 100);
+        let feedbackMessage = "";
+
+        if (percentage >= 80) {
+            feedbackMessage = "ÓPTIMO. Posee bases sólidas. Capacidad operativa adecuada para iniciar Análisis Matemático I.";
+        } else if (percentage >= 60) {
+            feedbackMessage = "ACEPTABLE. Se sugiere revisión de: casos de factoreo, propiedades de logaritmos y restricciones de dominio.";
+        } else {
+            feedbackMessage = "CRÍTICO. Requiere refuerzo urgente. Enfoque en: inecuaciones con valor absoluto, trigonometría y operatoria algebraica básica.";
+        }
+
+        const screen = document.getElementById('quiz-screen');
+        screen.innerHTML = `
+            <h2 style="color: var(--primary-accent); margin-bottom: 20px; font-size: 1.8rem; text-align: center; font-family: 'Fira Code', monospace;">INFORME DE SALIDA: ${studentName}</h2>
+            
+            <div class="math-block" style="font-size: 1.8rem; color: var(--text-main); margin-bottom: 20px;">
+                PRECISIÓN: <span style="color: ${percentage >= 60 ? 'var(--correct-border)' : 'var(--error-border)'}; font-weight: 800;">${percentage}%</span><br>
+                <span style="font-size: 1rem; color: var(--text-muted); font-family: 'Fira Code', monospace;">ACIERTO_RATE: ${score}/${questionsDB.length}</span>
+            </div>
+            
+            <div style="background: var(--math-block-bg); border: 1px solid var(--glass-border); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+                <h3 style="color: var(--primary-accent); margin-top: 0; font-size: 1rem; font-family: 'Fira Code', monospace;">DIAGNÓSTICO_SISTEMA:</h3>
+                <p style="font-size: 1rem; line-height: 1.6; color: var(--text-main); margin: 0; font-family: 'Inter', sans-serif;">${feedbackMessage}</p>
+            </div>
+            
+            <button class="btn-action btn-secondary" onclick="location.reload()">Reiniciar Secuencia de Evaluación</button>
+        `;
+    }
+</script>
+
+</body>
+</html>
