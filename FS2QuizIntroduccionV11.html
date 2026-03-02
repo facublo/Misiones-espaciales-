@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulador Avanzado - UTN FRT</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;1,400&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --bg-deep: #010205;
+            --bg-gradient: radial-gradient(circle at center, #050a14 0%, #000000 100%);
+            --card-bg: rgba(4, 8, 18, 0.85);
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+            
+            --neon-green: #00ff41;
+            --neon-red: #ff003c;
+            --neon-blue: #00e5ff;
+            --neon-amber: #ff6600; 
+            --hud-grid: rgba(0, 229, 255, 0.03);
+        }
+
+        body.light-theme {
+            --bg-deep: #e2e8f0; --bg-gradient: radial-gradient(circle at top right, #ffffff 0%, #cbd5e1 100%);
+            --card-bg: rgba(255, 255, 255, 0.95); --text-main: #0f172a; --text-muted: #475569;
+            --neon-green: #10b981; --neon-red: #ef4444; --neon-blue: #0284c7; --neon-amber: #d97706;
+            --hud-grid: rgba(2, 132, 199, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Exo 2', sans-serif; transition: background-color 0.4s; }
+        body { background-color: var(--bg-deep); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; overflow-x: hidden; }
+
+        /* --- BOOT SCREEN --- */
+        #init-overlay { position: fixed; inset: 0; background-color: #000; z-index: 99999; display: flex; justify-content: center; align-items: center; flex-direction: column; cursor: pointer; background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 229, 255, 0.05) 2px, rgba(0, 229, 255, 0.05) 4px); }
+        .blinking-text { color: var(--neon-amber); font-size: clamp(1.2rem, 4vw, 2rem); font-family: 'Orbitron', sans-serif; animation: blink 1.5s infinite; text-align: center; font-weight: 900; padding: 2rem; border: 2px dashed var(--neon-amber); box-shadow: 0 0 40px rgba(255, 102, 0, 0.3); background: rgba(0,0,0,0.9); letter-spacing: 2px;}
+        @keyframes blink { 0%, 100% { opacity: 1; text-shadow: 0 0 20px var(--neon-amber); } 50% { opacity: 0.3; text-shadow: none; } }
+
+        /* --- CAPA CANVAS (PARTÍCULAS) --- */
+        #particle-canvas { position: fixed; inset: 0; z-index: -3; pointer-events: none; }
+
+        /* --- DECORACIONES CÓSMICAS CSS --- */
+        .space-background { position: fixed; inset: 0; z-index: -4; background: var(--bg-gradient); overflow: hidden; }
+        .grid-overlay { position: fixed; inset: 0; z-index: -2; pointer-events: none; background-image: linear-gradient(var(--hud-grid) 1px, transparent 1px), linear-gradient(90deg, var(--hud-grid) 1px, transparent 1px); background-size: 30px 30px; animation: panGrid 40s linear infinite; }
+        @keyframes panGrid { 0% { background-position: 0 0; } 100% { background-position: 30px 30px; } }
+        
+        .black-hole { position: absolute; width: 45vh; height: 45vh; border-radius: 50%; bottom: 5vh; right: -10vh; background: #000; box-shadow: 0 0 80px 20px rgba(255, 102, 0, 0.4), 0 0 150px 50px rgba(255, 0, 60, 0.2), inset 0 0 20px 5px rgba(255, 255, 255, 0.1); animation: pulseSingularity 6s ease-in-out infinite alternate; z-index: -2; }
+        .black-hole::after { content: ''; position: absolute; top: 50%; left: 50%; width: 250%; height: 50%; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(255, 170, 0, 0.6) 0%, rgba(255, 0, 60, 0.3) 40%, transparent 70%); transform: translate(-50%, -50%) rotate(-15deg); filter: blur(8px); animation: spinDisk 15s linear infinite; }
+        .black-hole::before { content: ''; position: absolute; top: -50%; left: 48%; width: 4%; height: 200%; background: linear-gradient(to bottom, transparent, rgba(0, 229, 255, 0.8), transparent); filter: blur(4px); transform: rotate(15deg); animation: pulseJet 0.16s infinite; }
+
+        @keyframes pulseSingularity { 0% { box-shadow: 0 0 60px 10px rgba(255, 102, 0, 0.3), 0 0 100px 30px rgba(255, 0, 60, 0.1); } 100% { box-shadow: 0 0 100px 30px rgba(255, 102, 0, 0.5), 0 0 180px 60px rgba(255, 0, 60, 0.3); } }
+        @keyframes spinDisk { 0% { transform: translate(-50%, -50%) rotate(-15deg) scale(1); } 50% { transform: translate(-50%, -50%) rotate(-15deg) scale(1.05); } 100% { transform: translate(-50%, -50%) rotate(-15deg) scale(1); } }
+        @keyframes pulseJet { 0% { opacity: 0.4; } 100% { opacity: 0.9; } }
+
+        /* Estrellas/Planetas dinámicos (CSS) */
+        .cosmic-object { position: absolute; border-radius: 50%; z-index: -3; opacity: 0; transition: opacity 2s ease-in; }
+
+        /* --- BARRA SUPERIOR --- */
+        .top-nav { width: 100%; max-width: 750px; display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.2rem; background: var(--card-bg); border: 1px solid rgba(0, 229, 255, 0.3); backdrop-filter: blur(10px); margin-bottom: 1.5rem; z-index: 10; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .nav-brand { font-family: 'Orbitron', sans-serif; color: var(--neon-blue); font-weight: 900; font-size: clamp(0.9rem, 4vw, 1.2rem); letter-spacing: 2px;}
+        .nav-controls { display: flex; gap: 0.8rem; }
+        .nav-btn { background: rgba(0, 229, 255, 0.05); border: 1px solid var(--neon-blue); color: var(--neon-blue); width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+        .nav-btn:hover { background: var(--neon-blue); color: var(--bg-deep); box-shadow: 0 0 15px var(--neon-blue); }
+
+        /* --- CONTENEDOR PRINCIPAL HUD --- */
+        .quiz-container { width: 100%; max-width: 750px; background: var(--card-bg); padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid rgba(0, 229, 255, 0.2); backdrop-filter: blur(20px); position: relative; z-index: 10; clip-path: polygon(30px 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%, 0 30px); }
+        .quiz-container::before { content: ''; position: absolute; top: 0; left: 0; width: 40px; height: 40px; border-top: 3px solid var(--neon-blue); border-left: 3px solid var(--neon-blue); pointer-events: none; }
+        .quiz-container::after { content: ''; position: absolute; bottom: 0; right: 0; width: 40px; height: 40px; border-bottom: 3px solid var(--neon-blue); border-right: 3px solid var(--neon-blue); pointer-events: none; }
+
+        .progress-bar-container { width: 100%; height: 3px; background: rgba(255,255,255,0.1); margin-bottom: 1.5rem; }
+        .progress-bar-fill { height: 100%; background: var(--neon-blue); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 15px var(--neon-blue); }
+
+        .stats-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.8rem; border-bottom: 1px dashed rgba(0,229,255,0.3); font-family: 'Orbitron', sans-serif; font-size: 1rem; }
+        .streak-counter { color: var(--neon-amber); text-shadow: 0 0 8px rgba(255, 102, 0, 0.6); font-weight: bold; letter-spacing: 1px;}
+        .timer { color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 8px rgba(0, 229, 255, 0.5); letter-spacing: 2px;}
+        .timer.danger { color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); animation: pulseTimer 0.8s infinite; }
+
+        .counter-badge { position: absolute; top: 0; right: 2rem; background: var(--neon-blue); color: #000; padding: 5px 20px; font-weight: 900; font-family: 'Orbitron'; font-size: 1rem; clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%); }
+        .unit-title { color: var(--neon-blue); font-family: 'Orbitron'; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1rem; opacity: 0.8; text-align: center;}
+        .question-text { font-size: clamp(1.15rem, 4vw, 1.4rem); font-weight: 600; line-height: 1.6; margin: 1.5rem 0 2rem 0; color: var(--text-main); }
+        
+        /* Opciones */
+        .options-container { display: flex; flex-direction: column; gap: 1rem; }
+        .option-btn { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); padding: clamp(1rem, 4vw, 1.25rem) clamp(1.5rem, 5vw, 2rem); color: var(--text-main); font-size: clamp(1.05rem, 3.5vw, 1.2rem); cursor: pointer; text-align: left; min-height: 65px; display: flex; align-items: center; font-weight: 500; position: relative; overflow: hidden; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); }
+        .option-btn::before { content: ''; position: absolute; left: 0; top: 0; width: 6px; height: 100%; background: var(--neon-blue); transform: scaleY(0); transition: transform 0.2s; }
+        .option-btn:hover:not(:disabled) { border-color: var(--neon-blue); background: rgba(0, 229, 255, 0.08); }
+        .option-btn:hover:not(:disabled)::before { transform: scaleY(1); }
+        .option-btn.correct { border-color: var(--neon-green); color: var(--neon-green); background: rgba(0, 255, 65, 0.1); }
+        .option-btn.correct::before { background: var(--neon-green); transform: scaleY(1); }
+        .option-btn.wrong { border-color: var(--neon-red); color: var(--neon-red); background: rgba(255, 0, 60, 0.1); }
+        .option-btn.wrong::before { background: var(--neon-red); transform: scaleY(1); text-decoration: line-through;}
+
+        /* --- VENTANA MODAL FLOTANTE (APUNTES) --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 9999; display: none; justify-content: center; align-items: center; }
+        .notes-modal { background: var(--card-bg); border: 1px solid var(--neon-amber); border-left: 8px solid var(--neon-amber); width: 90%; max-width: 600px; padding: 2rem; box-shadow: 0 0 50px rgba(255, 102, 0, 0.3); position: relative; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px); }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .notes-modal h4 { color: var(--neon-amber); font-family: 'Orbitron', sans-serif; font-size: 1.2rem; margin-bottom: 1rem; letter-spacing: 2px; border-bottom: 1px solid rgba(255, 102, 0, 0.3); padding-bottom: 0.5rem;}
+        .notes-modal p { font-size: 1.1rem; line-height: 1.6; color: var(--text-main); }
+        .close-modal-btn { position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid var(--neon-red); color: var(--neon-red); width: 30px; height: 30px; cursor: pointer; font-family: 'Orbitron'; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+        .close-modal-btn:hover { background: var(--neon-red); color: #fff; box-shadow: 0 0 10px var(--neon-red); }
+
+        .action-btn { width: 100%; margin-top: 2rem; padding: 1.2rem; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 900; color: #000; background: var(--neon-blue); border: none; cursor: pointer; display: none; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); text-transform: uppercase; clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px); transition: 0.3s; position: relative; z-index: 30;}
+        .action-btn:hover { background: #fff; box-shadow: 0 0 30px #fff; }
+        .action-btn.share { background: var(--neon-green); box-shadow: 0 0 20px rgba(0, 255, 65, 0.4); }
+
+        .creator-info { text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(0, 229, 255, 0.2); font-family: 'Exo 2', sans-serif; font-size: 0.95rem; color: var(--text-muted); font-weight: 600; }
+        .creator-info span { color: var(--neon-blue); font-weight: 700; text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);}
+
+        #result-screen { text-align: center; display: none; }
+        .final-score { font-size: 5rem; font-family: 'Orbitron', sans-serif; font-weight: 900; color: var(--neon-green); text-shadow: 0 0 30px rgba(0,255,65,0.5); margin: 1rem 0; }
+        .final-stats { display: flex; justify-content: space-around; margin-bottom: 2.5rem; color: var(--text-main); font-size: 1.1rem;}
+        .final-stats span { display: block; margin-top: 0.5rem; font-family: 'Orbitron'; font-weight: bold;}
+
+        @media (max-width: 480px) { .nav-controls .nav-btn { width: 38px; height: 38px; font-size: 1rem; } body { padding: 0.5rem; } .top-nav, .quiz-container { clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); } }
+    </style>
+</head>
+<body>
+
+    <div id="init-overlay" onclick="bootSystem()">
+        <div class="blinking-text">[ ESTABLECER ENLACE DE SINGULARIDAD ]</div>
+        <p style="color:var(--neon-blue); margin-top:20px; text-align: center; font-family: 'Exo 2'; opacity: 0.7;">Calibrando instrumentos. Toque la pantalla para iniciar telemetría háptica.</p>
+    </div>
+
+    <div id="app-container" style="display: none; width: 100%; display: flex; flex-direction: column; align-items: center;">
+        
+        <canvas id="particle-canvas"></canvas>
+
+        <div class="space-background" id="space-bg"><div class="black-hole" id="black-hole"></div></div>
+        <div class="grid-overlay"></div>
+
+        <header class="top-nav" id="main-nav">
+            <div class="nav-brand">UTN FRT | TELEMETRÍA FÍSICA II</div>
+            <div class="nav-controls">
+                <button class="nav-btn" id="btn-audio" onclick="toggleAudio()" title="Radiación On/Off">🔊</button>
+                <button class="nav-btn" onclick="toggleTheme()" title="Filtro Óptico">🌓</button>
+            </div>
+        </header>
+
+        <div class="quiz-container" id="quiz-container">
+            <div class="progress-bar-container" id="progress-container">
+                <div class="progress-bar-fill" id="progress-bar"></div>
+            </div>
+
+            <div id="quiz-content">
+                <div class="counter-badge" id="question-counter">VECTOR 1 / 10</div>
+                
+                <div class="stats-header">
+                    <div class="streak-counter" id="streak-display">🔥 SECUENCIA: 0</div>
+                    <div class="timer" id="timer-display">⏱️ 02:00</div>
+                </div>
+                
+                <h3 class="unit-title">SEARS-ZEMANSKY // Cargas, Campos y Teorema de Gauss</h3>
+                <div class="question-text" id="question-text"></div>
+                
+                <div class="options-container" id="options-container"></div>
+
+                <button id="next-btn" class="action-btn" onclick="nextQuestion()">INICIALIZAR SIGUIENTE VECTOR ⭢</button>
+            </div>
+
+            <div id="result-screen">
+                <h2 style="font-family: 'Orbitron'; color: var(--text-main); letter-spacing: 2px;">ANÁLISIS DE DATOS COMPLETADO</h2>
+                <div class="final-score" id="final-score-text">0/10</div>
+                <div class="final-stats">
+                    <div>Secuencia Máxima<br><span id="final-streak" style="font-size:2rem; color:var(--neon-amber);">0</span></div>
+                    <div>Precisión Cuántica<br><span id="final-accuracy" style="font-size:2rem; color:var(--neon-blue);">0%</span></div>
+                </div>
+                <button class="action-btn share" style="display:block; margin-bottom: 1rem;" onclick="compartirResultados()">📲 Transmitir Log al Servidor (Profe)</button>
+                <button class="action-btn" style="display:block;" onclick="location.reload()">Reiniciar Protocolo</button>
+            </div>
+
+            <div class="creator-info">
+                Autoridad del Sistema: <span>Facundo Barrojo</span> | Canal de Comm: <span>3815690147</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="notes-modal">
+            <button class="close-modal-btn" onclick="toggleNotes()">X</button>
+            <h4>[ DESENCRIPTANDO REGISTRO DE DATOS ]</h4>
+            <p id="notes-content"></p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. MOTOR DE PARTÍCULAS CANVAS ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let baseParticles = 40; // Empezamos con pocas partículas
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() { this.reset(true); }
+            reset(randomizeRadius = false) {
+                this.angle = Math.random() * Math.PI * 2;
+                // Si es inicial, aparecen en cualquier lado. Si es respawn, aparecen lejos en los bordes.
+                this.radius = randomizeRadius ? Math.random() * canvas.width : canvas.width * 0.8 + Math.random() * 200;
+                this.speed = (Math.random() * 0.01) + 0.002;
+                this.size = Math.random() * 2 + 0.5;
+                const colors = ['#00e5ff', '#ff6600', '#ffffff', '#ff003c'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.alpha = Math.random() * 0.5 + 0.3;
+            }
+            update() {
+                this.angle -= this.speed; // Rotación
+                this.radius -= this.speed * 150; // Succión hacia el centro
+                if (this.radius < 20) this.reset(); // Si caen al agujero negro, renacen lejos
+            }
+            draw() {
+                // El agujero negro está aproximadamente en bottom-right
+                const cx = canvas.width * 0.85; 
+                const cy = canvas.height * 0.85;
+                const x = cx + Math.cos(this.angle) * this.radius;
+                const y = cy + Math.sin(this.angle) * this.radius;
+                
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(x, y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for(let i = 0; i < baseParticles; i++) particles.push(new Particle());
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // --- EXPANSIÓN DEL UNIVERSO ---
+        // Se llama cada vez que responde, agrega partículas y astros CSS
+        function expandirUniverso() {
+            // Aumentar partículas de canvas (el agujero negro atrae más materia)
+            for(let i = 0; i < 15; i++) {
+                particles.push(new Particle());
+            }
+
+            // Crear un astro o nebulosa estática con CSS en el fondo
+            const spaceBg = document.getElementById('space-bg');
+            const astro = document.createElement('div');
+            astro.className = 'cosmic-object';
+            const size = Math.random() * 8 + 2;
+            astro.style.width = size + 'px';
+            astro.style.height = size + 'px';
+            astro.style.top = Math.random() * 100 + 'vh';
+            astro.style.left = Math.random() * 100 + 'vw';
+            
+            // Colores espaciales
+            const isBlue = Math.random() > 0.5;
+            astro.style.background = isBlue ? 'var(--neon-blue)' : 'var(--neon-amber)';
+            astro.style.boxShadow = `0 0 ${size * 2}px ${astro.style.background}`;
+            
+            spaceBg.appendChild(astro);
+            
+            // Aparece suavemente
+            setTimeout(() => {
+                astro.style.opacity = Math.random() * 0.6 + 0.2;
+            }, 100);
+        }
+
+        // --- 2. MOTOR DE AUDIO NATIVO Y HÁPTICO ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx, masterGain, pulsarOsc, droneOsc;
+        let audioHabilitado = false;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function vibrar(patron) {
+            // Verifica si el celular soporta vibración
+            if ("vibrate" in navigator) {
+                navigator.vibrate(patron);
+            }
+        }
+
+        function startBackgroundDrone() {
+            if (!audioCtx) return;
+            if (masterGain) return; 
+            
+            masterGain = audioCtx.createGain();
+            masterGain.connect(audioCtx.destination);
+            masterGain.gain.value = 0.08;
+
+            droneOsc = audioCtx.createOscillator();
+            droneOsc.type = 'sine';
+            droneOsc.frequency.value = 40; 
+            droneOsc.connect(masterGain);
+            droneOsc.start();
+
+            pulsarOsc = audioCtx.createOscillator();
+            pulsarOsc.type = 'square';
+            pulsarOsc.frequency.value = 150; 
+            
+            const pulsarGain = audioCtx.createGain();
+            pulsarGain.gain.value = 0; 
+            
+            const lfo = audioCtx.createOscillator();
+            lfo.type = 'sawtooth';
+            lfo.frequency.value = 6; 
+            
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = 0.5; 
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(pulsarGain.gain); 
+            
+            pulsarOsc.connect(pulsarGain);
+            pulsarGain.connect(masterGain);
+            
+            pulsarOsc.start();
+            lfo.start();
+            audioHabilitado = true;
+        }
+
+        function playCorrectSound() {
+            if (!audioCtx || !audioHabilitado) return;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; const now = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(1600, now + 0.1);
+            gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.2, now + 0.02); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+            vibrar(100); // Vibración corta de éxito
+        }
+
+        function playWrongSound() {
+            if (!audioCtx || !audioHabilitado) return;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth'; const now = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(60, now + 0.4);
+            gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.2, now + 0.02); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
+            vibrar([200, 100, 200]); // Doble vibración pesada de error
+        }
+
+        function toggleAudio() {
+            const btn = document.getElementById('btn-audio');
+            if (audioHabilitado) {
+                if(masterGain) masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                audioHabilitado = false;
+                btn.innerText = '🔇'; btn.style.color = 'var(--neon-red)'; btn.style.borderColor = 'var(--neon-red)';
+            } else {
+                if(masterGain) masterGain.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
+                audioHabilitado = true;
+                btn.innerText = '🔊'; btn.style.color = 'var(--neon-blue)'; btn.style.borderColor = 'var(--neon-blue)';
+            }
+        }
+
+        // --- 3. BASE DE DATOS FÍSICA ---
+        // --- BASE DE DATOS DE 20 PREGUNTAS (Sears Zemansky - Unidad 1 y 2) ---
+        // Mezcla equilibrada: Nivel Fácil, Medio y Difícil.
+        const physicsData = [
+            {
+                q: "[NIVEL 1] Si un sistema cerrado de cuerpos neutros intercambia electrones por frotamiento, la suma algebraica de todas las cargas del sistema:",
+                options: [ "Aumenta proporcionalmente", "Se vuelve negativa", "Permanece igual a cero", "Se vuelve positiva" ],
+                correct: 2, 
+                note: "Principio de conservación de la carga: la carga eléctrica no se crea ni se destruye, sólo se transfiere. Si la suma inicial era cero, la carga neta final seguirá siendo matemáticamente cero."
+            },
+            {
+                q: "[NIVEL 1] ¿Cuál es la magnitud de la carga eléctrica fundamental (la carga de un electrón o protón) en el Sistema Internacional?",
+                options: [ "\\( 1.60 \\times 10^{-19} C \\)", "\\( 9.11 \\times 10^{-31} C \\)", "\\( 8.85 \\times 10^{-12} C \\)", "\\( 9.0 \\times 10^9 C \\)" ],
+                correct: 0, 
+                note: "La magnitud de la carga de un electrón es la unidad natural de carga. Toda cantidad observable de carga eléctrica es siempre un múltiplo entero de \\( 1.602 \\times 10^{-19} C \\)."
+            },
+            {
+                q: "[NIVEL 2] Tres cargas puntuales positivas iguales se colocan en los vértices de un triángulo equilátero. La fuerza eléctrica neta sobre cualquiera de las cargas apunta:",
+                options: [ "Hacia el centro geométrico del triángulo", "Alejándose radialmente del centro del triángulo", "De forma paralela a uno de los lados", "La fuerza neta es exactamente cero" ],
+                correct: 1, 
+                note: "Por superposición vectorial y simetría, las fuerzas de repulsión provenientes de las otras dos cargas se suman generando un vector resultante que biseca el ángulo y apunta hacia el exterior."
+            },
+            {
+                q: "[NIVEL 1] Por convención de signos, las líneas de campo eléctrico producidas por una carga puntual negativa y aislada en el vacío:",
+                options: [ "Son curvas cerradas concéntricas", "Son vectores que divergen radialmente de la carga", "Son vectores que convergen radialmente hacia la carga", "Adoptan una trayectoria elíptica hacia el centro" ],
+                correct: 2, 
+                note: "El campo eléctrico indica la dirección de la fuerza sobre una carga de prueba positiva. Una fuente negativa atraerá a la carga de prueba, por ende, las líneas apuntan hacia la carga fuente."
+            },
+            {
+                q: "[NIVEL 2] Un electrón (masa \\( m \\), carga \\( -e \\)) se inyecta en un campo eléctrico uniforme \\( E \\) dirigido verticalmente hacia arriba. La magnitud y dirección de su aceleración inicial es:",
+                options: [ "\\( eE / m \\) hacia arriba", "\\( mE / e \\) hacia abajo", "\\( eE / m \\) hacia abajo", "Aceleración nula por tratarse de un campo uniforme" ],
+                correct: 2, 
+                note: "La fuerza es \\( F = qE \\). Siendo la carga negativa, la fuerza va hacia abajo. Aplicando la 2da Ley de Newton (\\( a = F/m \\)), obtenemos un vector de aceleración \\( eE/m \\) hacia abajo."
+            },
+            {
+                q: "[NIVEL 3] El campo eléctrico producido por un filamento aislante, rectilíneo e infinitamente largo, con densidad de carga lineal \\( \\lambda \\), a una distancia radial \\( r \\) decae proporcionalmente a:",
+                options: [ "\\( 1 / r^2 \\)", "\\( 1 / r \\)", "\\( 1 / r^3 \\)", "Es independiente de la distancia espacial \\( r \\)" ],
+                correct: 1, 
+                note: "Aplicando topología Gaussiana con un cilindro coaxial, el área lateral es \\( 2\\pi rL \\). Al despejar de \\( E(2\\pi rL) = \\lambda L/\\varepsilon_0 \\), se evidencia que el campo cae con \\( 1/r \\), no cuadráticamente."
+            },
+            {
+                q: "[NIVEL 2] El momento de torsión (torque) máximo que experimenta un dipolo eléctrico \\( p \\) inmerso en un campo eléctrico uniforme \\( E \\) ocurre cuando el ángulo entre \\( p \\) y \\( E \\) es:",
+                options: [ "\\( 0^\\circ \\)", "\\( 45^\\circ \\)", "\\( 90^\\circ \\)", "\\( 180^\\circ \\)" ],
+                correct: 2, 
+                note: "La dinámica rotacional del dipolo se modela con el producto cruz \\( \\vec{\\tau} = \\vec{p} \\times \\vec{E} \\). Su magnitud es máxima (\\( pE \\sin \\theta \\)) cuando los vectores son estrictamente ortogonales (\\( 90^\\circ \\))."
+            },
+            {
+                q: "[NIVEL 2] Considere una superficie gaussiana en forma de cubo inmersa en un campo eléctrico externo constante y uniforme. El flujo eléctrico neto a través del volumen total es:",
+                options: [ "Estrictamente mayor a cero", "Estrictamente menor a cero", "Cero", "Depende de la magnitud escalar del volumen" ],
+                correct: 2, 
+                note: "Cualquier línea de campo de un vector uniforme que penetra una cara del cubo, escapa irremediablemente por la cara opuesta. El balance algebraico de flujo entrante y saliente siempre es cero."
+            },
+            {
+                q: "[NIVEL 1] La formulación matemática de la Ley de Gauss vincula el flujo eléctrico neto a través de una superficie topológica cerrada exclusivamente con:",
+                options: [ "El campo eléctrico en el centroide de la superficie", "La carga eléctrica neta confinada dentro del volumen", "La densidad del material de la frontera", "Las cargas ubicadas en el horizonte exterior" ],
+                correct: 1, 
+                note: "El Teorema de Gauss establece \\( \\Phi_E = q_{enc} / \\varepsilon_0 \\). La integral de superficie del campo eléctrico es directamente proporcional y dependiente tan sólo de la carga interior neta."
+            },
+            {
+                q: "[NIVEL 2] Se inyecta una carga neta \\( Q \\) al interior de una esfera conductora maciza de cobre. Alcanzado el equilibrio electrostático, dicha carga se estabilizará:",
+                options: [ "En el centro geométrico de la masa", "Distribuida homogéneamente en todo su volumen interno", "Exclusivamente en el límite superficial exterior", "Dependiendo de la conductividad térmica del metal" ],
+                correct: 2, 
+                note: "Para asegurar un campo interno nulo (condición de equilibrio en conductores), los portadores se repelen internamente hasta alcanzar el perímetro exterior del material metálico."
+            },
+            {
+                q: "[NIVEL 3] El campo eléctrico en el interior de una esfera aislante de radio \\( R \\), con densidad volumétrica de carga uniforme \\( \\rho \\), a un radio interno \\( r < R \\) del origen es:",
+                options: [ "Nulo en toda la región", "Proporcional a \\( 1/r^2 \\)", "Directamente proporcional al radio \\( r \\)", "Proporcional a \\( 1/r \\)" ],
+                correct: 2, 
+                note: "A diferencia de un conductor, el aislante retiene la carga internamente. La carga encerrada crece con \\( r^3 \\) pero el área gausiana crece con \\( r^2 \\). El cociente demuestra un campo de crecimiento lineal (\\( r \\))."
+            },
+            {
+                q: "[NIVEL 2] ¿Bajo qué fenómeno físico un peine de polímero cargado negativamente es capaz de vencer la gravedad y atraer recortes de papel aislante y neutro?",
+                options: [ "Ionización destructiva del papel", "Polarización dieléctrica de las moléculas celulósicas", "Efecto magnético de cargas estáticas", "Inyección de electrones de valencia en el papel" ],
+                correct: 1, 
+                note: "El campo eléctrico deprime las nubes electrónicas del papel aislante. Esta micro-separación (polarización) acerca los núcleos positivos al peine, logrando una atracción macroscópica diferencial."
+            },
+            {
+                q: "[NIVEL 3] Dos cargas puntuales, \\( +q \\) y \\( -q \\), distan una métrica de \\( 2a \\). El vector campo eléctrico en el punto intermedio exacto de la coordenada que las une es:",
+                options: [ "El vector nulo", "\\( 2kq / a^2 \\) en dirección a la carga positiva", "\\( 2kq / a^2 \\) en dirección a la carga negativa", "\\( kq / a^2 \\) ortogonal al eje" ],
+                correct: 2, 
+                note: "El campo radiado por \\( +q \\) apunta hacia \\( -q \\) con magnitud \\( kq/a^2 \\). El campo de \\( -q \\) converge hacia sí misma con \\( kq/a^2 \\). Por principio de superposición, ambos vectores se suman."
+            },
+            {
+                q: "[NIVEL 2] Se introduce una partícula puntual de carga \\( -Q \\) al centro del vacío de un cascarón esférico metálico (conductor) originalmente neutro. La carga en el estrato exterior será:",
+                options: [ "Cero por apantallamiento", "\\( +Q \\)", "\\( -Q \\)", "\\( -2Q \\)" ],
+                correct: 2, 
+                note: "La carga \\( -Q \\) induce forzosamente una carga de \\( +Q \\) en la cara interna para cancelar el campo. Para mantener la neutralidad total del conductor, la superficie externa manifiesta una carga neta \\( -Q \\)."
+            },
+            {
+                q: "[NIVEL 3] Considere el modelo de dos placas conductoras infinitas paralelas (como en un capacitor ideal) con densidades de carga \\( +\\sigma \\) y \\( -\\sigma \\). El campo eléctrico al exterior de las láminas es:",
+                options: [ "Cero absoluto", "\\( \\sigma / \\varepsilon_0 \\)", "\\( \\sigma / 2\\varepsilon_0 \\)", "Tangencial a la superficie de los metales" ],
+                correct: 0, 
+                note: "Cada placa genera un campo uniforme \\( \\sigma / 2\\varepsilon_0 \\). En el volumen exterior al sistema, los vectores de ambas láminas poseen sentidos antiparalelos, resultando en interferencia destructiva (campo nulo)."
+            },
+            {
+                q: "[NIVEL 2] Una superficie gaussiana esférica ocluye de manera íntegra a un dipolo eléctrico permanente. Determine el flujo eléctrico total integrado sobre dicho horizonte de eventos.",
+                options: [ "Máximo positivo", "Máximo negativo", "Estrictamente cero", "Se requiere el volumen de integración" ],
+                correct: 2, 
+                note: "El dipolo se define topológicamente por dos cargas de la misma magnitud escalar pero de signo opuesto (\\( +q \\) y \\( -q \\)). Su suma algebraica interna es cero; ergo, no existen líneas de flujo residuales de la cápsula."
+            },
+            {
+                q: "[NIVEL 2] El campo eléctrico uniforme radiado por una lámina delgada, infinita y aislante con densidad superficial de carga \\( \\sigma \\), calculada a una altura \\( y \\) es:",
+                options: [ "\\( \\sigma / \\varepsilon_0 \\)", "\\( \\sigma / 2\\varepsilon_0 \\)", "\\( \\sigma / 4\\pi\\varepsilon_0 \\)", "Asintóticamente cero para \\( y > 0 \\)" ],
+                correct: 1, 
+                note: "Se modela con un cilindro gaussiano cuyas tapas perforan el plano dieléctrico. Como el flujo fluye por 2 áreas A, \\( 2EA = \\sigma A / \\varepsilon_0 \\), definiendo el campo como independiente a la altitud \\( y \\)."
+            },
+            {
+                q: "[NIVEL 1] Evalúe el campo eléctrico en el centroide de simetría exacta de un anillo no conductor delgado, cuya distribución de carga lineal positiva es uniforme a lo largo del perímetro:",
+                options: [ "Diverge al infinito", "Es matemáticamente cero", "\\( kQ / R^2 \\)", "Rotacional pero no nulo" ],
+                correct: 1, 
+                note: "El campo vectorial radiado por cualquier segmento diferencial de arco en el perímetro es cancelado por el vector de igual magnitud del arco diametralmente opuesto en el plano rotacional."
+            },
+            {
+                q: "[NIVEL 3] Inmediatamente en el exterior de la frontera geométrica de cualquier masa conductora en reposo electrostático, el vector de perturbación eléctrica \\( E \\) debe ser:",
+                options: [ "Tangencial al estrato del límite", "Nulo al igual que en el volumen interno", "Perpendicular a la placa con módulo \\( \\sigma / \\varepsilon_0 \\)", "Perpendicular a la placa con módulo \\( \\sigma / 2\\varepsilon_0 \\)" ],
+                correct: 2, 
+                note: "Toda componente paralela causaría corrientes de superficie. Siendo estrictamente normal, la integración de Gauss en un cilindro (con flujo lateral e interno nulo) deriva en \\( E = \\sigma / \\varepsilon_0 \\)."
+            },
+            {
+                q: "[NIVEL 2] Una singularidad puntual de carga \\( q \\) reposa inmóvil en el centro del espacio tridimensional de un cubo de lado \\( L \\). El flujo que atraviesa tan sólo UNA cara del prisma cúbico es:",
+                options: [ "\\( q / \\varepsilon_0 \\)", "\\( q / 6\\varepsilon_0 \\)", "\\( q / 4\\pi\\varepsilon_0 L^2 \\)", "Dependiente de la ubicación cartesiana x,y,z" ],
+                correct: 1, 
+                note: "El Teorema de Gauss declara que todo volumen encierra un flujo de \\( q / \\varepsilon_0 \\). Hallándose exactamente concéntrica, la simetría euclidiana de 6 caras garantiza que cada una escape un sexto del flujo total."
+            }
+        ];
+
+        let currentQuestionIndex = 0, score = 0, currentStreak = 0, maxStreak = 0;
+        let isAnswered = false;
+        let timeLimit = 120, timeRemaining = timeLimit, timerInterval;
+
+        function bootSystem() {
+            initAudio(); startBackgroundDrone();
+            document.getElementById('init-overlay').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false; timeRemaining = timeLimit;
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('modal-overlay').style.display = 'none';
+            
+            document.getElementById('progress-bar').style.width = `${(currentQuestionIndex / physicsData.length) * 100}%`;
+            document.getElementById('options-container').innerHTML = '';
+
+            const currentData = physicsData[currentQuestionIndex];
+            document.getElementById('question-counter').innerText = `VECTOR ${currentQuestionIndex + 1} / ${physicsData.length}`;
+            document.getElementById('question-text').innerHTML = currentData.q;
+            document.getElementById('notes-content').innerHTML = currentData.note;
+
+            currentData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn'; btn.innerHTML = opt;
+                btn.onclick = () => checkAnswer(btn, index === currentData.correct, index);
+                document.getElementById('options-container').appendChild(btn);
+            });
+
+            renderMathInElement(document.getElementById('quiz-container'), { delimiters: [ {left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false} ] });
+            iniciarTemporizador();
+        }
+
+        function iniciarTemporizador() {
+            clearInterval(timerInterval); actualizarDisplayTiempo();
+            timerInterval = setInterval(() => {
+                timeRemaining--; actualizarDisplayTiempo();
+                
+                // Vibración de alerta en los últimos 10 segundos
+                if(timeRemaining <= 10 && timeRemaining > 0 && !isAnswered) vibrar(50);
+                
+                if (timeRemaining <= 0) { clearInterval(timerInterval); checkAnswer(null, false, -1); }
+            }, 1000);
+        }
+
+        function actualizarDisplayTiempo() {
+            const timerDisplay = document.getElementById('timer-display');
+            const min = Math.floor(timeRemaining / 60), seg = timeRemaining % 60;
+            timerDisplay.innerText = `⏱️ ${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`;
+            if (timeRemaining <= 15) timerDisplay.classList.add('danger'); else timerDisplay.classList.remove('danger');
+        }
+
+        function checkAnswer(selectedBtn, isCorrect, selectedIndex) {
+            if (isAnswered) return;
+            isAnswered = true; clearInterval(timerInterval);
+
+            // Expande el universo en cada respuesta
+            expandirUniverso();
+
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+            const currentData = physicsData[currentQuestionIndex];
+
+            if(masterGain) masterGain.gain.setTargetAtTime(0.02, audioCtx.currentTime, 0.1);
+
+            if (isCorrect) {
+                if (selectedBtn) selectedBtn.classList.add('correct');
+                score++; currentStreak++; if (currentStreak > maxStreak) maxStreak = currentStreak;
+                
+                const streakDisplay = document.getElementById('streak-display');
+                streakDisplay.innerText = `🔥 SECUENCIA: ${currentStreak}`;
+                streakDisplay.style.transform = 'scale(1.2)'; setTimeout(() => streakDisplay.style.transform = 'scale(1)', 300);
+
+                playCorrectSound();
+            } else {
+                if (selectedBtn) selectedBtn.classList.add('wrong');
+                allBtns[currentData.correct].classList.add('correct');
+                
+                document.getElementById('modal-overlay').style.display = 'flex'; // Abre apunte
+                
+                currentStreak = 0; document.getElementById('streak-display').innerText = `🔥 SECUENCIA: 0`;
+                playWrongSound();
+            }
+
+            if(masterGain && audioHabilitado) {
+                setTimeout(() => masterGain.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.5), 500);
+            }
+
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < physicsData.length) loadQuestion(); else mostrarResultados();
+        }
+
+        function mostrarResultados() {
+            document.getElementById('quiz-content').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'block';
+            
+            document.getElementById('final-score-text').innerText = `${score}/${physicsData.length}`;
+            document.getElementById('final-streak').innerText = maxStreak;
+            document.getElementById('final-accuracy').innerText = `${Math.round((score / physicsData.length) * 100)}%`;
+        }
+
+        function toggleNotes() { 
+            const modal = document.getElementById('modal-overlay'); 
+            modal.style.display = (modal.style.display === 'none' || modal.style.display === '') ? 'flex' : 'none'; 
+        }
+        function toggleTheme() { document.body.classList.toggle('light-theme'); }
+        
+        function compartirResultados() {
+            const accuracy = Math.round((score / physicsData.length) * 100);
+            const texto = `🌌 *Telemetría UTN - Física II completada!*\n\n✅ Aciertos: ${score}/${physicsData.length}\n🔥 Max. Secuencia: ${maxStreak}\n🎯 Precisión: ${accuracy}%\n\n¡Preparándome para el final!\nAutoridad: Facundo Barrojo - 3815690147`;
+            navigator.clipboard.writeText(texto).then(() => alert("¡Registro copiado al portapapeles!")).catch(e => console.error(e));
+        }
+    </script>
+</body>
+</html>
