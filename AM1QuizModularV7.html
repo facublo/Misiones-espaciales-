@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UTN FRT - Laboratorio de Análisis Matemático I</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        /* --- VARIABLES --- */
+        :root[data-theme="dark"] {
+            --bg-color: #030508; --primary-accent: #00f2fe; --secondary-accent: #4facfe; 
+            --text-main: #f8fafc; --text-muted: #94a3b8; --glass-bg: rgba(10, 15, 25, 0.65); 
+            --glass-border: rgba(0, 242, 254, 0.3); --btn-bg: rgba(10, 15, 25, 0.4); 
+            --btn-hover: rgba(0, 242, 254, 0.15); --correct-bg: rgba(16, 185, 129, 0.2);
+            --correct-border: #10b981; --error-bg: rgba(239, 68, 68, 0.2);
+            --error-border: #ef4444; --math-block-bg: rgba(0, 0, 0, 0.7);
+            --grid-line: rgba(0, 242, 254, 0.05); --modal-bg: rgba(10, 15, 25, 0.98);
+            --spark-color: #fff; --spark-glow: #00f2fe;
+        }
+
+        :root[data-theme="light"] {
+            --bg-color: #e2e8f0; --primary-accent: #0369a1; --secondary-accent: #0ea5e9;
+            --text-main: #0f172a; --text-muted: #475569; --glass-bg: rgba(255, 255, 255, 0.75); 
+            --glass-border: rgba(2, 132, 199, 0.3); --btn-bg: rgba(255, 255, 255, 0.9); 
+            --btn-hover: rgba(2, 132, 199, 0.1); --correct-bg: rgba(16, 185, 129, 0.15);
+            --correct-border: #059669; --error-bg: rgba(239, 68, 68, 0.15);
+            --error-border: #dc2626; --math-block-bg: rgba(241, 245, 249, 1);
+            --grid-line: rgba(2, 132, 199, 0.08); --modal-bg: rgba(255, 255, 255, 0.98);
+            --spark-color: #fde047; --spark-glow: #eab308;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main);
+            font-family: 'Inter', sans-serif; margin: 0; padding: 0; min-height: 100vh;
+            overflow-x: hidden; position: relative; transition: background-color 0.4s ease, color 0.4s ease;
+            -webkit-font-smoothing: antialiased; 
+        }
+
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3;
+            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.8;
+        }
+        
+        .ambient-light { position: fixed; border-radius: 50%; filter: blur(150px); z-index: -2; opacity: 0.3; pointer-events: none; }
+        #light-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--primary-accent); }
+        #light-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: #8a2be2; }
+
+        .header {
+            position: fixed; top: 0; width: 100%; padding: 10px 20px; background: var(--glass-bg);
+            border-bottom: 1px solid var(--glass-border); backdrop-filter: blur(15px);
+            display: flex; justify-content: space-between; align-items: center; z-index: 50;
+        }
+        .header-title { font-weight: 700; font-size: 1.2rem; letter-spacing: 1.5px; color: var(--primary-accent); font-family: 'Rajdhani', sans-serif; text-transform: uppercase; }
+        
+        .controls { display: flex; gap: 10px; }
+        .icon-btn {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main);
+            width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .icon-btn:hover { background: var(--btn-hover); border-color: var(--primary-accent); transform: translateY(-2px); box-shadow: 0 0 15px var(--glass-border); }
+        .icon-btn.active-music { border-color: var(--correct-border); color: var(--correct-border); text-shadow: 0 0 10px var(--correct-border); }
+
+        .dashboard-layout {
+            display: flex; justify-content: center; align-items: flex-start; gap: 20px;
+            max-width: 1600px; margin: 80px auto 40px auto; padding: 0 15px;
+        }
+
+        .side-panel {
+            flex: 1; min-width: 280px; max-width: 300px; background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 16px; padding: 20px; backdrop-filter: blur(25px); 
+            display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .center-panel {
+            flex: 2; width: 100%; max-width: 800px; background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 20px; padding: 30px; backdrop-filter: blur(25px); 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative;
+        }
+
+        .panel-title { font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; color: var(--primary-accent); margin-bottom: 20px; text-transform: uppercase; text-align: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; width: 100%; font-weight: 700; letter-spacing: 1px; }
+        
+        /* --- CAPACITOR REFINADO --- */
+        .capacitor-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
+        .capacitor-body {
+            width: 100px; height: 260px; background: linear-gradient(90deg, #1e293b 0%, #334155 40%, #0f172a 100%);
+            border-radius: 8px; position: relative; overflow: hidden; border-top: 12px solid #94a3b8; border-bottom: 8px solid #94a3b8;
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5); transition: all 0.3s ease;
+        }
+
+        .capacitor-body.destroyed {
+            background: linear-gradient(90deg, #2a0505 0%, #4a1515 40%, #1a0000 100%) !important;
+            border-top-color: #551b1b !important; border-bottom-color: #3b1212 !important;
+            box-shadow: inset -10px 0 30px rgba(0,0,0,0.9), 0 0 40px rgba(239, 68, 68, 0.4) !important;
+        }
+        
+        .capacitor-body.destroyed::after {
+            content: ''; position: absolute; top:0; left:0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(255, 100, 100, 0.2) 0%, transparent 60%);
+            animation: err-flicker 0.15s infinite alternate; pointer-events: none; mix-blend-mode: screen;
+        }
+
+        @keyframes err-flicker { 0% { opacity: 0.3; } 100% { opacity: 0.8; } }
+
+        .capacitor-stripe {
+            position: absolute; right: 10px; width: 15px; height: 100%; background: linear-gradient(90deg, #e2e8f0 0%, #94a3b8 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: space-around;
+            color: #000; font-weight: bold; font-size: 1.2rem; line-height: 1; padding: 10px 0; transition: all 0.4s ease;
+        }
+        .capacitor-body.destroyed .capacitor-stripe { background: linear-gradient(90deg, #ef4444 0%, #7f1d1d 100%); color: #fff; text-shadow: 0 0 5px #fff; }
+
+        .capacitor-pins { display: flex; gap: 15px; margin-top: -2px; }
+        .pin { width: 6px; height: 30px; background: linear-gradient(90deg, #cbd5e1, #64748b); border-radius: 0 0 4px 4px; box-shadow: inset -2px 0 5px rgba(0,0,0,0.5); }
+        .pin:first-child { height: 22px; } 
+        
+        .dielectric-charge { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(0deg, rgba(0,242,254,0.3), rgba(0,242,254,0.7)); box-shadow: 0 -10px 30px rgba(0,242,254,0.5); transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1); mix-blend-mode: screen; }
+
+        .sparks-container { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 80px; height: 40px; display: none; z-index: 10; }
+        .spark { position: absolute; width: 3px; height: 20px; background: var(--spark-color); box-shadow: 0 0 15px var(--spark-glow), 0 0 30px var(--spark-color); border-radius: 5px; animation: spark-anim 0.15s infinite alternate; }
+        .spark:nth-child(1) { left: 20%; top: 10px; transform: rotate(-35deg); animation-delay: 0.1s; }
+        .spark:nth-child(2) { left: 50%; top: 0px; transform: rotate(15deg); height: 30px; animation-delay: 0.05s; }
+        .spark:nth-child(3) { left: 80%; top: 15px; transform: rotate(45deg); animation-delay: 0.2s; }
+        @keyframes spark-anim { 0% { opacity: 0; transform: scaleY(0.5) translateY(10px); } 100% { opacity: 1; transform: scaleY(1.2) translateY(0); } }
+        
+        .capacitor-breakdown { animation: breakdown-shake 0.4s ease; }
+        .capacitor-breakdown .sparks-container, .capacitor-body.destroyed + .sparks-container { display: block; }
+        @keyframes breakdown-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px) rotate(-2deg); } 40%, 80% { transform: translateX(6px) rotate(2deg); } }
+
+        .charge-text { margin-top: 15px; font-family: 'Fira Code', monospace; font-size: 1.2rem; font-weight: 700; color: var(--primary-accent); transition: color 0.3s ease; }
+        .charge-text.destroyed-text { color: var(--error-border); text-shadow: 0 0 10px var(--error-border); }
+
+        /* --- OSCILOSCOPIO --- */
+        .osc-screen { width: 100%; height: 160px; background: #010a0f; border: 2px solid #1e293b; border-radius: 8px; position: relative; overflow: hidden; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(0,242,254,0.1); }
+        .osc-screen::before { content: ''; position: absolute; top:0; left:0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0,242,254,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,242,254,0.15) 1px, transparent 1px); background-size: 20px 20px; pointer-events: none; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .control-group { width: 100%; margin-bottom: 15px; }
+        .control-label { display: flex; justify-content: space-between; font-family: 'Fira Code', monospace; font-size: 0.85rem; margin-bottom: 8px; color: var(--text-muted); }
+        input[type="range"] { width: 100%; -webkit-appearance: none; background: transparent; padding: 10px 0; }
+        input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: rgba(120,120,120,0.3); border-radius: 3px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: var(--primary-accent); cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px var(--primary-accent); }
+
+        .btn-switch { background: rgba(0,242,254,0.1); border: 1px solid var(--primary-accent); color: var(--text-main); width: 100%; padding: 12px; border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-size: 1rem; cursor: pointer; transition: all 0.2s; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-switch:hover { background: var(--primary-accent); color: #000; box-shadow: 0 0 15px var(--primary-accent); }
+
+        /* --- CUESTIONARIO --- */
+        h1 { font-family: 'Rajdhani', sans-serif; font-size: 2.2rem; margin-top:0; margin-bottom: 15px; font-weight: 700; text-transform: uppercase; border-bottom: 2px dashed var(--glass-border); padding-bottom: 15px; color: var(--primary-accent); text-shadow: 0 0 15px rgba(0, 242, 254, 0.4); text-align: center; }
+        .subtitle { color: var(--text-muted); font-size: 1.05rem; line-height: 1.5; margin-bottom: 25px; text-align: center; }
+
+        .input-field { width: 100%; padding: 15px; border-radius: 12px; background: var(--btn-bg); border: 1px solid var(--glass-border); color: var(--text-main); font-family: 'Inter', sans-serif; font-weight: 500; margin-bottom: 20px; text-align: center; font-size: 1.05rem; transition: all 0.3s ease; }
+        .input-field:focus { outline: none; border-color: var(--primary-accent); box-shadow: 0 0 15px var(--btn-hover); background: rgba(10, 15, 25, 0.7); }
+        select.input-field { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 1.15rem; cursor: pointer; padding: 12px;}
+
+        .question-header { font-size: 0.95rem; text-transform: uppercase; color: var(--primary-accent); font-weight: 700; margin-bottom: 15px; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px; display: inline-block; padding: 6px 12px; border-radius: 8px; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.2); }
+        .question-text { font-family: 'Inter', sans-serif !important; font-size: 1.25rem; line-height: 1.5; font-weight: 500; margin-bottom: 20px; }
+
+        .math-block { background: var(--math-block-bg); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 25px; border: 1px solid var(--glass-border); font-size: 1.3rem; overflow-x: auto; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
+
+        .option-btn {
+            background: var(--btn-bg); border: 1px solid var(--glass-border); color: var(--text-main);
+            padding: 15px 20px; width: 100%; text-align: left; border-radius: 12px; font-size: 1.05rem;
+            margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; 
+            font-weight: 500; font-family: 'Inter', sans-serif !important; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .option-btn > div { font-family: 'Inter', sans-serif; line-height: 1.4; }
+        .option-btn:hover:not(.disabled) { background: var(--btn-hover); border-color: var(--primary-accent); transform: translateX(5px); box-shadow: 0 5px 15px rgba(0, 242, 254, 0.15); }
+        .option-btn.correct-choice { background: var(--correct-bg); border-color: var(--correct-border); box-shadow: 0 0 15px var(--correct-bg); }
+        .option-btn.error-choice { background: var(--error-bg); border-color: var(--error-border); box-shadow: 0 0 15px var(--error-bg); }
+        .option-btn.disabled { opacity: 0.5; pointer-events: none; transform: scale(0.98); }
+
+        .option-index { color: #000; font-weight: 700; margin-right: 15px; background: var(--primary-accent); font-size: 1.05rem; width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; border-radius: 8px; flex-shrink: 0; font-family: 'Rajdhani', sans-serif !important; box-shadow: 0 0 10px rgba(0, 242, 254, 0.4); }
+
+        .feedback-area { margin-top: 20px; padding: 15px; border-radius: 12px; font-size: 1rem; line-height: 1.5; display: none; border-width: 2px; border-style: solid; font-family: 'Inter', sans-serif;}
+        
+        .btn-action { background: linear-gradient(135deg, var(--secondary-accent) 0%, var(--primary-accent) 100%); color: #000; border: none; padding: 18px 24px; border-radius: 12px; font-weight: 700; font-size: 1.1rem; cursor: pointer; letter-spacing: 1px; margin-top: 25px; width: 100%; text-transform: uppercase; font-family: 'Rajdhani', sans-serif; transition: all 0.2s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .btn-action:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0, 242, 254, 0.3); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: var(--modal-bg); border: 2px solid var(--primary-accent); padding: 30px; border-radius: 20px; max-width: 750px; width: 90%; max-height: 85vh; overflow-y: auto; color: var(--text-main); position: relative; box-shadow: 0 0 40px rgba(0, 242, 254, 0.15); font-family: 'Inter', sans-serif;}
+        .close-btn { position: absolute; top: 15px; right: 15px; background: var(--error-bg); color: var(--error-border); border: 1px solid var(--error-border); width: 35px; height: 35px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s;}
+
+        /* --- RESPONSIVE OPTIMIZADO PARA MÓVILES --- */
+        @media (max-width: 850px) {
+            .dashboard-layout { flex-direction: column; align-items: stretch; margin-top: 70px; padding: 0 10px; gap: 15px;}
+            .side-panel { width: 100%; max-width: 100%; min-width: unset; }
+            .center-panel { padding: 20px 15px; }
+            h1 { font-size: 1.8rem; }
+            .subtitle { font-size: 0.95rem; }
+            .question-text { font-size: 1.15rem; }
+            .math-block { font-size: 1.2rem; padding: 15px 10px; }
+            .option-btn { padding: 12px 15px; }
+            
+            .capacitor-wrapper { flex-direction: row; justify-content: center; gap: 20px; }
+            .capacitor-body { width: 200px; height: 50px; border-top: none; border-bottom: none; border-left: 10px solid #94a3b8; border-right: 10px solid #94a3b8; background: linear-gradient(0deg, #1e293b 0%, #334155 40%, #0f172a 100%);}
+            .capacitor-stripe { width: 100%; height: 12px; top: 8px; right: 0; flex-direction: row; padding: 0 10px;}
+            .capacitor-stripe::before, .capacitor-stripe::after { content: "-"; font-size: 1rem;}
+            .capacitor-pins { flex-direction: column; margin-top: 0; margin-left: -2px; gap: 8px; }
+            .pin { height: 6px; width: 20px; border-radius: 0 4px 4px 0;}
+            .pin:first-child { width: 15px; height: 6px; }
+            .dielectric-charge { width: 0%; height: 100%; background: linear-gradient(90deg, rgba(0,242,254,0.3), rgba(0,242,254,0.7)); transition: width 0.8s; }
+            .sparks-container { top: 0px; left: -25px; transform: rotate(90deg); }
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-light" id="light-1"></div>
+    <div class="ambient-light" id="light-2"></div>
+
+    <header class="header">
+        <div class="header-title">&lt;UTN_FRT_ELECTRICA /&gt;</div>
+        <div class="controls">
+            <button class="icon-btn" onclick="toggleBGM()" title="Música Retro" id="bgm-icon">🎵</button>
+            <button class="icon-btn" onclick="toggleNotes()" title="Ver Apuntes">📖</button>
+            <button class="icon-btn" onclick="toggleTheme()" title="Cambiar Tema" id="theme-icon">☀️</button>
+        </div>
+    </header>
+
+    <div class="modal-overlay" id="notes-modal">
+        <div class="modal-content" id="notes-content">
+            <button class="close-btn" onclick="toggleNotes()">&times;</button>
+            <h2 style="color: var(--primary-accent); margin-top:0; font-family: 'Rajdhani', sans-serif; font-size: 1.8rem;">Apuntes: Análisis Matemático I</h2>
+            <h3 style="color: var(--primary-accent); margin-top: 15px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px; font-family: 'Rajdhani', sans-serif; font-size: 1.3rem;">1. Límites y Teoremas</h3>
+            <ul style="line-height: 1.5; color: var(--text-muted); font-size: 1rem; padding-left: 20px;">
+                <li><strong style="color: var(--text-main);">Regla de L'Hôpital:</strong> Solo para $0/0$ o $\infty/\infty$.</li>
+                <li><strong style="color: var(--text-main);">Teorema de Bolzano:</strong> Si $f$ es continua en $[a, b]$ y $f(a) \cdot f(b) < 0$, existe raíz en $(a, b)$.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+        <div class="side-panel">
+            <div class="panel-title">Capacitor de Reserva</div>
+            <div class="capacitor-wrapper" id="cap-wrapper">
+                <div class="sparks-container"><div class="spark"></div><div class="spark"></div><div class="spark"></div></div>
+                <div class="capacitor-body" id="cap-body">
+                    <div class="capacitor-stripe"><span>-</span><span>-</span><span>-</span></div>
+                    <div class="dielectric-charge" id="cap-fill"></div>
+                </div>
+                <div class="capacitor-pins"><div class="pin"></div><div class="pin"></div></div>
+            </div>
+            <div class="charge-text" id="cap-text">0.0 %</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; text-align:center; font-family: 'Inter', sans-serif;">
+                Carga acumulada solo por aciertos.
+            </div>
+        </div>
+
+        <div class="center-panel" id="main-panel">
+            <div id="start-screen">
+                <h1>Simulador AM1</h1>
+                <p class="subtitle">Seleccione la unidad a evaluar e ingrese su matrícula para iniciar el entorno de pruebas.</p>
+                
+                <select id="module-selector" class="input-field" style="appearance: none; background-color: rgba(0,0,0,0.4);">
+                    <option value="0" style="color: #000;">[ Módulo 1 ] - Funciones y Dominios</option>
+                    <option value="1" style="color: #000;">[ Módulo 2 ] - Teoría de Límites</option>
+                    <option value="2" style="color: #000;">[ Módulo 3 ] - Continuidad y Asíntotas</option>
+                    <option value="3" style="color: #000;">[ Módulo 4 ] - Derivadas y Aplicaciones</option>
+                    <option value="4" style="color: #000;">[ Módulo 5 ] - Integrales y Áreas</option>
+                </select>
+
+                <input type="text" id="student-name" class="input-field" placeholder="Nombre / Matrícula" required>
+                <button class="btn-action" onclick="startQuiz()">Energizar Sistema</button>
+            </div>
+
+            <div id="quiz-screen" class="hidden">
+                <div id="q-header" class="question-header"></div>
+                <div id="q-text" class="question-text"></div>
+                <div id="q-math" class="math-block hidden"></div>
+                <div id="options-container"></div>
+                <div id="feedback-msg" class="feedback-area"></div>
+                <button id="next-btn" class="btn-action hidden" onclick="nextQuestion()">Siguiente Iteración >></button>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div class="panel-title">Telemetría de Señal</div>
+            <div class="osc-screen"><canvas id="osc-canvas"></canvas></div>
+            <button id="btn-switch-func" class="btn-switch" onclick="toggleFunction()">SENO (AC)</button>
+            
+            <div class="control-group" style="margin-top: 20px;">
+                <div class="control-label"><span>Amplitud ($A$)</span><span style="color:var(--primary-accent); font-weight:700;"><span id="val-amp">50</span> V</span></div>
+                <input type="range" id="osc-amp" min="10" max="100" value="50">
+            </div>
+            <div class="control-group">
+                <div class="control-label"><span>Frecuencia ($\omega$)</span><span style="color:var(--primary-accent); font-weight:700;"><span id="val-freq">50</span> Hz</span></div>
+                <input type="range" id="osc-freq" min="10" max="150" value="50">
+            </div>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError : false });
+    });
+
+    function toggleTheme() {
+        const html = document.documentElement; const icon = document.getElementById('theme-icon');
+        if (html.getAttribute('data-theme') === 'dark') { html.setAttribute('data-theme', 'light'); icon.innerText = '🌙'; } 
+        else { html.setAttribute('data-theme', 'dark'); icon.innerText = '☀️'; }
+    }
+
+    let notesRendered = false;
+    function toggleNotes() {
+        const modal = document.getElementById('notes-modal');
+        if (modal.style.display === 'flex') modal.style.display = 'none';
+        else { modal.style.display = 'flex'; if (!notesRendered) { try { renderMathInElement(document.getElementById('notes-content'), { delimiters: [{left: '$', right: '$', display: false}], throwOnError: false }); notesRendered = true; } catch(e) {} } }
+    }
+
+    // --- OSCILOSCOPIO OPTIMIZADO ---
+    const canvas = document.getElementById('osc-canvas'); const ctx = canvas.getContext('2d');
+    let oscTime = 0; let currentFunc = 0; 
+    const funcs = ['SENO (AC)', 'COSENO (AC)', 'EXPONENCIAL', 'LOGARITMO', 'TRIANGULAR', 'TANGENTE', 'ALGEBRAICA (x³)', 'VALOR ABSOLUTO'];
+    let oscAmp = 50; let oscFreq = 50;
+
+    document.getElementById('osc-amp').addEventListener('input', (e) => { oscAmp = parseFloat(e.target.value); document.getElementById('val-amp').innerText = oscAmp; });
+    document.getElementById('osc-freq').addEventListener('input', (e) => { oscFreq = parseFloat(e.target.value); document.getElementById('val-freq').innerText = oscFreq; });
+    function toggleFunction() { currentFunc = (currentFunc + 1) % funcs.length; document.getElementById('btn-switch-func').innerText = funcs[currentFunc]; }
+    function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    function drawOscilloscope() {
+        ctx.fillStyle = 'rgba(1, 10, 15, 0.25)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(150,150,150,0.3)'; ctx.lineWidth = 1; ctx.moveTo(0, canvas.height / 2); ctx.lineTo(canvas.width, canvas.height / 2); ctx.stroke();
+        ctx.beginPath(); ctx.strokeStyle = '#00f2fe'; ctx.lineWidth = 2.5; ctx.shadowBlur = 8; ctx.shadowColor = '#00f2fe';
+        
+        let midY = canvas.height / 2; let prevY = null;
+
+        for(let x = 0; x < canvas.width; x++) {
+            let y = midY; let normX = (x * (oscFreq/1000)); let drawLine = true;
+
+            if (currentFunc === 0) { y = midY - Math.sin(normX - oscTime) * (oscAmp * 0.6); } 
+            else if (currentFunc === 1) { y = midY - Math.cos(normX - oscTime) * (oscAmp * 0.6); }
+            else if (currentFunc === 2) { let sweepX = ((x * oscFreq * 0.02) - oscTime * 10) % 10; if(sweepX < 0) sweepX += 10; y = midY + (oscAmp*0.5) - Math.exp(sweepX * 0.5) * (oscAmp * 0.01); }
+            else if (currentFunc === 3) { let sweepX = ((x * oscFreq * 0.02) - oscTime * 10) % 15; if(sweepX < 0) sweepX += 15; y = midY + (oscAmp*0.5) - Math.log(sweepX + 1) * (oscAmp * 0.3); }
+            else if (currentFunc === 4) { let period = Math.PI * 2; let val = (normX - oscTime*2) % period; if (val < 0) val += period; let tri = Math.abs(val / period * 4 - 2) - 1; y = midY - tri * (oscAmp * 0.6); }
+            else if (currentFunc === 5) { let tanVal = Math.tan(normX - oscTime); if (Math.abs(tanVal) > 6) drawLine = false; else y = midY - tanVal * (oscAmp * 0.25); }
+            else if (currentFunc === 6) { let sweepX = ((x * oscFreq * 0.02) - oscTime * 10) % 20; if(sweepX < 0) sweepX += 20; let shiftedX = sweepX - 10; y = midY - (Math.pow(shiftedX, 3) * 0.05) * (oscAmp * 0.05); }
+            else if (currentFunc === 7) { let sweepX = ((x * oscFreq * 0.02) - oscTime * 10) % 20; if(sweepX < 0) sweepX += 20; let shiftedX = sweepX - 10; y = midY - (Math.abs(shiftedX) * 2 - 10) * (oscAmp * 0.1); }
+
+            if(x === 0 || !drawLine) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            prevY = y;
+        }
+        ctx.stroke(); ctx.shadowBlur = 0; oscTime += 0.05; requestAnimationFrame(drawOscilloscope);
+    }
+    drawOscilloscope();
+
+    // --- LÓGICA DE AUDIO ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx; let bgmInterval; let isBgmPlaying = false; let noteIndex = 0;
+    const melody = [220.00, 261.63, 329.63, 440.00, 329.63, 261.63, 196.00, 246.94, 293.66, 392.00, 293.66, 246.94]; 
+
+    function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+
+    function toggleBGM() {
+        const icon = document.getElementById('bgm-icon');
+        if (isBgmPlaying) { clearInterval(bgmInterval); isBgmPlaying = false; icon.classList.remove('active-music'); } 
+        else {
+            initAudio(); isBgmPlaying = true; icon.classList.add('active-music');
+            bgmInterval = setInterval(() => {
+                if(audioCtx.state === 'suspended') return;
+                let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+                osc.type = 'square'; osc.frequency.value = melody[noteIndex];
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                gain.gain.setValueAtTime(0.015, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+                noteIndex = (noteIndex + 1) % melody.length;
+            }, 180); 
+        }
+    }
+
+    function playSound(type) {
+        if (!audioCtx) return; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        if (type === 'correct') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        } else {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, audioCtx.currentTime); osc.frequency.setValueAtTime(40, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        }
+    }
+
+    // --- BASE DE DATOS ACTUALIZADA CON LAS 100 PREGUNTAS ---
+    const allModules = [
+        [ // MÓDULO 0: FUNCIONES (20 Preguntas)
+            { text: "(Fácil) Según el texto, ¿cuál es el dominio de la función racional $f(x) = \\frac{x^2+1}{x^2-4}$?", math: null, options: ["$\\mathbb{R}$", "$\\mathbb{R} - \\{2\\}$", "$\\mathbb{R} - \\{-2, 2\\}$", "$(-2, 2)$"], correctIndex: 2, feedback: "El denominador no puede ser cero. $x^2 - 4 = 0 \\implies x = \\pm 2$. Por lo tanto, el dominio son todos los reales excepto 2 y -2." },
+            { text: "(Fácil) Dada la función $f(x) = \\sqrt{9 - x}$, ¿cuál es su dominio natural?", math: null, options: ["$(-\\infty, 9]$", "$[9, \\infty)$", "$(9, \\infty)$", "$(0, 9]$"], correctIndex: 0, feedback: "El radicando debe ser mayor o igual a cero: $9 - x \\ge 0 \\implies 9 \\ge x$, es decir, $x \\in (-\\infty, 9]$." },
+            { text: "(Fácil) Si $f(x) = 3x^2 - x + 2$, ¿cuál es el valor de $f(-2)$?", math: null, options: ["$12$", "$16$", "$8$", "$-12$"], correctIndex: 1, feedback: "Se reemplaza la variable: $f(-2) = 3(-2)^2 - (-2) + 2 = 3(4) + 2 + 2 = 12 + 2 + 2 = 16$." },
+            { text: "(Fácil) ¿Qué tipo de paridad tiene la función $f(x) = x^4 + x^2$?", math: null, options: ["Es una función impar.", "Es una función par.", "Es par e impar simultáneamente.", "No tiene paridad."], correctIndex: 1, feedback: "Se evalúa la función en su negativo: $f(-x) = (-x)^4 + (-x)^2 = x^4 + x^2 = f(x)$. Al ser $f(-x) = f(x)$, la función es par." },
+            { text: "(Fácil) Si una función $f$ es inyectiva (uno a uno) y $f(4) = 7$, ¿cuál es el valor de $f^{-1}(7)$?", math: null, options: ["$1/7$", "$1/4$", "$4$", "$-7$"], correctIndex: 2, feedback: "Por la definición de función inversa, si $f(x) = y$, entonces $f^{-1}(y) = x$. Por lo tanto, $f^{-1}(7) = 4$." },
+            { text: "(Fácil) La función valor absoluto $f(x) = |x|$ puede definirse por ramas como:", math: null, options: ["$f(x) = x$ para todo $x$", "$f(x) = x$ si $x>0$, y $f(x) = -x$ si $x<0$", "$f(x) = x$ si $x \\ge 0$, y $f(x) = -x$ si $x < 0$", "Ninguna de las anteriores"], correctIndex: 2, feedback: "La definición formal del valor absoluto asigna el mismo valor si el número es no negativo, y su opuesto si es negativo." },
+            { text: "(Fácil) La función inversa de la función exponencial natural $f(x) = e^x$ es:", math: null, options: ["$f^{-1}(x) = 1/e^x$", "$f^{-1}(x) = \\ln(x)$", "$f^{-1}(x) = \\log_{10}(x)$", "$f^{-1}(x) = x^e$"], correctIndex: 1, feedback: "La función logaritmo natural, $\\ln(x)$, es por definición la función inversa de la exponencial natural $e^x$." },
+            { text: "(Intermedio) Si $f(x) = \\sqrt{x}$ y $g(x) = 2x - 3$, ¿cuál es el dominio de la función compuesta $(f \\circ g)(x)$?", math: null, options: ["$[3/2, \\infty)$", "$(3/2, \\infty)$", "$[0, \\infty)$", "$\\mathbb{R}$"], correctIndex: 0, feedback: "La composición es $f(g(x)) = \\sqrt{2x - 3}$. Para que la raíz cuadrada exista en los reales, $2x - 3 \\ge 0 \\implies x \\ge 3/2$." },
+            { text: "(Intermedio) ¿Cuál es la imagen (o rango) de la función cuadrática $f(x) = 4 - x^2$?", math: null, options: ["$\\mathbb{R}$", "$[4, \\infty)$", "$( -\\infty, 4 ]$", "$(-2, 2)$"], correctIndex: 2, feedback: "Como $x^2 \\ge 0$ para todo $x$, entonces $-x^2 \\le 0$. Al sumar 4 en ambos lados, queda $4 - x^2 \\le 4$. Por lo tanto, la imagen es $(-\\infty, 4]$." },
+            { text: "(Intermedio) ¿Cuál es la solución de la ecuación logarítmica $\\ln(x-1) = 2$?", math: null, options: ["$x = e^2 - 1$", "$x = e^2 + 1$", "$x = 3$", "$x = 10^2 + 1$"], correctIndex: 1, feedback: "Aplicando la función exponencial a ambos lados: $e^{\\ln(x-1)} = e^2 \\implies x - 1 = e^2 \\implies x = e^2 + 1$." },
+            { text: "(Intermedio) Si se conoce la gráfica de $y = f(x)$, la gráfica de $y = f(x+2)$ se obtiene:", math: null, options: ["Desplazando la gráfica 2 unidades hacia arriba.", "Desplazando la gráfica 2 unidades hacia abajo.", "Desplazando la gráfica 2 unidades a la derecha.", "Desplazando la gráfica 2 unidades a la izquierda."], correctIndex: 3, feedback: "Un cambio de la variable independiente de $x$ a $x+c$ con $c>0$ produce un desplazamiento horizontal hacia la izquierda en $c$ unidades." },
+            { text: "(Intermedio) En base a la teoría trigonométrica, ¿cuál es el dominio de $f(x) = \\tan(x)$?", math: null, options: ["$\\mathbb{R}$", "$[-1, 1]$", "$\\mathbb{R} - \\{\\frac{\\pi}{2} + k\\pi, k \\in \\mathbb{Z}\\} $", "$\\mathbb{R} - \\{k\\pi, k \\in \\mathbb{Z}\\} $"], correctIndex: 2, feedback: "La tangente se define como $\\frac{\\sin(x)}{\\cos(x)}$. No está definida en los puntos donde $\\cos(x) = 0$, es decir, en los múltiplos impares de $\\pi/2$." },
+            { text: "(Intermedio) Halle la función inversa $f^{-1}(x)$ de la función homográfica $f(x) = \\frac{2x - 1}{x + 3}$.", math: null, options: ["$\\frac{x + 3}{2x - 1}$", "$\\frac{-3x - 1}{x - 2}$", "$\\frac{3x + 1}{2 - x}$", "Las opciones B y C son equivalentes y correctas algebraicamente."], correctIndex: 3, feedback: "Despejando y multiplicando numerador y denominador por -1 obtenemos $\\frac{3y+1}{2-y}$ o su equivalente $\\frac{-3y - 1}{y - 2}$." },
+            { text: "(Intermedio) Si $f(x) = x^2$ y $g(x) = \\cos(x)$, la función compuesta $(f \\circ g)(x)$ es:", math: null, options: ["$\\cos(x^2)$", "$\\cos^2(x)$", "$x^2\\cos(x)$", "$2\\cos(x)$"], correctIndex: 1, feedback: "La composición de funciones se obtiene evaluando $g$ dentro de $f$: $(f \\circ g)(x) = f(g(x)) = (\\cos(x))^2 = \\cos^2(x)$." },
+            { text: "(Difícil) Determine el dominio de la función trigonométrica inversa $f(x) = \\arcsin(3x - 1)$.", math: null, options: ["$[-1, 1]$", "$[0, 2/3]$", "$[0, 1/3]$", "$[-1/3, 1]$"], correctIndex: 1, feedback: "La función arcoseno está definida solo en el intervalo $[-1, 1]$. Por tanto, $-1 \\le 3x - 1 \\le 1 \\implies 0 \\le 3x \\le 2 \\implies 0 \\le x \\le 2/3$." },
+            { text: "(Difícil) La función seno hiperbólico se define como $\\sinh(x) = \\frac{e^x - e^{-x}}{2}$. ¿Qué paridad tiene?", math: null, options: ["Es par.", "Es impar.", "No tiene paridad.", "Es constante."], correctIndex: 1, feedback: "Al evaluar en negativo obtenemos $-\\left( \\frac{e^x - e^{-x}}{2} \\right) = -\\sinh(x)$. Por tanto, es impar." },
+            { text: "(Difícil) Calcule el dominio estricto de la función compuesta $h(x) = \\ln(\\sqrt{x^2 - 4})$.", math: null, options: ["$(-\\infty, -2] \\cup [2, \\infty)$", "$(-2, 2)$", "$( -\\infty, -2 ) \\cup ( 2, \\infty )$", "$(2, \\infty)$"], correctIndex: 2, feedback: "La raíz exige $x^2 - 4 \\ge 0$. El logaritmo exige que su argumento sea $> 0$. Resulta $x^2 - 4 > 0 \\implies |x| > 2$." },
+            { text: "(Difícil) ¿Cuál de las siguientes funciones es inyectiva (uno a uno) en todo su dominio natural?", math: null, options: ["$f(x) = x^2 - 2x + 1$", "$f(x) = \\sin(x)$", "$f(x) = e^{x^2}$", "$f(x) = \\ln(x)$"], correctIndex: 3, feedback: "La función logaritmo natural es estrictamente creciente en $(0, \\infty)$, por lo tanto, pasa la prueba de la recta horizontal y es inyectiva." },
+            { text: "(Difícil) Dada la función por ramas: $f(x) = 2x+1$ si $x \\le 0$, y $f(x) = x^2 - 3$ si $x > 0$. ¿Cuáles son las raíces de $f$?", math: null, options: ["$-1/2$ y $\\sqrt{3}$", "Solo $\\sqrt{3}$", "$-1/2$, $\\sqrt{3}$ y $-\\sqrt{3}$", "No tiene raíces."], correctIndex: 0, feedback: "Para $x \\le 0$, $2x+1 = 0 \\implies x = -1/2$. Para $x > 0$, $x^2 - 3 = 0 \\implies x = \\pm\\sqrt{3}$. Solo $\\sqrt{3}$ es válida en su rama." },
+            { text: "(Difícil) ¿Cuál es el dominio de la función $f(x) = \\ln\\left(\\frac{x}{x-1}\\right)$?", math: null, options: ["$(0, 1)$", "$(1, \\infty)$", "$( -\\infty, 0 ) \\cup ( 1, \\infty )$", "$\\mathbb{R} - \\{1\\}$"], correctIndex: 2, feedback: "El argumento del logaritmo debe ser $> 0$. Analizando signos, la fracción es positiva si $x > 1$, y también si $x < 0$." }
+        ],
+        [ // MÓDULO 1: TEORÍA DE LÍMITES (20 Preguntas)
+            { text: "(Fácil) Calcule por evaluación directa el siguiente límite:", math: "$$\\lim_{x \\to 2} (3x^2 - 5x + 4)$$", options: ["$4$", "$6$", "$8$", "$0$"], correctIndex: 1, feedback: "Al ser una función polinómica, basta con sustituir la variable: $3(2)^2 - 5(2) + 4 = 12 - 10 + 4 = 6$." },
+            { text: "(Fácil) Para que el límite de una función $f(x)$ exista en un punto $x = a$, es ESTRICTAMENTE necesario que:", math: null, options: ["La función esté definida en $x = a$ ($f(a)$ exista).", "Los límites laterales existan y sean iguales.", "La función sea continua en $x = a$.", "El límite sea distinto de cero."], correctIndex: 1, feedback: "Según el teorema de existencia del límite, $\\lim_{x \\to a} f(x) = L$ si y solo si $\\lim_{x \\to a^-} f(x) = L$ y $\\lim_{x \\to a^+} f(x) = L$." },
+            { text: "(Fácil) Resuelva la siguiente indeterminación del tipo $0/0$:", math: "$$\\lim_{x \\to 3} \\frac{x^2 - 9}{x - 3}$$", options: ["$0$", "$3$", "$6$", "$\\infty$"], correctIndex: 2, feedback: "Factorizando el numerador como diferencia de cuadrados: $\\frac{(x-3)(x+3)}{x-3}$. Simplificando queda $\\lim_{x \\to 3} (x+3) = 6$." },
+            { text: "(Fácil) Evalúe el límite al infinito para cocientes de polinomios del mismo grado:", math: "$$\\lim_{x \\to \\infty} \\frac{4x^2 - x}{2x^2 + 1}$$", options: ["$\\infty$", "$0$", "$2$", "$4$"], correctIndex: 2, feedback: "Cuando los grados son iguales, el límite al infinito es el cociente de los coeficientes principales: $4/2 = 2$." },
+            { text: "(Fácil) Según las propiedades de los límites, si $\\lim_{x \\to a} f(x) = 5$ y $\\lim_{x \\to a} g(x) = -2$, ¿cuál es el valor de $\\lim_{x \\to a} [f(x) \\cdot g(x)]$?", math: null, options: ["$3$", "$7$", "$-10$", "No se puede determinar."], correctIndex: 2, feedback: "El límite de un producto es el producto de los límites: $5 \\cdot (-2) = -10$." },
+            { text: "(Fácil) Determine el valor del límite de una constante:", math: "$$\\lim_{x \\to 100} \\pi$$", options: ["$100$", "$100\\pi$", "$\\pi$", "$0$"], correctIndex: 2, feedback: "El límite de una constante es la constante misma, independientemente hacia dónde tienda $x$." },
+            { text: "(Intermedio) Resuelva la indeterminación factorizando el trinomio:", math: "$$\\lim_{x \\to 1} \\frac{x^2 + 2x - 3}{x - 1}$$", options: ["$2$", "$4$", "$0$", "$-3$"], correctIndex: 1, feedback: "Las raíces del numerador son 1 y -3. Factorizado queda $\\frac{(x-1)(x+3)}{x-1}$. Simplificando evaluamos $\\lim_{x \\to 1} (x+3) = 4$." },
+            { text: "(Intermedio) Resuelva usando el límite trigonométrico notable fundamental:", math: "$$\\lim_{x \\to 0} \\frac{\\sin(4x)}{2x}$$", options: ["$2$", "$4$", "$1/2$", "$0$"], correctIndex: 0, feedback: "Por la propiedad del límite notable, el resultado directo es $4/2 = 2$." },
+            { text: "(Intermedio) Salve la indeterminación irracional multiplicando por el conjugado:", math: "$$\\lim_{x \\to 9} \\frac{\\sqrt{x} - 3}{x - 9}$$", options: ["$1/3$", "$1/6$", "$0$", "$\\infty$"], correctIndex: 1, feedback: "Multiplicando y dividiendo por $(\\sqrt{x} + 3)$, el numerador queda $x-9$. Simplificando resulta $\\lim_{x \\to 9} \\frac{1}{\\sqrt{x}+3} = 1/6$." },
+            { text: "(Intermedio) Evalúe el siguiente límite en el infinito donde el grado del numerador es mayor:", math: "$$\\lim_{x \\to -\\infty} \\frac{x^3 + 2}{x^2 - 5x}$$", options: ["$0$", "$\\infty$", "$-\\infty$", "$1$"], correctIndex: 2, feedback: "El término dominante es $x^3 / x^2 = x$. Al evaluar en $-\\infty$, el límite tiende a $-\\infty$." },
+            { text: "(Intermedio) Aplicando el límite notable que define al número $e$:", math: "$$\\lim_{x \\to \\infty} \\left(1 + \\frac{1}{x}\\right)^{3x}$$", options: ["$e$", "$e^3$", "$3e$", "$\\infty$"], correctIndex: 1, feedback: "Por las propiedades de potencias de los límites exponenciales, la constante en el exponente eleva al número $e$. El resultado es $e^3$." },
+            { text: "(Intermedio) Halle el límite lateral que determina la asíntota vertical:", math: "$$\\lim_{x \\to 2^+} \\frac{5}{x - 2}$$", options: ["$0$", "$-\\infty$", "$+\\infty$", "$5$"], correctIndex: 2, feedback: "Numerador es positivo (5). El denominador tiende a un 'cero positivo'. Positivo sobre positivo da $+\\infty$." },
+            { text: "(Intermedio) Dada la función por ramas $f(x) = x^2$ si $x < 1$, y $f(x) = 3$ si $x > 1$. Calcule $\\lim_{x \\to 1} f(x)$.", math: null, options: ["$1$", "$3$", "$2$", "No existe."], correctIndex: 3, feedback: "El límite lateral por la izquierda es 1. El lateral por la derecha es 3. Como son diferentes, el límite global no existe." },
+            { text: "(Difícil) Analice el límite en un punto anguloso con valor absoluto:", math: "$$\\lim_{x \\to 0} \\frac{|x|}{x}$$", options: ["$1$", "$-1$", "$0$", "No existe."], correctIndex: 3, feedback: "Por derecha da 1, por izquierda da -1. Como los laterales no coinciden, no existe." },
+            { text: "(Difícil) Aplicando el Teorema del Sándwich (o compresión), halle:", math: "$$\\lim_{x \\to 0} x^2 \\cdot \\sin\\left(\\frac{1}{x}\\right)$$", options: ["$1$", "$\\infty$", "$0$", "No existe."], correctIndex: 2, feedback: "El producto de una función acotada (seno) por una que tiende a cero ($x^2$) es igual a 0." },
+            { text: "(Difícil) Resuelva la indeterminación $\\infty - \\infty$:", math: "$$\\lim_{x \\to \\infty} (\\sqrt{x^2 + 4x} - x)$$", options: ["$0$", "$2$", "$4$", "$\\infty$"], correctIndex: 1, feedback: "Se racionaliza multiplicando por el conjugado. El numerador queda $4x$, y dividiendo todo por $x$ se obtiene $4/2 = 2$." },
+            { text: "(Difícil) Identifique el límite trigonométrico complejo:", math: "$$\\lim_{x \\to 0} \\frac{1 - \\cos(x)}{x^2}$$", options: ["$0$", "$1$", "$1/2$", "$-1$"], correctIndex: 2, feedback: "Multiplicando y dividiendo por $(1+\\cos(x))$ o usando L'Hôpital dos veces se obtiene $1/2$." },
+            { text: "(Difícil) Variante fundamental del límite exponencial $1^\\infty$:", math: "$$\\lim_{x \\to 0} (1 + 2x)^{\\frac{1}{x}}$$", options: ["$e$", "$e^2$", "$1$", "$\\infty$"], correctIndex: 1, feedback: "Se resuelve con la estructura de Euler: $e^{\\lim_{x \\to 0} 2x \\cdot (1/x)} = e^2$." },
+            { text: "(Difícil) Para hallar la pendiente '$m$' de una Asíntota Oblicua ($y = mx + b$) de $f(x)$ cuando $x \\to \\infty$, se debe calcular:", math: null, options: ["$\\lim_{x \\to \\infty} f(x)$", "$\\lim_{x \\to \\infty} \\frac{f(x)}{x}$", "$\\lim_{x \\to \\infty} [f(x) - x]$", "$\\lim_{x \\to \\infty} f'(x)$"], correctIndex: 1, feedback: "La fórmula teórica indica que la pendiente se halla evaluando el límite en el infinito del cociente entre la función y $x$." },
+            { text: "(Difícil) Evalúe el límite de la composición trigonométrica:", math: "$$\\lim_{x \\to \\infty} \\arctan\\left(\\frac{x^2 + 1}{x + 1}\\right)$$", options: ["$0$", "$\\pi/2$", "$\\pi/4$", "$\\infty$"], correctIndex: 1, feedback: "El argumento tiende a $+\\infty$. El arco cuya tangente es $+\\infty$ es $\\pi/2$." }
+        ],
+        [ // MÓDULO 2: CONTINUIDAD Y ASÍNTOTAS (20 Preguntas)
+            { text: "(Fácil) Para que una función $f(x)$ sea continua en un punto $x = a$, se deben cumplir tres condiciones. ¿Cuál de las siguientes NO es una de ellas?", math: null, options: ["$f(a)$ debe estar definida.", "$\\lim_{x \\to a} f(x)$ debe existir.", "$\\lim_{x \\to a} f(x)$ debe ser igual a $f(a)$.", "$f(a)$ debe ser igual a cero."], correctIndex: 3, feedback: "El valor de la función en el punto no necesita ser cero, solo coincidir con el límite." },
+            { text: "(Fácil) ¿En qué conjunto es continua la función polinómica $f(x) = 2x^3 - 5x^2 + x - 7$?", math: null, options: ["$(0, \\infty)$", "$\\mathbb{R} - \\{0\\}$", "$\\mathbb{R}$", "$[-7, \\infty)$"], correctIndex: 2, feedback: "Por teorema, todos los polinomios son continuos en todo el conjunto de los números reales." },
+            { text: "(Fácil) Si $\\lim_{x \\to a} f(x) = \\pm \\infty$, entonces la recta $x = a$ se denomina:", math: null, options: ["Asíntota Horizontal.", "Asíntota Vertical.", "Asíntota Oblicua.", "Punto de Inflexión."], correctIndex: 1, feedback: "La función crece o decrece sin límite cuando $x$ se acerca a un valor finito $a$." },
+            { text: "(Fácil) Si $\\lim_{x \\to \\infty} f(x) = L$ (donde $L$ es un número real), entonces la recta $y = L$ se denomina:", math: null, options: ["Asíntota Horizontal.", "Asíntota Vertical.", "Asíntota Oblicua.", "Raíz de la función."], correctIndex: 0, feedback: "Si la curva se estabiliza en un valor $L$ hacia el infinito, esa recta es su asíntota horizontal." },
+            { text: "(Fácil) ¿Qué tipo de discontinuidad presenta $f(x) = \\frac{x^2 - 4}{x - 2}$ en $x = 2$?", math: null, options: ["Salto Finito.", "Salto Infinito.", "Esencial.", "Evitable (Punto vacío)."], correctIndex: 3, feedback: "El límite existe y vale 4, pero $f(2)$ no está definida. Al existir el límite, es evitable." },
+            { text: "(Fácil) Según el Teorema del Valor Intermedio (Bolzano), si $f$ es continua en $[a, b]$, $f(a) = -3$ y $f(b) = 4$, entonces:", math: null, options: ["La función es siempre creciente.", "Existe al menos un $c \\in (a,b)$ tal que $f(c) = 0$.", "La función no tiene asíntotas.", "El límite no existe."], correctIndex: 1, feedback: "Si pasa de negativo a positivo de forma continua, debe cruzar el eje X al menos una vez." },
+            { text: "(Medio) Encuentre la asíntota vertical de la función homográfica $f(x) = \\frac{3x + 1}{2x - 4}$.", math: null, options: ["$x = 2$", "$y = 3/2$", "$x = 4$", "$x = -1/3$"], correctIndex: 0, feedback: "La asíntota vertical se encuentra donde el denominador se hace cero: $2x - 4 = 0 \\implies x = 2$." },
+            { text: "(Medio) Encuentre la asíntota horizontal de la misma función $f(x) = \\frac{3x + 1}{2x - 4}$.", math: null, options: ["$y = 0$", "$y = 3/2$", "$y = 2$", "No tiene."], correctIndex: 1, feedback: "Al tender a infinito, dividimos los coeficientes principales: $3/2$." },
+            { text: "(Medio) Analice la discontinuidad de la función Signo: $f(x) = \\frac{|x|}{x}$ en $x = 0$.", math: null, options: ["Evitable.", "Salto Finito.", "Salto Infinito.", "Continua."], correctIndex: 1, feedback: "El límite por derecha es 1, por izquierda es -1. Hay un 'salto' numérico en la gráfica." },
+            { text: "(Medio) Determine el valor de $k$ para que la función sea continua en $x=0$: $f(x) = \\frac{\\sin(3x)}{x}$ si $x \\neq 0$, y $f(0) = k$.", math: null, options: ["$0$", "$1$", "$3$", "$1/3$"], correctIndex: 2, feedback: "Calculamos el límite en $x=0$, que vale 3. Para que sea continua, $f(0)$ debe ser igual a 3." },
+            { text: "(Medio) ¿Dónde es continua la función $f(x) = \\sqrt{x - 5}$?", math: null, options: ["$(-\\infty, 5]$", "$(5, \\infty)$", "$[5, \\infty)$", "$\\mathbb{R}$"], correctIndex: 2, feedback: "Es continua en todo su dominio, es decir, en el intervalo cerrado $[5, \\infty)$." },
+            { text: "(Medio) Analice las asíntotas de la función exponencial $f(x) = e^{-x}$.", math: null, options: ["A.V. en $x=0$.", "A.H. en $y=0$ solo cuando $x \\to \\infty$.", "A.H. en $y=0$ solo cuando $x \\to -\\infty$.", "No tiene asíntotas."], correctIndex: 1, feedback: "Cuando $x \\to \\infty$, $e^{-\\infty} \\to 0$. Solo tiene asíntota horizontal hacia la derecha." },
+            { text: "(Medio) Analice las asíntotas de la función logarítmica $f(x) = \\ln(x)$.", math: null, options: ["A.H. en $y=0$.", "A.V. en $x=0$ por la derecha.", "A. Oblicua en $y=x$.", "No tiene."], correctIndex: 1, feedback: "El límite de $\\ln(x)$ cuando $x \\to 0^+$ es $-\\infty$, lo que define una asíntota vertical." },
+            { text: "(Difícil) Determine la asíntota oblicua de la función racional $f(x) = \\frac{x^2 + 2x + 1}{x - 1}$.", math: null, options: ["$y = x + 3$", "$y = x - 1$", "$y = x + 2$", "No tiene asíntota oblicua."], correctIndex: 0, feedback: "Se efectúa la división polinómica, dando como cociente la recta $y = x+3$." },
+            { text: "(Difícil) Halle las asíntotas horizontales de $f(x) = \\frac{\\sqrt{4x^2 + 1}}{x - 2}$.", math: null, options: ["$y = 2$ únicamente.", "$y = 4$ y $y = -4$.", "$y = 2$ y $y = -2$.", "No tiene asíntotas horizontales."], correctIndex: 2, feedback: "Al tender a $+\\infty$ da $y=2$. Al tender a $-\\infty$, la raíz devuelve un valor positivo dividiendo un negativo, dando $y=-2$." },
+            { text: "(Difícil) Analice la continuidad de $f(x) = x \\cdot \\sin\\left(\\frac{1}{x}\\right)$ en $x = 0$, asumiendo que $f(0) = 0$.", math: null, options: ["Discontinuidad Evitable.", "Discontinuidad de Salto.", "Discontinuidad Esencial.", "Es continua."], correctIndex: 3, feedback: "Por Sándwich, el límite es 0. Como el límite es igual a $f(0)$, la función es continua." },
+            { text: "(Difícil) Determine la constante '$c$' para que $f(x)$ sea continua: $f(x) = cx^2 + 2x$ si $x < 2$, y $f(x) = x^3 - cx$ si $x \\ge 2$.", math: null, options: ["$c = 2/3$", "$c = 4/5$", "$c = 1$", "$c = 0$"], correctIndex: 0, feedback: "Igualando límites laterales: $c(4) + 4 = 8 - 2c \\implies 6c = 4 \\implies c = 2/3$." },
+            { text: "(Difícil) ¿Qué función posee una asíntota horizontal en $y=0$ pero la cruza infinitas veces?", math: null, options: ["$f(x) = e^{-x}$", "$f(x) = \\frac{1}{x}$", "$f(x) = \\frac{\\sin(x)}{x}$", "$f(x) = \\arctan(x)$"], correctIndex: 2, feedback: "Se amortigua hacia 0 pero la oscilación del seno hace que cruce el eje X periódicamente." },
+            { text: "(Difícil) ¿Qué tipo de discontinuidad tiene $f(x) = e^{1/x}$ en $x = 0$?", math: null, options: ["Evitable.", "Salto Finito.", "Esencial (Salto Infinito unilateral).", "Continua."], correctIndex: 2, feedback: "Si $x \\to 0^+$, $e^{1/x} \\to \\infty$. Al haber un infinito unilateral, es discontinuidad esencial." },
+            { text: "(Difícil) Si una función racional tiene un grado mayor en el numerador que en el denominador, entonces:", math: null, options: ["Siempre tiene Asíntota Horizontal.", "No puede tener Asíntota Oblicua.", "Si el grado difiere exactamente en 1, tiene Asíntota Oblicua.", "Es continua."], correctIndex: 2, feedback: "Si el grado del numerador es mayor exactamente por 1, la división arroja una recta oblicua." }
+        ],
+        [ // MÓDULO 3: DERIVADAS Y APLICACIONES (20 Preguntas)
+            { text: "(Fácil) La derivada de una función $f(x)$ en un punto $x=a$ representa geométricamente:", math: null, options: ["El área bajo la curva en ese punto.", "La pendiente de la recta secante.", "La pendiente de la recta tangente a la curva en ese punto.", "El valor máximo de la función."], correctIndex: 2, feedback: "La derivada evaluada en un punto coincide con la pendiente de la recta tangente." },
+            { text: "(Fácil) Según las reglas de derivación, ¿cuál es la derivada de $f(x) = 5x^3 - 2x + 7$?", math: null, options: ["$15x^2 - 2x$", "$15x^2 - 2$", "$5x^2 - 2$", "$15x^3 - 2$"], correctIndex: 1, feedback: "Derivada de $x^n$ es $nx^{n-1}$. La derivada de una constante es 0." },
+            { text: "(Fácil) ¿Cuál es la derivada de la función exponencial natural $f(x) = e^x$?", math: null, options: ["$x e^{x-1}$", "$e^x$", "$\\ln(x)$", "$1/x$"], correctIndex: 1, feedback: "La función exponencial natural es la única función que es su propia derivada." },
+            { text: "(Fácil) Si $f(x) = \\sin(x)$, entonces su derivada $f'(x)$ es:", math: null, options: ["$\\cos(x)$", "$-\\cos(x)$", "$-\\sin(x)$", "$\\sec^2(x)$"], correctIndex: 0, feedback: "Por definición y límites, la derivada del seno es el coseno." },
+            { text: "(Fácil) Para encontrar los puntos críticos de una función, se debe resolver la ecuación:", math: null, options: ["$f(x) = 0$", "$f''(x) = 0$", "$f'(x) = 0$", "$f'(x) = 1$"], correctIndex: 2, feedback: "Los puntos críticos se encuentran donde la recta tangente es horizontal ($f'(x) = 0$)." },
+            { text: "(Medio) Aplique la regla del producto para derivar $f(x) = x^2 \\ln(x)$.", math: null, options: ["$2x \\ln(x) + x$", "$2x / x$", "$2x \\ln(x) + x^2$", "$x \\ln(x) + 2x$"], correctIndex: 0, feedback: "$(uv)' = u'v + uv' = (2x)(\\ln(x)) + (x^2)(1/x) = 2x \\ln(x) + x$." },
+            { text: "(Medio) Aplique la regla del cociente para derivar $f(x) = \\frac{\\sin(x)}{x}$.", math: null, options: ["$\\frac{x\\cos(x) - \\sin(x)}{x^2}$", "$\\frac{\\cos(x)}{1}$", "$\\frac{\\sin(x) - x\\cos(x)}{x^2}$", "$\\frac{x\\cos(x) + \\sin(x)}{x^2}$"], correctIndex: 0, feedback: "Regla: $(u'v - uv')/v^2 = (\\cos(x) \\cdot x - \\sin(x) \\cdot 1) / x^2$." },
+            { text: "(Medio) Usando la Regla de la Cadena, derive $y = \\cos(3x)$.", math: null, options: ["$\\sin(3x)$", "$-\\sin(3x)$", "$-3\\sin(3x)$", "$3\\sin(3x)$"], correctIndex: 2, feedback: "Derivada de la externa evaluada en la interna por la derivada de la interna: $-\\sin(3x) \\cdot 3$." },
+            { text: "(Medio) Calcule la derivada de la función $f(x) = \\ln(x^2 + 1)$.", math: null, options: ["$\\frac{1}{x^2+1}$", "$\\frac{2x}{x^2+1}$", "$2x \\ln(x^2+1)$", "$\\frac{1}{2x}$"], correctIndex: 1, feedback: "Por regla de la cadena para logaritmos, es $u'/u$, siendo $u = x^2+1$." },
+            { text: "(Medio) ¿Qué nos indica el signo de la segunda derivada, $f''(x)$?", math: null, options: ["Si es creciente o decreciente.", "Las asíntotas.", "La concavidad (hacia arriba o hacia abajo).", "Puntos de intersección."], correctIndex: 2, feedback: "Si $f''(x) > 0$, es cóncava hacia arriba. Si $f''(x) < 0$, es cóncava hacia abajo." },
+            { text: "(Medio) Evaluando $\\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}$ para $f(x) = x^2$, se obtiene:", math: null, options: ["$x$", "$2x$", "$x^2$", "$h$"], correctIndex: 1, feedback: "El límite del cociente incremental se simplifica a $2x+h$, que al tender a 0 resulta en $2x$." },
+            { text: "(Difícil) Halle la derivada implícita $y'$ para $x^2 + y^2 = 25$.", math: null, options: ["$y' = -x/y$", "$y' = x/y$", "$y' = -2x$", "$y' = -y/x$"], correctIndex: 0, feedback: "Derivando respecto a $x$: $2x + 2y \\cdot y' = 0 \\implies y' = -x/y$." },
+            { text: "(Difícil) Aplique L'Hôpital a $\\lim_{x \\to 0} \\frac{e^x - 1 - x}{x^2}$.", math: null, options: ["$0$", "$1$", "$1/2$", "$\\infty$"], correctIndex: 2, feedback: "Forma 0/0. Tras aplicar L'Hôpital dos veces se llega a $e^x / 2$, que evaluado en 0 da $1/2$." },
+            { text: "(Difícil) Determine la derivada de la función $f(x) = x^x$.", math: null, options: ["$x \\cdot x^{x-1}$", "$x^x \\ln(x)$", "$x^x (1 + \\ln(x))$", "$x^x$"], correctIndex: 2, feedback: "Por derivación logarítmica: $\\ln(y) = x \\ln(x) \\implies y'/y = \\ln(x) + 1$." },
+            { text: "(Difícil) Si $f(x) = \\arctan(e^x)$, ¿cuál es su derivada?", math: null, options: ["$\\frac{e^x}{1 + e^{2x}}$", "$\\frac{1}{1 + e^x}$", "$\\frac{e^x}{1 + e^x}$", "$\\frac{1}{1 + e^{2x}}$"], correctIndex: 0, feedback: "Derivada de $\\arctan(u)$ es $u'/(1+u^2)$. Aquí $u = e^x \\implies u' = e^x$ y $u^2 = e^{2x}$." },
+            { text: "(Difícil) Un punto de inflexión ocurre cuando:", math: null, options: ["La primera derivada se hace cero.", "La función cruza el eje X.", "La segunda derivada cambia de signo.", "No es derivable."], correctIndex: 2, feedback: "Es el punto exacto donde la curva cambia su concavidad." },
+            { text: "(Difícil) ¿Cuál es la derivada de $f(x) = 1/x$ por regla de potencia?", math: null, options: ["$\\ln(x)$", "$-1/x^2$", "$1/x^2$", "$-x^{-1}$"], correctIndex: 1, feedback: "Reescribiendo como $x^{-1}$, su derivada es $-1x^{-2} = -1/x^2$." },
+            { text: "(Difícil) Encuentre el valor mínimo absoluto de $f(x) = x^2 - 4x + 5$ en $[0, 5]$.", math: null, options: ["$5$", "$1$", "$0$", "$-1$"], correctIndex: 1, feedback: "$f'(x) = 2x - 4 = 0 \\implies x=2$. $f(2) = 1$. Evaluando bordes $f(0)=5$ y $f(5)=10$. El mínimo es 1." },
+            { text: "(Difícil) La derivada de una función par es siempre:", math: null, options: ["Una función par.", "Una función impar.", "Una constante.", "Cero."], correctIndex: 1, feedback: "Derivando $f(-x) = f(x)$ con la regla de la cadena obtenemos $-f'(-x) = f'(x)$, definición de función impar." },
+            { text: "(Difícil) Derive la función trigonométrica inversa $f(x) = \\arcsin(x)$.", math: null, options: ["$\\frac{1}{\\sqrt{1-x^2}}$", "$\\frac{-1}{\\sqrt{1-x^2}}$", "$\\frac{1}{1+x^2}$", "$\\frac{1}{|x|\\sqrt{x^2-1}}$"], correctIndex: 0, feedback: "Se obtiene mediante derivación implícita partiendo de $\\sin(y) = x$." }
+        ],
+        [ // MÓDULO 4: INTEGRALES Y ÁREAS (20 Preguntas)
+            { text: "(Fácil) ¿Cuál es la integral indefinida de $f(x) = x^n$ (para $n \\neq -1$)?", math: null, options: ["$\\frac{x^{n-1}}{n-1} + C$", "$\\frac{x^{n+1}}{n+1} + C$", "$n x^{n-1} + C$", "$\\frac{x^{n+1}}{n} + C$"], correctIndex: 1, feedback: "Se suma 1 al exponente y se divide por ese nuevo exponente." },
+            { text: "(Fácil) Evalúe la siguiente integral indefinida:", math: "$$\\int e^x \\, dx$$", options: ["$x e^{x-1} + C$", "$e^x + C$", "$\\frac{e^{x+1}}{x+1} + C$", "$\\ln(x) + C$"], correctIndex: 1, feedback: "La función exponencial $e^x$ es su propia integral y derivada." },
+            { text: "(Fácil) ¿Cuál es el resultado de $\\int \\frac{1}{x} \\, dx$?", math: null, options: ["$\\ln|x| + C$", "$-1/x^2 + C$", "$\\frac{x^0}{0} + C$", "$e^x + C$"], correctIndex: 0, feedback: "La integral de $1/x$ corresponde al logaritmo natural del valor absoluto de $x$." },
+            { text: "(Fácil) Si $f(x) \\ge 0$ en $[a, b]$, ¿qué representa $\\int_a^b f(x) \\, dx$?", math: null, options: ["La longitud de la curva.", "El volumen de revolución.", "La pendiente.", "El área bajo la curva."], correctIndex: 3, feedback: "La integral definida de una función no negativa representa el área exacta bajo la gráfica." },
+            { text: "(Fácil) ¿Cuál es el resultado de la integral de una constante $k$?", math: "$$\\int k \\, dx$$", options: ["$k + C$", "$kx + C$", "$0$", "$k^2/2 + C$"], correctIndex: 1, feedback: "Se multiplica la constante por la variable de integración: $kx + C$." },
+            { text: "(Fácil) Resuelva la integral de la función coseno:", math: "$$\\int \\cos(x) \\, dx$$", options: ["$-\\sin(x) + C$", "$\\sin(x) + C$", "$\\sec(x) + C$", "$-\\cos(x) + C$"], correctIndex: 1, feedback: "La derivada del seno es el coseno, por lo que la integral del coseno es el seno positivo." },
+            { text: "(Medio) Utilice la Regla de Barrow para evaluar la integral definida:", math: "$$\\int_0^2 3x^2 \\, dx$$", options: ["$6$", "$12$", "$8$", "$4$"], correctIndex: 2, feedback: "La integral de $3x^2$ es $x^3$. Evaluando: $2^3 - 0^3 = 8$." },
+            { text: "(Medio) Aplique el método de sustitución para resolver:", math: "$$\\int 2x \\cos(x^2) \\, dx$$", options: ["$\\sin(x^2) + C$", "$2x \\sin(x^2) + C$", "$-\\sin(x^2) + C$", "$\\cos(x^2) + C$"], correctIndex: 0, feedback: "Tomando $u = x^2$, $du = 2x dx$. Queda $\\int \\cos(u) du = \\sin(x^2) + C$." },
+            { text: "(Medio) Según la fórmula de Integración por Partes, $\\int u \\, dv$ es igual a:", math: null, options: ["$uv - \\int v \\, du$", "$u'v + uv'$", "$uv + \\int v \\, du$", "$\\frac{uv' - u'v}{v^2}$"], correctIndex: 0, feedback: "Fórmula deducida de la regla del producto para derivadas." },
+            { text: "(Medio) Resuelva la siguiente integral definida:", math: "$$\\int_1^e \\frac{1}{x} \\, dx$$", options: ["$e$", "$e - 1$", "$1$", "$0$"], correctIndex: 2, feedback: "La antiderivada es $\\ln|x|$. $\\ln(e) - \\ln(1) = 1 - 0 = 1$." },
+            { text: "(Medio) Resuelva mediante sustitución simple:", math: "$$\\int \\frac{1}{2x+1} \\, dx$$", options: ["$\\ln|2x+1| + C$", "$\\frac{1}{2} \\ln|2x+1| + C$", "$2 \\ln|2x+1| + C$", "$-\\frac{1}{(2x+1)^2} + C$"], correctIndex: 1, feedback: "Sea $u = 2x+1$, entonces $dx = du/2$. Queda $\\frac{1}{2} \\ln|2x+1| + C$." },
+            { text: "(Medio) Calcule el área bajo $y = \\sin(x)$ en el intervalo $[0, \\pi]$.", math: null, options: ["$0$", "$1$", "$\\pi$", "$2$"], correctIndex: 3, feedback: "$[-\\cos(x)]_0^\\pi = -\\cos(\\pi) - (-\\cos(0)) = 1 + 1 = 2$." },
+            { text: "(Medio) ¿Cuál es la antiderivada de la secante al cuadrado?", math: "$$\\int \\sec^2(x) \\, dx$$", options: ["$\\tan(x) + C$", "$\\sec(x)\\tan(x) + C$", "$\\sec^3(x)/3 + C$", "$-\\cot(x) + C$"], correctIndex: 0, feedback: "Proviene directamente de las derivadas trigonométricas. La derivada de $\\tan(x)$ es $\\sec^2(x)$." },
+            { text: "(Difícil) Según la Parte 1 del Teorema Fundamental del Cálculo, calcule:", math: "$$\\frac{d}{dx} \\left[ \\int_a^x f(t) \\, dt \\right]$$", options: ["$f'(x)$", "$f(x) - f(a)$", "$f(x)$", "$0$"], correctIndex: 2, feedback: "Derivar una función acumulada de área devuelve la función original evaluada en $x$." },
+            { text: "(Difícil) Utilice Integración por Partes para evaluar:", math: "$$\\int x e^x \\, dx$$", options: ["$x e^x - e^x + C$", "$x^2 e^x / 2 + C$", "$x e^x + e^x + C$", "$e^x + C$"], correctIndex: 0, feedback: "Elegimos $u = x$ y $dv = e^x dx$. Aplicando $uv - \\int v du$ nos queda $x e^x - e^x + C$." },
+            { text: "(Difícil) Halle el área delimitada por las curvas $y = x$ e $y = x^2$.", math: null, options: ["$1/2$", "$1/3$", "$1/6$", "$1$"], correctIndex: 2, feedback: "Las curvas se cortan en 0 y 1. El área es $\\int_0^1 (x - x^2) dx = 1/2 - 1/3 = 1/6$." },
+            { text: "(Difícil) Evalúe la integral de la tangente:", math: "$$\\int \\tan(x) \\, dx$$", options: ["$\\sec^2(x) + C$", "$\\ln|\\cos(x)| + C$", "$-\\ln|\\cos(x)| + C$", "$\\ln|\\sin(x)| + C$"], correctIndex: 2, feedback: "Sustituyendo $u = \\cos(x) \\implies du = -\\sin(x) dx$. Queda $-\\ln|\\cos(x)| + C$." },
+            { text: "(Difícil) Evalúe la Integral Impropia:", math: "$$\\int_1^\\infty \\frac{1}{x^2} \\, dx$$", options: ["$\\infty$ (diverge)", "$1$", "$0$", "$e$"], correctIndex: 1, feedback: "Se plantea con un límite al infinito. $\\lim_{t \\to \\infty} [-1/x]_1^t = 0 - (-1) = 1$." },
+            { text: "(Difícil) Combinando TFC 1 y Regla de la Cadena, determine $F'(x)$ si:", math: "$$F(x) = \\int_0^{x^2} \\sin(t) \\, dt$$", options: ["$\\sin(x^2)$", "$2x \\sin(x^2)$", "$-\\cos(x^2)$", "$-2x \\cos(x^2)$"], correctIndex: 1, feedback: "Se evalúa la función interna en el límite superior y se multiplica por la derivada del límite superior." },
+            { text: "(Difícil) Aplique fracciones simples para resolver:", math: "$$\\int \\frac{1}{x^2 - x} \\, dx$$", options: ["$\\ln|x^2 - x| + C$", "$\\ln|x-1| - \\ln|x| + C$", "$\\ln|x| - \\ln|x-1| + C$", "$1/(2x-1) + C$"], correctIndex: 1, feedback: "Factorizando queda $\\frac{1}{x(x-1)} = \\frac{1}{x-1} - \\frac{1}{x}$. Al integrar se obtiene $\\ln|x-1| - \\ln|x| + C$." }
+        ]
+    ];
+
+    let questionsDB = []; let currentQuestion = 0; let chargeErrors = 0; let studentName = "";
+
+    function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
+
+    function startQuiz() {
+        const nameInput = document.getElementById('student-name').value.trim();
+        const moduleSelect = document.getElementById('module-selector');
+        if(nameInput === "") { alert("Requisito de seguridad: Ingrese su matrícula/nombre."); return; }
+        
+        studentName = nameInput; questionsDB = [...allModules[parseInt(moduleSelect.value)]]; shuffleArray(questionsDB); 
+        
+        if(!isBgmPlaying) toggleBGM();
+        
+        document.getElementById('q-header').dataset.moduleName = moduleSelect.options[moduleSelect.selectedIndex].text.split('-')[1].trim();
+        document.getElementById('start-screen').classList.add('hidden'); document.getElementById('quiz-screen').classList.remove('hidden');
+        
+        currentQuestion = 0; chargeErrors = 0;
+        document.getElementById('cap-body').classList.remove('destroyed'); document.getElementById('cap-text').classList.remove('destroyed-text');
+        updateCapacitor(); loadQuestion(); 
+    }
+
+    function updateCapacitor() {
+        const fill = document.getElementById('cap-fill'); const text = document.getElementById('cap-text'); const capBody = document.getElementById('cap-body');
+        let correctAnswers = currentQuestion - chargeErrors; if (correctAnswers < 0) correctAnswers = 0; 
+        let percentage = (correctAnswers / questionsDB.length) * 100;
+        
+        if(window.innerWidth <= 850) { fill.style.width = percentage + '%'; fill.style.height = '100%'; } 
+        else { fill.style.height = percentage + '%'; fill.style.width = '100%'; }
+        
+        if(!capBody.classList.contains('destroyed')) text.innerText = percentage.toFixed(1) + ' %';
+        else text.innerText = "¡ERR CRÍTICO!";
+    }
+
+    function loadQuestion() {
+        if (currentQuestion >= questionsDB.length) { finishQuiz(); return; }
+        const q = questionsDB[currentQuestion]; updateCapacitor();
+        document.getElementById('q-header').innerText = `[ ${document.getElementById('q-header').dataset.moduleName.toUpperCase()} ] - NODO ${currentQuestion + 1} DE ${questionsDB.length}`;
+        document.getElementById('q-text').innerText = q.text;
+
+        const mathBlock = document.getElementById('q-math');
+        if (q.math) { mathBlock.innerHTML = q.math; mathBlock.classList.remove('hidden'); } else { mathBlock.classList.add('hidden'); }
+        document.getElementById('feedback-msg').style.display = 'none'; document.getElementById('next-btn').classList.add('hidden');
+
+        let optionsHTML = ""; const letters = ['A', 'B', 'C', 'D'];
+        q.options.forEach((opt, index) => { optionsHTML += `<button class="option-btn" id="opt-btn-${index}" onclick="checkAnswer(${index}, this)"><div class="option-index">${letters[index]}</div><div>${opt}</div></button>`; });
+        document.getElementById('options-container').innerHTML = optionsHTML;
+        try { renderMathInElement(document.getElementById('quiz-screen'), { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false }); } catch(e) {}
+    }
+
+    function checkAnswer(selectedIndex, clickedBtn) {
+        const q = questionsDB[currentQuestion]; const feedback = document.getElementById('feedback-msg');
+        const capBody = document.getElementById('cap-body'); const capText = document.getElementById('cap-text');
+        
+        document.querySelectorAll('.option-btn').forEach(btn => { btn.classList.add('disabled'); btn.onclick = null; });
+        clickedBtn.classList.remove('disabled'); feedback.style.display = 'block';
+
+        if (selectedIndex === q.correctIndex) {
+            playSound('correct'); clickedBtn.classList.add('correct-choice');
+            feedback.style.backgroundColor = 'var(--correct-bg)'; feedback.style.borderColor = 'var(--correct-border)';
+            feedback.innerHTML = `<strong style="color: var(--correct-border);">✓ ACEPTADO</strong><br><br>${q.feedback}`;
+            capBody.classList.remove('destroyed'); capText.classList.remove('destroyed-text'); updateCapacitor();
+        } else {
+            chargeErrors++; playSound('error'); clickedBtn.classList.add('error-choice');
+            capBody.classList.add('destroyed'); capText.classList.add('destroyed-text');
+            document.getElementById('cap-wrapper').classList.add('capacitor-breakdown');
+            setTimeout(() => { document.getElementById('cap-wrapper').classList.remove('capacitor-breakdown'); }, 600); 
+            document.getElementById(`opt-btn-${q.correctIndex}`).classList.remove('disabled'); document.getElementById(`opt-btn-${q.correctIndex}`).style.border = '1px solid var(--correct-border)';
+            feedback.style.backgroundColor = 'var(--error-bg)'; feedback.style.borderColor = 'var(--error-border)';
+            feedback.innerHTML = `<strong style="color: var(--error-border);">✗ RUPTURA DIELÉCTRICA DETECTADA</strong><br><br>${q.feedback}`;
+            updateCapacitor(); 
+        }
+        try { renderMathInElement(feedback, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false }); } catch(e){}
+        document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function nextQuestion() { currentQuestion++; loadQuestion(); }
+
+    function finishQuiz() {
+        if(isBgmPlaying) toggleBGM(); 
+        currentQuestion = questionsDB.length; updateCapacitor(); 
+        const correctAnswers = questionsDB.length - chargeErrors; const percentage = Math.round((correctAnswers / questionsDB.length) * 100);
+        let feedbackMessage = percentage >= 80 ? "El capacitor ha mantenido su integridad estructural. Estás listo." : (percentage >= 60 ? "Se detectaron fugas dieléctricas pero la estructura resiste. Requiere repaso." : "COLAPSO TOTAL DEL SISTEMA. El dieléctrico se ha quemado por falta de bases teóricas.");
+
+        document.getElementById('quiz-screen').innerHTML = `
+            <h2 style="color: var(--primary-accent); margin-bottom: 20px; font-size: 2rem; font-family: 'Rajdhani', sans-serif; text-align: center; text-transform: uppercase;">REPORTE DE RED: ${studentName}</h2>
+            <div class="math-block" style="font-size: 1.8rem; color: var(--text-main); margin-bottom: 20px;">
+                INTEGRIDAD: <span style="color: ${percentage >= 60 ? 'var(--correct-border)' : 'var(--error-border)'}; font-weight: 800; font-family: 'Fira Code', monospace;">${percentage}%</span><br>
+                <span style="font-size: 1.1rem; color: var(--text-muted); font-family: 'Inter', sans-serif;">${correctAnswers} aciertos de ${questionsDB.length}</span>
+            </div>
+            <p style="font-size: 1.15rem; line-height: 1.6; text-align: center; font-weight: 500;">${feedbackMessage}</p>
+            <button class="btn-action" onclick="location.reload()" style="margin-top: 30px;">Reiniciar Simulador</button>
+        `;
+    }
+</script>
+
+</body>
+</html>
