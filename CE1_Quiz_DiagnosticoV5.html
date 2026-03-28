@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TERMINAL UTN-FRT | F. BARROJO v3.4 FINAL</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- VARIABLES GLOBALES --- */
+        :root {
+            --matrix-bg: #050505;
+            --matrix-green: #00FF41;
+            --matrix-dark-green: #008F11;
+            --matrix-glow: 0 0 10px rgba(0, 255, 65, 0.6);
+            --monitor-plastic: #d4d0c8;
+            --monitor-metallic: #5c4e3e;
+            --contact-llamativo: #000000; 
+        }
+
+        body {
+            background-color: #1a1a1a;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'VT323', monospace;
+            transition: all 0.3s ease;
+        }
+
+        /* --- MODO CONCENTRACIÓN --- */
+        body.focus-mode { background-color: #000; }
+        body.focus-mode .crt-screen { background: #111; border-color: #333; box-shadow: none; }
+        body.focus-mode .crt-screen::before { display: none; }
+        body.focus-mode * { text-shadow: none !important; color: #d4d4d4 !important; border-color: #555 !important; }
+        body.focus-mode .btn-option:hover:not(:disabled),
+        body.focus-mode .btn-option.selected,
+        body.focus-mode .btn-next:hover,
+        body.focus-mode .tool-btn:hover { background: #333 !important; color: #fff !important; }
+        body.focus-mode .success-msg { color: #4ade80 !important; }
+        body.focus-mode .error-msg { color: #f87171 !important; }
+
+        /* --- EL MONITOR FÍSICO --- */
+        .monitor-bezel {
+            background: var(--monitor-plastic);
+            padding: 40px 40px 80px 40px;
+            border-radius: 15px;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.2), inset 5px 5px 15px rgba(255,255,255,0.7), 10px 10px 20px rgba(0,0,0,0.8);
+            width: 95%; max-width: 1000px; position: relative;
+        }
+        .monitor-bezel::before {
+            content: "UTN-FRT / FB-SYS Model 1999";
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            color: #888; font-family: sans-serif; font-size: 0.8rem; letter-spacing: 2px;
+        }
+        .monitor-info-bottom {
+            position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
+            color: var(--contact-llamativo); font-family: 'Share Tech Mono', monospace;
+            font-size: 0.95rem; font-weight: bold; letter-spacing: 1px; text-align: center;
+            border-top: 2px solid rgba(0,0,0,0.2); padding-top: 10px; width: 85%;
+        }
+
+        /* --- PANTALLA CRT --- */
+        .crt-screen {
+            background: var(--matrix-bg); border: 15px solid var(--monitor-metallic); border-radius: 20px;
+            position: relative; overflow: hidden; box-shadow: inset 0 0 30px rgba(0, 255, 65, 0.1);
+            height: 65vh; min-height: 500px; display: flex; flex-direction: column;
+        }
+        .crt-screen::before {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px; z-index: 50; pointer-events: none;
+        }
+
+        /* --- HEADER & HERRAMIENTAS --- */
+        .terminal-header {
+            color: var(--matrix-green); font-size: 1.3rem; text-shadow: var(--matrix-glow);
+            border-bottom: 2px dashed var(--matrix-dark-green); padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; z-index: 10;
+        }
+        .sys-tools { display: flex; gap: 10px; }
+        .tool-btn {
+            background: transparent; border: 1px solid var(--matrix-dark-green);
+            color: var(--matrix-green); font-family: 'VT323', monospace; font-size: 1.1rem;
+            padding: 5px 10px; cursor: pointer; transition: 0.2s; text-shadow: var(--matrix-glow);
+        }
+        .tool-btn:hover { background: var(--matrix-dark-green); color: var(--matrix-bg); text-shadow: none; }
+
+        /* --- PANTALLA DE BIENVENIDA --- */
+        #welcome-screen {
+            flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px; color: var(--matrix-green); text-shadow: var(--matrix-glow); z-index: 10;
+        }
+        #welcome-screen h2 { font-size: 3rem; margin-bottom: 10px; }
+        #welcome-screen p { font-size: 1.8rem; margin-top: 0; color: #a7f3d0; }
+
+        /* --- SPLIT SCREEN --- */
+        .split-container {
+            flex-grow: 1; display: none; color: var(--matrix-green); text-shadow: var(--matrix-glow);
+            padding: 20px; overflow: hidden; position: relative;
+        }
+        .split-left { width: 55%; border-right: 1px dashed var(--matrix-dark-green); padding-right: 20px; overflow-y: auto; }
+        .split-left::-webkit-scrollbar { display: none; }
+        .split-right { width: 45%; padding-left: 20px; display: flex; justify-content: center; align-items: center; }
+        
+        /* --- CONTENIDO DE PREGUNTAS --- */
+        .question-title { font-size: 1.6rem; line-height: 1.3; margin-bottom: 15px; min-height: 60px;}
+        .math-display {
+            font-size: 2.5rem; text-align: center; padding: 15px;
+            border: 1px solid var(--matrix-dark-green); background: rgba(0, 143, 17, 0.1); width: 100%;
+        }
+        
+        /* --- BOTONES DE OPCIÓN --- */
+        #options-container { display: none; }
+        .btn-option {
+            width: 100%; background: transparent; border: 1px solid var(--matrix-dark-green);
+            color: var(--matrix-green); padding: 12px; margin-bottom: 10px;
+            font-family: 'VT323', monospace; font-size: 1.4rem; cursor: pointer; text-align: left;
+            text-shadow: var(--matrix-glow);
+        }
+        .btn-option:hover:not(:disabled), .btn-option.selected { background: var(--matrix-dark-green); color: var(--matrix-bg); text-shadow: none; }
+        .btn-option::before { content: "> [ "; margin-right: 5px; }
+        .btn-option::after { content: " ]"; margin-left: 5px; }
+
+        .btn-next {
+            background: var(--matrix-dark-green); color: var(--matrix-bg); border: none;
+            width: 100%; padding: 12px; font-family: 'VT323', monospace; font-size: 1.5rem;
+            margin-top: 15px; cursor: pointer; display: none; text-transform: uppercase; text-shadow: none;
+        }
+
+        .feedback-panel { padding: 10px; margin-top: 15px; border: 1px solid var(--matrix-green); font-size: 1.3rem; display: none; }
+        .success-msg { color: #a7f3d0; border-color: #a7f3d0; }
+        .error-msg { color: #fca5a5; border-color: #fca5a5; }
+
+        /* --- ANIMACIONES DE CARGA --- */
+        @keyframes fadeInTerminal { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .terminal-load { animation: fadeInTerminal 0.4s ease-out; opacity: 1; }
+
+        /* --- VENTANAS FLOTANTES (MODALES RETRO) --- */
+        .retro-window {
+            position: absolute; top: 10%; left: 10%; width: 80%; height: 75%;
+            background: var(--matrix-bg); border: 2px solid var(--matrix-green);
+            box-shadow: 10px 10px 0px rgba(0, 143, 17, 0.4); z-index: 100; display: none; flex-direction: column;
+        }
+        .window-header {
+            background: var(--matrix-dark-green); color: var(--matrix-bg); padding: 5px 10px;
+            display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; text-shadow: none;
+        }
+        .window-close { cursor: pointer; font-family: sans-serif; }
+        .window-content { padding: 20px; overflow-y: auto; flex-grow: 1; }
+        
+        textarea.scratchpad-input {
+            width: 100%; height: 100%; background: transparent; border: none; color: var(--matrix-green);
+            font-family: 'VT323', monospace; font-size: 1.3rem; resize: none; outline: none; text-shadow: var(--matrix-glow);
+        }
+
+        /* --- CSS DE LOS APUNTES --- */
+        .cheatsheet-content p {
+            color: #a7f3d0;
+            text-shadow: none; 
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        .cheatsheet-content strong { color: var(--matrix-green); text-shadow: var(--matrix-glow); }
+        .cheat-title {
+            color: var(--matrix-green);
+            border-bottom: 1px dashed var(--matrix-green);
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-size: 1.4rem;
+            text-shadow: var(--matrix-glow);
+        }
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 768px) {
+            .monitor-bezel { padding: 20px 15px 70px 15px; border-radius: 10px; width: 95%;}
+            .monitor-info-bottom { font-size: 0.8rem; bottom: 15px; }
+            .crt-screen { border-width: 8px; height: 75vh; }
+            .terminal-header { flex-direction: column; align-items: flex-start; gap: 10px; font-size: 1.1rem; }
+            .sys-tools { width: 100%; justify-content: space-between; }
+            .split-container { flex-direction: column; overflow-y: auto; padding: 10px; }
+            .split-left { width: 100%; border-right: none; padding-right: 0; overflow: visible; }
+            .split-right { width: 100%; padding-left: 0; padding-top: 15px; border-top: 1px dashed var(--matrix-dark-green); margin-top: 15px; }
+            .math-display { font-size: 1.8rem; }
+            .question-title { font-size: 1.4rem; }
+            #welcome-screen h2 { font-size: 2rem; }
+            #welcome-screen p { font-size: 1.3rem; }
+            .btn-next { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="monitor-bezel">
+        <div class="monitor-info-bottom">Creado por Facundo Barrojo UTN FRT | Cel: 3815690147</div>
+        
+        <div class="crt-screen">
+            <div class="terminal-header">
+                <div>C:\> fb_sys.exe <span id="timer-display" style="margin-left: 10px; color: #a7f3d0;">[T: 0.00s]</span></div>
+                <div class="sys-tools">
+                    <button class="tool-btn" onclick="toggleWindow('scratchpad')">[NOTAS]</button>
+                    <button class="tool-btn" onclick="toggleWindow('cheatsheet')">[APUNTES]</button>
+                    <button class="tool-btn" onclick="toggleFocus()">[MODO]</button>
+                </div>
+            </div>
+
+            <div id="welcome-screen">
+                <h2>> SISTEMA EN LÍNEA_</h2>
+                <p>IDENTIFICACIÓN CONFIRMADA: LUCAS</p>
+                <button class="btn-next" style="display: block; width: auto; padding: 15px 40px; margin-top: 30px;" onclick="startQuiz()">> INICIAR PROTOCOLO_</button>
+            </div>
+
+            <div class="split-container" id="quiz-panel">
+                <div class="split-left">
+                    <div style="color: var(--matrix-dark-green); margin-bottom: 5px;">[NODO: <span id="current-q">1</span>/<span id="total-q">10</span>]</div>
+                    
+                    <div class="question-title terminal-load" id="question-text">INICIANDO...</div>
+                    <div id="options-container" class="terminal-load"></div>
+                    <div class="feedback-panel terminal-load" id="feedback-display"></div>
+                    
+                    <button class="btn-next" id="next-btn" onclick="nextQuestion()">> CONTINUAR_</button>
+                </div>
+                <div class="split-right">
+                    <div class="math-display terminal-load" id="math-display"></div>
+                </div>
+            </div>
+
+            <div class="retro-window" id="win-scratchpad">
+                <div class="window-header">
+                    <span>SYS_SCRATCHPAD.txt</span>
+                    <span class="window-close" onclick="toggleWindow('scratchpad')">[X]</span>
+                </div>
+                <div class="window-content">
+                    <textarea class="scratchpad-input" placeholder="> Ingrese cálculos temporales aquí..."></textarea>
+                </div>
+            </div>
+
+            <div class="retro-window" id="win-cheatsheet">
+                <div class="window-header">
+                    <span>SYS_FUNDAMENTOS.lib</span>
+                    <span class="window-close" onclick="toggleWindow('cheatsheet')">[X]</span>
+                </div>
+                <div class="window-content cheatsheet-content" id="cheat-content-area">
+                    
+                    <h3 class="cheat-title">> LEY DE OHM</h3>
+                    <p>Postula que la intensidad de corriente ($I$) es directamente proporcional a la tensión ($V$) e inversamente proporcional a la resistencia ($R$).</p>
+                    <p>Fórmula General: $V = I \cdot R$</p>
+
+                    <h3 class="cheat-title">> RESISTENCIAS EN SERIE</h3>
+                    <p>La <strong>Corriente</strong> es igual en todos los elementos ($I_{total} = I_1 = I_2$).</p>
+                    <p>La <strong>Tensión Total</strong> es la suma de las tensiones parciales ($V_{total} = V_1 + V_2$).</p>
+                    <p><strong>R Equivalente:</strong> $R_{eq} = R_1 + R_2$</p>
+
+                    <h3 class="cheat-title">> RESISTENCIAS EN PARALELO</h3>
+                    <p>La <strong>Tensión</strong> es igual en todas las ramas ($V_{total} = V_1 = V_2$).</p>
+                    <p>La <strong>Corriente Total</strong> es la suma de las corrientes parciales ($I_{total} = I_1 + I_2$).</p>
+                    <p><strong>R Equivalente:</strong> $\frac{1}{R_{eq}} = \frac{1}{R_1} + \frac{1}{R_2}$</p>
+
+                    <h3 class="cheat-title">> LEYES DE KIRCHHOFF</h3>
+                    <p><strong>LCK (Nodos):</strong> $\sum I_{entran} = \sum I_{salen}$. La carga se conserva.</p>
+                    <p><strong>LVK (Mallas):</strong> En cualquier lazo cerrado, $\sum V_{caidas} = \sum V_{fuentes}$. La energía se conserva.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN DE KATEX ---
+        const katexConfig = {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false}
+            ],
+            throwOnError: false
+        };
+
+        // RENDERIZAR APUNTES AL CARGAR LA PÁGINA (SOLUCIONA EL PROBLEMA DE LOS SÍMBOLOS)
+        window.addEventListener('DOMContentLoaded', () => {
+            const cheatsheet = document.getElementById('cheat-content-area');
+            if(cheatsheet) {
+                renderMathInElement(cheatsheet, katexConfig);
+            }
+        });
+
+        // --- FUNCIÓN MANUAL PARA RENDERIZAR MATEMÁTICAS EN BOTONES Y PREGUNTAS ---
+        function renderTextWithMath(text) {
+            if (!text) return "";
+            return text.replace(/\$(.*?)\$/g, function(match, mathExpr) {
+                return katex.renderToString(mathExpr, { throwOnError: false });
+            });
+        }
+
+        // --- BASE DE DATOS DE PREGUNTAS ---
+        const quizData = [
+            { q: "¿Qué representa fundamentalmente la resistencia eléctrica en un circuito?", m: "R = \\rho \\frac{L}{A}", o: ["La cantidad de carga eléctrica", "La oposición al paso de la corriente", "La potencia consumida"], a: 1 },
+            { q: "¿Cuál es el efecto natural de una resistencia cuando circula corriente a través de ella?", m: "E = P \\cdot t \\rightarrow Calor", o: ["Almacenamiento de energía", "Emisión de luz", "Conversión de energía en calor"], a: 2 },
+            { q: "¿Cuál es la ecuación fundamental de la Ley de Ohm?", m: "V = I \\cdot R", o: ["$V = I \\cdot R$", "$I = V \\cdot R$", "$R = V \\cdot I$"], a: 0 },
+            { q: "En un circuito en serie, ¿qué magnitud se mantiene igual en todos los elementos?", m: "I_{total} = I_1 = I_2 = I_3", o: ["Tensión", "Corriente", "Resistencia"], a: 1 },
+            { q: "Una resistencia de $6\\ \\Omega$ está conectada a una fuente de $12\\text{ V}$. ¿Qué corriente circula?", m: "I = \\frac{12\\text{ V}}{6\\ \\Omega} = 2\\text{ A}", o: ["$0,5\\text{ A}$", "$72\\text{ A}$", "$2\\text{ A}$"], a: 2 },
+            { q: "Dos resistencias de $4\\ \\Omega$ y $6\\ \\Omega$ están conectadas en serie. ¿Cuál es la resistencia equivalente?", m: "R_{eq} = R_1 + R_2", o: ["$10\\ \\Omega$", "$2,4\\ \\Omega$", "$24\\ \\Omega$"], a: 0 },
+            { q: "En un circuito en paralelo, al agregar una nueva rama resistiva, la resistencia total:", m: "\\frac{1}{R_{eq}} = \\frac{1}{R_1} + \\frac{1}{R_2} + ...", o: ["Aumenta", "No cambia", "Disminuye"], a: 2 },
+            { q: "¿Cuál es una expresión correcta de la potencia disipada por una resistencia?", m: "P = I^2 \\cdot R", o: ["$P = V + I$", "$P = I^2 \\cdot R$", "$P = R^2 \\cdot I$"], a: 1 },
+            { q: "¿Qué afirma mejor el origen físico de la resistencia eléctrica en un conductor metálico?", m: "\\text{R } \\propto \\text{ Colisiones}", o: ["Las colisiones de electrones con la red cristalina", "La aceleración constante de electrones", "La generación de campos magnéticos"], a: 0 },
+            { q: "En un circuito en serie con una fuente ideal, ¿cuándo se disipa la mayor potencia total?", m: "P = \\frac{V^2}{R_{total}}", o: ["Cuando la corriente es nula", "Cuando la resistencia total es mínima", "Cuando la resistencia total aumenta"], a: 1 }
+        ];
+
+        // --- VARIABLES DE ESTADO ---
+        let currentQuestion = 0;
+        let correctAnswers = 0;
+        let questionStartTime;
+        let timerInterval;
+
+        // --- MANEJO DE HERRAMIENTAS ---
+        function toggleWindow(winId) {
+            const win = document.getElementById(`win-${winId}`);
+            win.style.display = (win.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function toggleFocus() { document.body.classList.toggle('focus-mode'); }
+
+        // --- TIMER ---
+        function updateTimer() {
+            const elapsed = (Date.now() - questionStartTime) / 1000;
+            document.getElementById("timer-display").innerText = `[T: ${elapsed.toFixed(2)}s]`;
+        }
+
+        // --- INICIAR CUESTIONARIO ---
+        function startQuiz() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('quiz-panel').style.display = 'flex';
+            document.getElementById('total-q').innerText = quizData.length;
+            
+            showQuestion();
+        }
+
+        // --- MOSTRAR PREGUNTA ---
+        function showQuestion() {
+            const data = quizData[currentQuestion];
+            const questionElement = document.getElementById("question-text");
+            const optionsContainer = document.getElementById("options-container");
+            const feedback = document.getElementById("feedback-display");
+
+            questionElement.innerHTML = "";
+            optionsContainer.innerHTML = "";
+            optionsContainer.style.display = "none";
+            feedback.style.display = "none";
+            document.getElementById("next-btn").style.display = "none";
+            
+            // Formula en tamaño grande
+            const mathEl = document.getElementById("math-display");
+            mathEl.innerHTML = katex.renderToString(data.m, { throwOnError: false, displayMode: true });
+
+            // Titulo de la pregunta
+            questionElement.innerHTML = renderTextWithMath(data.q);
+
+            // Botones de respuesta
+            optionsContainer.style.display = "block"; 
+            data.o.forEach((opt, index) => {
+                const btn = document.createElement("button"); 
+                btn.className = "btn-option";
+                btn.innerHTML = renderTextWithMath(opt);
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById("current-q").innerText = currentQuestion + 1;
+
+            questionStartTime = Date.now();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 10);
+        }
+
+        // --- COMPROBAR RESPUESTA ---
+        function checkAnswer(selectedIndex, button) {
+            clearInterval(timerInterval); 
+            const data = quizData[currentQuestion];
+            const feedback = document.getElementById("feedback-display");
+            
+            document.querySelectorAll(".btn-option").forEach(opt => opt.disabled = true);
+            button.classList.add("selected");
+
+            let isCorrect = (selectedIndex === data.a);
+            if (isCorrect) correctAnswers++;
+
+            const correctText = renderTextWithMath(data.o[data.a]);
+            feedback.innerHTML = isCorrect ? "> RES_VALIDO. [ACCESO CONCEDIDO]" : `> FALLO. [Correcto: ${correctText}]`;
+            feedback.className = `feedback-panel ${isCorrect ? 'success-msg' : 'error-msg'}`;
+            
+            feedback.style.display = "block";
+            document.getElementById("next-btn").style.display = "block";
+        }
+
+        // --- SIGUIENTE NODO ---
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                const panel = document.getElementById('quiz-panel');
+                panel.style.animation = 'none';
+                panel.offsetHeight; 
+                panel.style.animation = null; 
+                showQuestion(); 
+            } else {
+                showFinalReport();
+            }
+        }
+
+        // --- PANTALLA FINAL REINICIABLE ---
+        function showFinalReport() {
+            const container = document.getElementById("quiz-panel");
+            const percentage = (correctAnswers / quizData.length * 100).toFixed(0);
+
+            container.innerHTML = `
+                <div style="width: 100%; text-align: center; padding: 20px; animation: fadeInTerminal 0.8s ease-out;">
+                    <div style="font-size: 2rem; margin-bottom: 20px; color: var(--matrix-green); text-shadow: var(--matrix-glow);">> EJECUCIÓN FINALIZADA</div>
+                    <div style="font-size: 4rem; color: ${percentage >= 60 ? 'var(--matrix-green)' : '#f87171'}; text-shadow: ${percentage >= 60 ? 'var(--matrix-glow)' : 'none'};">${percentage}%</div>
+                    <p style="font-size: 1.5rem;">NODOS VÁLIDOS: ${correctAnswers} de ${quizData.length}</p>
+                    
+                    <div style="display: flex; justify-content: center; margin-top: 30px;">
+                        <button class="btn-next" style="display:inline-block; width: auto; padding: 15px 30px;" onclick="location.reload()">> REINICIAR SISTEMA_</button>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
