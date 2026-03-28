@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UNCO - Laboratorio de Álgebra y Geometría Analítica</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        /* --- VARIABLES --- */
+        :root[data-theme="dark"] {
+            --bg-color: #050508; --primary-accent: #00ffcc; --secondary-accent: #ff4655; 
+            --text-main: #f8fafc; --text-muted: #64748b; --glass-bg: rgba(10, 15, 25, 0.75); 
+            --glass-border: rgba(0, 255, 204, 0.25); --btn-bg: rgba(15, 20, 30, 0.6); 
+            --btn-hover: rgba(0, 255, 204, 0.15); --correct-bg: rgba(0, 255, 204, 0.15);
+            --correct-border: #00ffcc; --error-bg: rgba(255, 70, 85, 0.15);
+            --error-border: #ff4655; --math-block-bg: rgba(0, 0, 0, 0.8);
+            --grid-line: rgba(0, 255, 204, 0.05); --modal-bg: rgba(10, 15, 25, 0.98);
+        }
+
+        :root[data-theme="light"] {
+            --bg-color: #f1f5f9; --primary-accent: #0284c7; --secondary-accent: #e11d48;
+            --text-main: #0f172a; --text-muted: #475569; --glass-bg: rgba(255, 255, 255, 0.85); 
+            --glass-border: rgba(2, 132, 199, 0.3); --btn-bg: rgba(255, 255, 255, 0.9); 
+            --btn-hover: rgba(2, 132, 199, 0.1); --correct-bg: rgba(16, 185, 129, 0.15);
+            --correct-border: #059669; --error-bg: rgba(225, 29, 72, 0.15);
+            --error-border: #e11d48; --math-block-bg: rgba(226, 232, 240, 1);
+            --grid-line: rgba(2, 132, 199, 0.08); --modal-bg: rgba(255, 255, 255, 0.98);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main);
+            font-family: 'Inter', sans-serif; margin: 0; padding: 0; min-height: 100vh;
+            overflow-x: hidden; position: relative; transition: background-color 0.4s ease, color 0.4s ease;
+            -webkit-font-smoothing: antialiased; 
+        }
+
+        /* FONDO MATEMÁTICO/QUÍMICO */
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3;
+            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 50px 50px; opacity: 0.9;
+        }
+
+        .chem-math-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -4; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' fill='rgba(0, 255, 204, 0.05)' font-size='18' font-family='Courier New, monospace' font-weight='bold'%3E%3Ctext x='20' y='50'%3E%E2%88%AB e%5Ex dx = e%5Ex%3C/text%3E%3Ctext x='250' y='100'%3EH%E2%82%82SO%E2%82%84%3C/text%3E%3Ctext x='40' y='180'%3E%CE%94G = %CE%94H - T%CE%94S%3C/text%3E%3Ctext x='250' y='250'%3E%E2%88%87%C3%97E = -%E2%88%82B/%E2%88%82t%3C/text%3E%3Ctext x='60' y='320'%3EC%E2%82%86H%E2%82%86 (Benceno)%3C/text%3E%3Ctext x='280' y='40'%3EpH = -log%5BH%E2%81%BA%5D%3C/text%3E%3Ctext x='150' y='380'%3E%CE%A3 F = m%C2%B7a%3C/text%3E%3C/svg%3E");
+        }
+        
+        .ambient-light { position: fixed; border-radius: 50%; filter: blur(150px); z-index: -2; opacity: 0.2; pointer-events: none; }
+        #light-1 { top: -20%; left: -10%; width: 60vw; height: 60vw; background: var(--primary-accent); }
+        #light-2 { bottom: -20%; right: -10%; width: 50vw; height: 50vw; background: var(--secondary-accent); }
+
+        .header {
+            position: fixed; top: 0; width: 100%; padding: 15px 25px; background: var(--glass-bg);
+            border-bottom: 1px solid var(--glass-border); backdrop-filter: blur(20px);
+            display: flex; justify-content: space-between; align-items: center; z-index: 50;
+        }
+        .header-title { font-weight: 700; font-size: 1.3rem; letter-spacing: 2px; color: var(--primary-accent); font-family: 'Rajdhani', sans-serif; text-transform: uppercase; }
+        
+        .controls { display: flex; gap: 12px; }
+        .icon-btn {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main);
+            width: 42px; height: 42px; border-radius: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem; transition: all 0.3s ease;
+        }
+        .icon-btn:hover { background: var(--btn-hover); border-color: var(--primary-accent); transform: translateY(-2px); }
+
+        /* --- LAYOUT 2 COLUMNAS --- */
+        .dashboard-layout {
+            display: flex; justify-content: center; align-items: flex-start; gap: 30px;
+            max-width: 1400px; margin: 100px auto 20px auto; padding: 0 20px;
+        }
+
+        .side-panel {
+            flex: 1; min-width: 320px; max-width: 350px; background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 12px; padding: 25px; backdrop-filter: blur(25px); 
+            display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: sticky; top: 100px; /* Para que acompañe al hacer scroll */
+        }
+
+        .center-panel {
+            flex: 2.5; width: 100%; background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 12px; padding: 40px; backdrop-filter: blur(25px); 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4); position: relative;
+        }
+
+        .panel-title { font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; color: var(--primary-accent); margin-bottom: 20px; text-transform: uppercase; text-align: center; border-bottom: 1px dashed var(--glass-border); padding-bottom: 10px; width: 100%; font-weight: 700; letter-spacing: 1px; }
+
+        /* --- VISUALIZADOR R2 --- */
+        .vector-screen { width: 100%; height: 260px; background: #030712; border: 1px solid var(--glass-border); border-radius: 8px; position: relative; overflow: hidden; margin-bottom: 25px; box-shadow: inset 0 0 30px rgba(0,0,0,0.8); }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .control-group { width: 100%; margin-bottom: 15px; }
+        .control-label { display: flex; justify-content: space-between; font-family: 'Fira Code', monospace; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase;}
+        input[type="range"] { width: 100%; -webkit-appearance: none; background: transparent; padding: 10px 0; }
+        input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; background: var(--primary-accent); cursor: pointer; margin-top: -7px; transform: rotate(45deg); box-shadow: 0 0 10px var(--primary-accent); }
+
+        /* --- BARRA DE PROGRESO --- */
+        .progress-container { width: 100%; background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; margin-bottom: 25px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--primary-accent); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 10px var(--primary-accent);}
+
+        /* --- MODAL APUNTES --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 9999; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: var(--modal-bg); border: 1px solid var(--primary-accent); padding: 35px; border-radius: 12px; max-width: 800px; width: 90%; max-height: 85vh; overflow-y: auto; color: var(--text-main); position: relative; box-shadow: 0 0 40px rgba(0, 255, 204, 0.15); font-family: 'Inter', sans-serif;}
+        .close-btn { position: absolute; top: 15px; right: 15px; background: transparent; color: var(--error-border); border: 1px solid var(--error-border); width: 35px; height: 35px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s;}
+        .close-btn:hover { background: var(--error-bg); }
+
+        /* --- CUESTIONARIO --- */
+        h1 { font-family: 'Rajdhani', sans-serif; font-size: 2.2rem; margin-top:0; margin-bottom: 15px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid var(--primary-accent); padding-bottom: 15px; color: var(--text-main); text-align: center; letter-spacing: 1px;}
+        .subtitle { color: var(--text-muted); font-size: 1.05rem; line-height: 1.5; margin-bottom: 25px; text-align: center; }
+
+        .input-field { width: 100%; padding: 15px; border-radius: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: var(--text-main); font-family: 'Inter', sans-serif; font-weight: 500; margin-bottom: 20px; text-align: center; font-size: 1.05rem; transition: all 0.3s ease; }
+        .input-field:focus { outline: none; border-color: var(--primary-accent); background: rgba(0, 0, 0, 0.7); }
+        select.input-field { font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 1.15rem; cursor: pointer; padding: 12px;}
+
+        .question-header { font-size: 0.95rem; text-transform: uppercase; color: var(--bg-color); font-weight: 700; margin-bottom: 20px; font-family: 'Rajdhani', sans-serif; letter-spacing: 1.5px; display: inline-block; padding: 6px 15px; border-radius: 4px; background: var(--primary-accent); }
+        .question-text { font-family: 'Inter', sans-serif !important; font-size: 1.35rem; line-height: 1.6; font-weight: 500; margin-bottom: 25px; }
+
+        .math-block { background: var(--math-block-bg); padding: 25px; border-radius: 8px; text-align: center; margin-bottom: 30px; border-left: 4px solid var(--primary-accent); font-size: 1.4rem; overflow-x: auto; }
+
+        .option-btn {
+            background: var(--btn-bg); border: 1px solid rgba(255,255,255,0.1); color: var(--text-main);
+            padding: 18px 20px; width: 100%; text-align: left; border-radius: 8px; font-size: 1.1rem;
+            margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; 
+            font-weight: 500; font-family: 'Inter', sans-serif !important;
+        }
+        .option-btn > div { font-family: 'Inter', sans-serif; line-height: 1.4; }
+        .option-btn:hover:not(.disabled) { background: var(--btn-hover); border-color: var(--primary-accent); }
+        .option-btn.correct-choice { background: var(--correct-bg); border-color: var(--correct-border); }
+        .option-btn.error-choice { background: var(--error-bg); border-color: var(--error-border); }
+        .option-btn.disabled { opacity: 0.5; pointer-events: none; }
+
+        .option-index { color: var(--text-main); font-weight: 700; margin-right: 15px; font-size: 1.1rem; width: 30px; display: flex; justify-content: center; font-family: 'Rajdhani', sans-serif !important; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 15px;}
+
+        .feedback-area { margin-top: 25px; padding: 20px; border-radius: 8px; font-size: 1rem; line-height: 1.6; display: none; border-left: 4px solid; font-family: 'Inter', sans-serif; background: rgba(0,0,0,0.5);}
+        
+        .btn-action { background: transparent; color: var(--primary-accent); border: 2px solid var(--primary-accent); padding: 18px 24px; border-radius: 8px; font-weight: 700; font-size: 1.1rem; cursor: pointer; letter-spacing: 2px; margin-top: 25px; width: 100%; text-transform: uppercase; font-family: 'Rajdhani', sans-serif; transition: all 0.3s ease; }
+        .btn-action:hover { background: var(--primary-accent); color: var(--bg-color); box-shadow: 0 0 20px rgba(0, 255, 204, 0.4); }
+
+        /* --- FOOTER AUTOR --- */
+        .footer-autor {
+            text-align: center; margin: 40px auto; padding: 20px; max-width: 1400px;
+            border-top: 1px dashed var(--glass-border); font-family: 'Fira Code', monospace;
+            color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;
+        }
+
+        .hidden { display: none !important; }
+        @media (max-width: 900px) {
+            .dashboard-layout { flex-direction: column; }
+            .side-panel { max-width: 100%; width: 100%; position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chem-math-bg"></div>
+    <div class="ambient-light" id="light-1"></div>
+    <div class="ambient-light" id="light-2"></div>
+
+    <header class="header">
+        <div class="header-title">&lt;ALGEBRA_UNCO /&gt;</div>
+        <div class="controls">
+            <button class="icon-btn" onclick="toggleNotes()" title="Ver Apuntes">📖</button>
+            <button class="icon-btn" onclick="toggleTheme()" title="Cambiar Tema" id="theme-icon">☀️</button>
+        </div>
+    </header>
+
+    <div class="modal-overlay" id="notes-modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="toggleNotes()">&times;</button>
+            <h2 style="color: var(--primary-accent); margin-top:0; font-family: 'Rajdhani', sans-serif; font-size: 1.8rem;">Apuntes de Laboratorio</h2>
+            <div id="notes-content" style="margin-top: 20px; font-size: 1.05rem;">
+                </div>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+        <div class="side-panel">
+            <div class="panel-title">Espacio Vectorial $\mathbb{R}^2$</div>
+            <div class="vector-screen"><canvas id="vector-canvas"></canvas></div>
+            <div class="control-group">
+                <div class="control-label"><span>Módulo $|v|$</span><span style="color:var(--primary-accent);"><span id="val-mod">50</span> u</span></div>
+                <input type="range" id="vec-mod" min="10" max="100" value="50">
+            </div>
+            <div class="control-group">
+                <div class="control-label"><span>Ángulo $\theta$</span><span style="color:var(--primary-accent);"><span id="val-ang">45</span>°</span></div>
+                <input type="range" id="vec-ang" min="0" max="360" value="45">
+            </div>
+        </div>
+
+        <div class="center-panel" id="main-panel">
+            <div id="start-screen">
+                <h1>Entorno de Simulación</h1>
+                <p class="subtitle">Seleccione el módulo a evaluar e ingrese la matrícula para inicializar el entorno.</p>
+                
+                <select id="module-selector" class="input-field" onchange="updateNotesContent()">
+                    <option value="diag" style="color: #000;">[ Módulo 0 ] - Diagnóstico: Reales e Inecuaciones</option>
+                    <option value="0" style="color: #000;">[ Módulo 1 ] - Vectores en R2 y R3</option>
+                    <option value="1" style="color: #000;">[ Módulo 2 ] - Matrices y Determinantes</option>
+                    <option value="2" style="color: #000;">[ Módulo 3 ] - Sistemas de Ecuaciones Lineales</option>
+                    <option value="3" style="color: #000;">[ Módulo 4 ] - Rectas y Planos en el Espacio</option>
+                </select>
+
+                <input type="text" id="student-name" class="input-field" placeholder="Nombre de la Alumna / Matrícula" required>
+                <button class="btn-action" onclick="startQuiz()">Inicializar Entorno</button>
+            </div>
+
+            <div id="quiz-screen" class="hidden">
+                <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+                <div id="q-header" class="question-header"></div>
+                <div id="q-text" class="question-text"></div>
+                <div id="q-math" class="math-block hidden"></div>
+                <div id="options-container"></div>
+                <div id="feedback-msg" class="feedback-area"></div>
+                <button id="next-btn" class="btn-action hidden" onclick="nextQuestion()">Siguiente Ejercicio >></button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer-autor">
+        <span style="color: var(--primary-accent); font-size: 1.2rem;">&gt;_</span> Creado por <span style="color: var(--text-main); font-weight: bold; letter-spacing: 1px;">Facundo Barrojo</span><br>
+        UTN FRT | Ing. Eléctrica<br>
+        Cel: 3815691047
+    </footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError : false });
+        updateNotesContent(); 
+    });
+
+    function toggleTheme() {
+        const html = document.documentElement; const icon = document.getElementById('theme-icon');
+        if (html.getAttribute('data-theme') === 'dark') { html.setAttribute('data-theme', 'light'); icon.innerText = '🌙'; } 
+        else { html.setAttribute('data-theme', 'dark'); icon.innerText = '☀️'; }
+    }
+
+    // --- APUNTES DINÁMICOS ---
+    const notesData = {
+        "diag": `
+            <h3 style="color: var(--primary-accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">1. El Conjunto de los Números Reales ($\\mathbb{R}$)</h3>
+            <ul style="color: var(--text-muted); line-height: 1.8; margin-top: 15px;">
+                <li><strong style="color: var(--text-main);">Clasificación:</strong> Los Reales agrupan a los <b>Racionales</b> $\\mathbb{Q}$ (enteros, fracciones, decimales exactos y periódicos) y a los <b>Irracionales</b> $\\mathbb{I}$ (números con infinitas cifras decimales no periódicas, como $\\pi$, $e$, o $\\sqrt{2}$).</li>
+                <li><strong style="color: var(--text-main);">Intervalos:</strong> Representan subconjuntos de $\\mathbb{R}$.
+                    <br> - <i>Abierto</i> $(a, b)$: No incluye los extremos ($a < x < b$).
+                    <br> - <i>Cerrado</i> $[a, b]$: Sí incluye los extremos ($a \\le x \\le b$).
+                </li>
+                <li><strong style="color: var(--text-main);">Valor Absoluto ($|x|$):</strong> Geométricamente es la distancia de un número al origen (cero). Siempre es positivo o nulo.
+                    <br> - Definición: $|x| = x$ si $x \\ge 0$, y $|x| = -x$ si $x < 0$.
+                </li>
+            </ul>
+
+            <h3 style="color: var(--primary-accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 5px; margin-top: 30px;">2. Inecuaciones y Desigualdades</h3>
+            <ul style="color: var(--text-muted); line-height: 1.8; margin-top: 15px;">
+                <li><strong style="color: var(--text-main);">Regla de Oro (Cambio de Signo):</strong> Si multiplicamos o dividimos ambos miembros de una inecuación por un número <b>negativo</b>, el sentido de la desigualdad se invierte obligatoriamente.
+                    <br><i>Ejemplo:</i> $-3x > 12 \\implies x < \\frac{12}{-3} \\implies x < -4$.
+                </li>
+                <li><strong style="color: var(--text-main);">Inecuaciones con Valor Absoluto:</strong>
+                    <br> - Tipo Menor: $|x| \\le a \\iff -a \\le x \\le a$ (Intersección / "Y").
+                    <br> - Tipo Mayor: $|x| \\ge a \\iff x \\ge a \\lor x \\le -a$ (Unión / "O").
+                </li>
+                <li><strong style="color: var(--text-main);">Inecuaciones Cuadráticas y Racionales:</strong> Nunca se "pasan multiplicando" variables que puedan ser negativas. Se debe igualar a cero, factorizar y analizar los signos de cada factor en la recta real (Método de los intervalos o regla de los signos).
+                </li>
+            </ul>`,
+        "0": `
+            <h3 style="color: var(--primary-accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Módulo 1: Vectores en $\\mathbb{R}^2$ y $\\mathbb{R}^3$</h3>
+            <ul style="color: var(--text-muted); line-height: 1.8; margin-top: 15px;">
+                <li><strong style="color: var(--text-main);">Producto Escalar (Punto):</strong> $\\vec{u} \\cdot \\vec{v} = |\\vec{u}||\\vec{v}|\\cos(\\theta)$. Si el producto da 0, los vectores son Ortogonales.</li>
+                <li><strong style="color: var(--text-main);">Producto Vectorial (Cruz):</strong> Exclusivo de $\\mathbb{R}^3$. $\\vec{u} \\times \\vec{v}$ devuelve un vector perpendicular a ambos. Su módulo equivale al área del paralelogramo que forman.</li>
+            </ul>`,
+        "1": `
+            <h3 style="color: var(--primary-accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Módulo 2: Matrices y Determinantes</h3>
+            <ul style="color: var(--text-muted); line-height: 1.8; margin-top: 15px;">
+                <li><strong style="color: var(--text-main);">Matriz Inversa:</strong> Una matriz cuadrada $A$ tiene inversa ($A^{-1}$) si y solo si su determinante es distinto de cero ($\\det(A) \\neq 0$).</li>
+                <li><strong style="color: var(--text-main);">Regla de Sarrus:</strong> Método práctico para calcular determinantes de matrices $3 \\times 3$.</li>
+            </ul>`,
+        "2": `
+            <h3 style="color: var(--primary-accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Módulo 3: Sistemas de Ecuaciones</h3>
+            <ul style="color: var(--text-muted); line-height: 1.8; margin-top: 15px;">
+                <li><strong style="color: var(--text-main);">Teorema de Rouché-Frobenius:</strong> Un sistema es compatible (tiene solución) si el rango de la matriz de coeficientes es igual al rango de la matriz ampliada.</li>
+                <li><strong style="color: var(--text-main);">Regla de Cramer:</strong> Método de resolución usando determinantes ($x_i = \\frac{\\det(A_i)}{\\det(A)}$). Exige que el sistema sea cuadrado y su $\\det(A) \\neq 0$.</li>
+            </ul>`,
+        "3": `
+            <h3 style="color: var(--primary-accent); border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">Módulo 4: Rectas y Planos</h3>
+            <ul style="color: var(--text-muted); line-height: 1.8; margin-top: 15px;">
+                <li><strong style="color: var(--text-main);">Ecuación General del Plano:</strong> $Ax + By + Cz + D = 0$. Su vector normal (perpendicular al plano) es $\\vec{n} = (A,B,C)$.</li>
+                <li><strong style="color: var(--text-main);">Ecuación Vectorial de la Recta:</strong> Exige un punto de paso $P_0$ y un vector director $\\vec{v}$. Ecuación: $P = P_0 + t\\vec{v}$.</li>
+            </ul>`
+    };
+
+    function updateNotesContent() {
+        const val = document.getElementById('module-selector').value;
+        const notesDiv = document.getElementById('notes-content');
+        notesDiv.innerHTML = notesData[val] || "<p>Seleccione un módulo válido.</p>";
+        try { renderMathInElement(notesDiv, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false }); } catch(e){}
+    }
+
+    function toggleNotes() {
+        const modal = document.getElementById('notes-modal');
+        if (modal.style.display === 'flex') modal.style.display = 'none';
+        else modal.style.display = 'flex';
+    }
+
+    // --- LÓGICA DEL PLANO VECTORIAL R2 ---
+    const canvas = document.getElementById('vector-canvas'); const ctx = canvas.getContext('2d');
+    let vecMod = 50; let vecAng = 45;
+
+    document.getElementById('vec-mod').addEventListener('input', (e) => { vecMod = parseFloat(e.target.value); document.getElementById('val-mod').innerText = vecMod; drawVectorSpace();});
+    document.getElementById('vec-ang').addEventListener('input', (e) => { vecAng = parseFloat(e.target.value); document.getElementById('val-ang').innerText = vecAng; drawVectorSpace();});
+    
+    function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; drawVectorSpace(); }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    function drawVectorSpace() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2; const cy = canvas.height / 2;
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+        for(let i = 0; i < canvas.width; i+=20) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
+        for(let i = 0; i < canvas.height; i+=20) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke(); 
+        ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.stroke(); 
+
+        const rad = vecAng * (Math.PI / 180);
+        const vx = cx + (vecMod * Math.cos(rad));
+        const vy = cy - (vecMod * Math.sin(rad)); 
+
+        ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 3; ctx.shadowBlur = 10; ctx.shadowColor = '#00ffcc';
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(vx, vy); ctx.stroke();
+
+        ctx.fillStyle = '#00ffcc';
+        ctx.beginPath(); ctx.moveTo(vx, vy);
+        ctx.lineTo(vx - 10 * Math.cos(rad - Math.PI/6), vy + 10 * Math.sin(rad - Math.PI/6));
+        ctx.lineTo(vx - 10 * Math.cos(rad + Math.PI/6), vy + 10 * Math.sin(rad + Math.PI/6));
+        ctx.fill(); ctx.shadowBlur = 0;
+    }
+
+    // --- BASE DE DATOS DE PREGUNTAS (20 PARA DIAGNÓSTICO) ---
+    const allModules = {
+        "diag": [
+            // 10 Preguntas: Números Reales
+            { text: "¿A qué conjunto numérico pertenece el valor de $\\pi$?", math: null, options: ["Números Racionales ($\\mathbb{Q}$)", "Números Irracionales ($\\mathbb{I}$)", "Números Enteros ($\\mathbb{Z}$)", "Números Naturales ($\\mathbb{N}$)"], correctIndex: 1, feedback: "$\\pi$ no puede expresarse como el cociente de dos enteros, por lo que pertenece al conjunto de los Irracionales." },
+            { text: "¿Cuál de las siguientes afirmaciones sobre los números reales es FALSA?", math: null, options: ["Todo número racional es también un número real.", "Todo número entero es un número racional.", "Todo número irracional es también un número real.", "Todo número real es un número racional."], correctIndex: 3, feedback: "Falso: Los números reales abarcan tanto a los racionales como a los irracionales. Un irracional (como $\\sqrt{2}$) es real pero no racional." },
+            { text: "Al simplificar la expresión $\\frac{2^3 \\cdot 2^{-1}}{2^2}$, se obtiene:", math: null, options: ["$2$", "$1$", "$1/2$", "$4$"], correctIndex: 1, feedback: "Por propiedades de potencias: $\\frac{2^{3-1}}{2^2} = \\frac{2^2}{2^2} = 1$." },
+            { text: "¿Cuál es el resultado de la operación con valor absoluto $|-8| - |3|$?", math: null, options: ["$-11$", "$-5$", "$5$", "$11$"], correctIndex: 2, feedback: "El valor absoluto siempre es positivo: $8 - 3 = 5$." },
+            { text: "Exprese el siguiente conjunto en notación de intervalo: Todos los números reales $x$ tales que $-3 \\le x < 7$.", math: null, options: ["$(-3, 7)$", "$[-3, 7)$", "$[-3, 7]$", "$(-3, 7]$"], correctIndex: 1, feedback: "El símbolo $\\le$ incluye al extremo (corchete '['), y el símbolo $<$ no lo incluye (paréntesis ')'). Resulta $[-3, 7)$." },
+            { text: "Racionalizar el denominador de la expresión $\\frac{2}{\\sqrt{2}}$.", math: null, options: ["$\\sqrt{2}$", "$2\\sqrt{2}$", "$1$", "$\\frac{\\sqrt{2}}{2}$"], correctIndex: 0, feedback: "Multiplicamos y dividimos por $\\sqrt{2}$: $\\frac{2\\sqrt{2}}{\\sqrt{2}\\cdot\\sqrt{2}} = \\frac{2\\sqrt{2}}{2} = \\sqrt{2}$." },
+            { text: "¿Cuál de estos números es un número Racional?", math: null, options: ["$\\sqrt{5}$", "$e$", "$\\frac{22}{7}$", "$\\pi$"], correctIndex: 2, feedback: "Un número racional es aquel que puede escribirse como fracción $\\frac{a}{b}$ donde $a$ y $b$ son enteros. $\\frac{22}{7}$ cumple esto." },
+            { text: "La propiedad que establece que $a \\cdot (b + c) = a \\cdot b + a \\cdot c$ se denomina:", math: null, options: ["Asociativa", "Conmutativa", "Distributiva", "Elemento Neutro"], correctIndex: 2, feedback: "Es la propiedad distributiva del producto respecto de la suma." },
+            { text: "Calcule el valor de $\\sqrt{16} + \\sqrt[3]{-8}$.", math: null, options: ["$6$", "$2$", "$0$", "$-2$"], correctIndex: 1, feedback: "$\\sqrt{16} = 4$ y $\\sqrt[3]{-8} = -2$. Entonces, $4 + (-2) = 2$." },
+            { text: "¿Qué condición estricta debe cumplir la variable $x$ para que la expresión $\\sqrt{x-5}$ represente un número real?", math: null, options: ["$x > 0$", "$x \\ge 0$", "$x > 5$", "$x \\ge 5$"], correctIndex: 3, feedback: "El radicando de una raíz de índice par debe ser mayor o igual a cero. $x - 5 \\ge 0 \\implies x \\ge 5$." },
+            
+            // 10 Preguntas: Inecuaciones
+            { text: "Resuelva la siguiente inecuación lineal: $3x - 6 > 0$", math: null, options: ["$x > -2$", "$x < 2$", "$x > 2$", "$x \\ge 2$"], correctIndex: 2, feedback: "Despejando: $3x > 6 \\implies x > \\frac{6}{3} \\implies x > 2$." },
+            { text: "Preste atención al signo. Resuelva: $-2x \\le 8$", math: null, options: ["$x \\le -4$", "$x \\ge -4$", "$x \\le 4$", "$x \\ge 4$"], correctIndex: 1, feedback: "Al dividir ambos miembros por un número negativo (-2), el sentido de la desigualdad se invierte: $x \\ge \\frac{8}{-2} \\implies x \\ge -4$." },
+            { text: "Resuelva la inecuación simultánea: $-1 < 2x + 3 \\le 9$", math: null, options: ["$-2 < x \\le 3$", "$1 < x \\le 3$", "$-1 < x \\le 6$", "$-2 \\le x < 3$"], correctIndex: 0, feedback: "Restamos 3 en todas las partes: $-4 < 2x \\le 6$. Dividimos por 2: $-2 < x \\le 3$." },
+            { text: "¿Cuál es el conjunto solución de la inecuación cuadrática $x^2 - 9 < 0$?", math: null, options: ["$(-\\infty, 3)$", "$(-3, 3)$", "$(3, \\infty)$", "$( -\\infty, -3 ) \\cup ( 3, \\infty )$"], correctIndex: 1, feedback: "Factorizamos: $(x-3)(x+3) < 0$. Las raíces son -3 y 3. Analizando los signos de los intervalos, la expresión es negativa entre -3 y 3." },
+            { text: "Resuelva la inecuación con valor absoluto: $|x - 2| \\le 4$", math: null, options: ["$x \\le 6$", "$-2 \\le x \\le 6$", "$-6 \\le x \\le 2$", "$( -\\infty, -2 ] \\cup [ 6, \\infty )$"], correctIndex: 1, feedback: "Por propiedad: $-4 \\le x - 2 \\le 4$. Sumamos 2 a todo: $-2 \\le x \\le 6$." },
+            { text: "Resuelva la inecuación con valor absoluto: $|2x| > 6$", math: null, options: ["$-3 < x < 3$", "$x > 3$", "$x > 3 \\lor x < -3$", "$x \\ge 3 \\lor x \\le -3$"], correctIndex: 2, feedback: "Por propiedad de 'mayor que': $2x > 6 \\lor 2x < -6$. Dividiendo por 2: $x > 3 \\lor x < -3$." },
+            { text: "¿Cuál es el dominio de validez de la expresión racional $\\frac{x}{x-2} \\ge 0$?", math: null, options: ["$(-\\infty, 0] \\cup (2, \\infty)$", "$[0, 2)$", "$(2, \\infty)$", "$( -\\infty, 0 ] \\cup [ 2, \\infty )$"], correctIndex: 0, feedback: "Las raíces del numerador (0) y denominador (2) dividen la recta. Probando valores, es positiva antes de 0 y después de 2. Notar que $x=2$ no se incluye (denominador cero)." },
+            { text: "¿Cuál es el dominio natural de la función $f(x) = \\sqrt{4 - 2x}$?", math: null, options: ["$x \\ge 2$", "$x \\le 2$", "$x > 2$", "$x < 2$"], correctIndex: 1, feedback: "Debe cumplirse $4 - 2x \\ge 0 \\implies 4 \\ge 2x \\implies 2 \\ge x$, es decir, $x \\le 2$." },
+            { text: "El conjunto solución de la inecuación cuadrática $x^2 - 5x + 6 \\ge 0$ es:", math: null, options: ["$[2, 3]$", "$(2, 3)$", "$( -\\infty, 2 ] \\cup [ 3, \\infty )$", "$( -\\infty, -3 ] \\cup [ -2, \\infty )$"], correctIndex: 2, feedback: "Factorizado es $(x-2)(x-3) \\ge 0$. Sus raíces son 2 y 3. La parábola abre hacia arriba, por lo que es $\\ge 0$ a la izquierda del 2 y a la derecha del 3." },
+            { text: "Propiedad Teórica: Si $a < b$ y $c < 0$, entonces al multiplicar ambos lados por $c$ se cumple que:", math: null, options: ["$ac < bc$", "$ac > bc$", "$ac = bc$", "No se puede determinar."], correctIndex: 1, feedback: "Al multiplicar una desigualdad por un número negativo, el sentido de la desigualdad obligatoriamente se invierte." }
+        ],
+        "0": [
+            { text: "Pregunta de muestra Módulo 1.", math: null, options: ["A", "B"], correctIndex: 0, feedback: "Feedback." }
+        ]
+    };
+
+    let questionsDB = []; let currentQuestion = 0; let chargeErrors = 0; let studentName = "";
+
+    function startQuiz() {
+        const nameInput = document.getElementById('student-name').value.trim();
+        const moduleSelect = document.getElementById('module-selector');
+        if(nameInput === "") { alert("Ingrese el nombre de la alumna para continuar."); return; }
+        
+        studentName = nameInput; 
+        const selectedModule = moduleSelect.value;
+        const sourceDB = allModules[selectedModule] || allModules["diag"];
+        
+        // Copiamos la DB para iterarla.
+        questionsDB = [...sourceDB]; 
+        
+        document.getElementById('q-header').dataset.moduleName = moduleSelect.options[moduleSelect.selectedIndex].text.split('-')[1].trim();
+        document.getElementById('start-screen').classList.add('hidden'); 
+        document.getElementById('quiz-screen').classList.remove('hidden');
+        
+        currentQuestion = 0; chargeErrors = 0;
+        updateProgressBar();
+        loadQuestion(); 
+    }
+
+    function updateProgressBar() {
+        const progressBar = document.getElementById('progress-bar');
+        const percentage = (currentQuestion / questionsDB.length) * 100;
+        progressBar.style.width = percentage + '%';
+    }
+
+    function loadQuestion() {
+        if (currentQuestion >= questionsDB.length) { finishQuiz(); return; }
+        const q = questionsDB[currentQuestion]; 
+        
+        document.getElementById('q-header').innerText = `[ ${document.getElementById('q-header').dataset.moduleName.toUpperCase()} ] - PREGUNTA ${currentQuestion + 1} DE ${questionsDB.length}`;
+        document.getElementById('q-text').innerText = q.text;
+
+        const mathBlock = document.getElementById('q-math');
+        if (q.math) { mathBlock.innerHTML = q.math; mathBlock.classList.remove('hidden'); } else { mathBlock.classList.add('hidden'); }
+        document.getElementById('feedback-msg').style.display = 'none'; document.getElementById('next-btn').classList.add('hidden');
+
+        let optionsHTML = ""; const letters = ['A', 'B', 'C', 'D'];
+        q.options.forEach((opt, index) => { optionsHTML += `<button class="option-btn" id="opt-btn-${index}" onclick="checkAnswer(${index}, this)"><div class="option-index">${letters[index]}</div><div>${opt}</div></button>`; });
+        document.getElementById('options-container').innerHTML = optionsHTML;
+        
+        updateProgressBar();
+        try { renderMathInElement(document.getElementById('quiz-screen'), { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false }); } catch(e) {}
+    }
+
+    function checkAnswer(selectedIndex, clickedBtn) {
+        const q = questionsDB[currentQuestion]; const feedback = document.getElementById('feedback-msg');
+        
+        document.querySelectorAll('.option-btn').forEach(btn => { btn.classList.add('disabled'); btn.onclick = null; });
+        clickedBtn.classList.remove('disabled'); feedback.style.display = 'block';
+
+        if (selectedIndex === q.correctIndex) {
+            clickedBtn.classList.add('correct-choice');
+            feedback.style.borderColor = 'var(--correct-border)';
+            feedback.innerHTML = `<strong style="color: var(--correct-border);">✓ RESPUESTA CORRECTA</strong><br><br>${q.feedback}`;
+        } else {
+            chargeErrors++; clickedBtn.classList.add('error-choice');
+            document.getElementById(`opt-btn-${q.correctIndex}`).classList.remove('disabled'); 
+            document.getElementById(`opt-btn-${q.correctIndex}`).style.border = '1px solid var(--correct-border)';
+            feedback.style.borderColor = 'var(--error-border)';
+            feedback.innerHTML = `<strong style="color: var(--error-border);">✗ RESPUESTA INCORRECTA</strong><br><br>${q.feedback}`;
+        }
+        try { renderMathInElement(feedback, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false }); } catch(e){}
+        document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function nextQuestion() { currentQuestion++; loadQuestion(); }
+
+    function finishQuiz() {
+        currentQuestion = questionsDB.length; updateProgressBar(); 
+        const correctAnswers = questionsDB.length - chargeErrors; const percentage = Math.round((correctAnswers / questionsDB.length) * 100);
+        let feedbackMessage = percentage >= 80 ? "¡Excelente base matemática! Estás lista para avanzar con álgebra lineal y cálculo." : "Se detectaron algunas dudas conceptuales. Te sugiero repasar el apunte de ingreso antes de avanzar a temas más abstractos.";
+
+        document.getElementById('quiz-screen').innerHTML = `
+            <h2 style="color: var(--primary-accent); margin-bottom: 20px; font-size: 2rem; font-family: 'Rajdhani', sans-serif; text-align: center; text-transform: uppercase;">REPORTE DE SIMULACIÓN: ${studentName}</h2>
+            <div class="math-block" style="font-size: 1.8rem; color: var(--text-main); margin-bottom: 20px; border-color: ${percentage >= 60 ? 'var(--correct-border)' : 'var(--error-border)'}">
+                PUNTUACIÓN: <span style="color: ${percentage >= 60 ? 'var(--correct-border)' : 'var(--error-border)'}; font-weight: 800; font-family: 'Fira Code', monospace;">${percentage}%</span><br>
+                <span style="font-size: 1.1rem; color: var(--text-muted); font-family: 'Inter', sans-serif;">${correctAnswers} aciertos de ${questionsDB.length}</span>
+            </div>
+            <p style="font-size: 1.15rem; line-height: 1.6; text-align: center; font-weight: 500;">${feedbackMessage}</p>
+            <button class="btn-action" onclick="location.reload()" style="margin-top: 30px;">Volver al Menú Principal</button>
+        `;
+    }
+</script>
+
+</body>
+</html>
