@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulador Avanzado - UTN FRT</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;1,400&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --bg-deep: #010205; --bg-gradient: radial-gradient(circle at center, #050a14 0%, #000000 100%);
+            --card-bg: rgba(4, 8, 18, 0.85); --text-main: #f8fafc; --text-muted: #64748b;
+            --neon-green: #00ff41; --neon-red: #ff003c; --neon-blue: #00e5ff; --neon-amber: #ff6600; 
+            --neon-purple: #b000ff; --hud-grid: rgba(0, 229, 255, 0.03);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Exo 2', sans-serif; transition: background-color 0.4s; }
+        body { background-color: var(--bg-deep); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; overflow-x: hidden; }
+
+        /* --- BOOT SCREEN --- */
+        #init-overlay { position: fixed; inset: 0; background-color: #000; z-index: 99999; display: flex; justify-content: center; align-items: center; flex-direction: column; cursor: pointer; background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 229, 255, 0.05) 2px, rgba(0, 229, 255, 0.05) 4px); }
+        .blinking-text { color: var(--neon-amber); font-size: clamp(1.2rem, 4vw, 2rem); font-family: 'Orbitron', sans-serif; animation: blink 1.5s infinite; text-align: center; font-weight: 900; padding: 2rem; border: 2px dashed var(--neon-amber); box-shadow: 0 0 40px rgba(255, 102, 0, 0.3); background: rgba(0,0,0,0.9); letter-spacing: 2px;}
+        @keyframes blink { 0%, 100% { opacity: 1; text-shadow: 0 0 20px var(--neon-amber); } 50% { opacity: 0.3; text-shadow: none; } }
+
+        /* --- CANVAS & FONDO CÓSMICO --- */
+        #particle-canvas { position: fixed; inset: 0; z-index: -3; pointer-events: none; }
+        .space-background { position: fixed; inset: 0; z-index: -4; background: var(--bg-gradient); overflow: hidden; }
+        .grid-overlay { position: fixed; inset: 0; z-index: -2; pointer-events: none; background-image: linear-gradient(var(--hud-grid) 1px, transparent 1px), linear-gradient(90deg, var(--hud-grid) 1px, transparent 1px); background-size: 30px 30px; animation: panGrid 40s linear infinite; }
+        @keyframes panGrid { 0% { background-position: 0 0; } 100% { background-position: 30px 30px; } }
+        
+        .black-hole { position: absolute; width: 45vh; height: 45vh; border-radius: 50%; bottom: 5vh; right: -10vh; background: #000; box-shadow: 0 0 80px 20px rgba(255, 102, 0, 0.4), 0 0 150px 50px rgba(255, 0, 60, 0.2), inset 0 0 20px 5px rgba(255, 255, 255, 0.1); animation: pulseSingularity 6s ease-in-out infinite alternate; z-index: -2; }
+        .black-hole::after { content: ''; position: absolute; top: 50%; left: 50%; width: 250%; height: 50%; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(255, 170, 0, 0.6) 0%, rgba(255, 0, 60, 0.3) 40%, transparent 70%); transform: translate(-50%, -50%) rotate(-15deg); filter: blur(8px); animation: spinDisk 15s linear infinite; }
+        .black-hole::before { content: ''; position: absolute; top: -50%; left: 48%; width: 4%; height: 200%; background: linear-gradient(to bottom, transparent, rgba(0, 229, 255, 0.8), transparent); filter: blur(4px); transform: rotate(15deg); animation: pulseJet 0.16s infinite; }
+        @keyframes pulseSingularity { 0% { box-shadow: 0 0 60px 10px rgba(255, 102, 0, 0.3), 0 0 100px 30px rgba(255, 0, 60, 0.1); } 100% { box-shadow: 0 0 100px 30px rgba(255, 102, 0, 0.5), 0 0 180px 60px rgba(255, 0, 60, 0.3); } }
+        @keyframes spinDisk { 0% { transform: translate(-50%, -50%) rotate(-15deg) scale(1); } 50% { transform: translate(-50%, -50%) rotate(-15deg) scale(1.05); } 100% { transform: translate(-50%, -50%) rotate(-15deg) scale(1); } }
+        @keyframes pulseJet { 0% { opacity: 0.4; } 100% { opacity: 0.9; } }
+        .cosmic-object { position: absolute; border-radius: 50%; z-index: -3; opacity: 0; transition: opacity 2s ease-in; }
+
+        /* --- BARRA SUPERIOR --- */
+        .top-nav { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.2rem; background: var(--card-bg); border: 1px solid rgba(0, 229, 255, 0.3); backdrop-filter: blur(10px); margin-bottom: 1.5rem; z-index: 10; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .nav-brand { font-family: 'Orbitron', sans-serif; color: var(--neon-blue); font-weight: 900; font-size: clamp(0.9rem, 4vw, 1.2rem); letter-spacing: 2px;}
+        .nav-controls { display: flex; gap: 0.8rem; }
+        .nav-btn { background: rgba(0, 229, 255, 0.05); border: 1px solid var(--neon-blue); color: var(--neon-blue); height: 40px; padding: 0 15px; font-family: 'Orbitron'; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); transition: 0.3s;}
+        .nav-btn:hover { background: var(--neon-blue); color: var(--bg-deep); box-shadow: 0 0 15px var(--neon-blue); }
+        .nav-btn.study { border-color: var(--neon-purple); color: var(--neon-purple); }
+        .nav-btn.study:hover { background: var(--neon-purple); color: var(--text-main); box-shadow: 0 0 15px var(--neon-purple); }
+
+        /* --- MENÚ DE MÓDULOS (GRILLA 2x3) --- */
+        #module-selection { width: 100%; max-width: 800px; display: none; flex-direction: column; gap: 1.5rem; z-index: 10; margin-top: 1rem;}
+        .modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .module-btn { background: rgba(0,0,0,0.6); border: 1px solid var(--neon-blue); padding: 1.5rem; color: var(--text-main); cursor: pointer; position: relative; overflow: hidden; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); transition: 0.3s; text-align: left; }
+        .module-btn::before { content: ''; position: absolute; left: 0; top: 0; width: 6px; height: 100%; background: var(--neon-blue); }
+        .module-btn:hover { background: rgba(0, 229, 255, 0.1); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0, 229, 255, 0.3); }
+        .module-btn h2 { font-family: 'Orbitron'; font-size: 1.2rem; color: var(--neon-blue); margin-bottom: 0.5rem;}
+        .module-btn p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.4;}
+        
+        /* Colores específicos por módulo */
+        .mod-2::before { background: var(--neon-amber); } .mod-2 h2 { color: var(--neon-amber); } .mod-2 { border-color: var(--neon-amber); }
+        .mod-3::before { background: var(--neon-green); } .mod-3 h2 { color: var(--neon-green); } .mod-3 { border-color: var(--neon-green); }
+        .mod-4::before { background: var(--neon-purple); } .mod-4 h2 { color: var(--neon-purple); } .mod-4 { border-color: var(--neon-purple); }
+        .mod-5::before { background: #ff00ff; } .mod-5 h2 { color: #ff00ff; } .mod-5 { border-color: #ff00ff; }
+        .mod-6::before { background: #ffff00; } .mod-6 h2 { color: #ffff00; } .mod-6 { border-color: #ffff00; }
+
+        /* --- CONTENEDOR PRINCIPAL HUD --- */
+        .quiz-container { width: 100%; max-width: 800px; background: var(--card-bg); padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid rgba(0, 229, 255, 0.2); backdrop-filter: blur(20px); position: relative; z-index: 10; clip-path: polygon(30px 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%, 0 30px); display: none; }
+        .quiz-container::before { content: ''; position: absolute; top: 0; left: 0; width: 40px; height: 40px; border-top: 3px solid var(--neon-blue); border-left: 3px solid var(--neon-blue); pointer-events: none; }
+        .quiz-container::after { content: ''; position: absolute; bottom: 0; right: 0; width: 40px; height: 40px; border-bottom: 3px solid var(--neon-blue); border-right: 3px solid var(--neon-blue); pointer-events: none; }
+
+        .progress-bar-container { width: 100%; height: 3px; background: rgba(255,255,255,0.1); margin-bottom: 1.5rem; }
+        .progress-bar-fill { height: 100%; background: var(--neon-blue); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 15px var(--neon-blue); }
+
+        .stats-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.8rem; border-bottom: 1px dashed rgba(0,229,255,0.3); font-family: 'Orbitron', sans-serif; font-size: 1rem; }
+        .streak-counter { color: var(--neon-amber); text-shadow: 0 0 8px rgba(255, 102, 0, 0.6); font-weight: bold; letter-spacing: 1px;}
+        .timer { color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 8px rgba(0, 229, 255, 0.5); letter-spacing: 2px;}
+        .timer.danger { color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); animation: pulseTimer 0.8s infinite; }
+
+        .counter-badge { position: absolute; top: 0; right: 2rem; background: var(--neon-blue); color: #000; padding: 5px 20px; font-weight: 900; font-family: 'Orbitron'; font-size: 1rem; clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%); }
+        .unit-title { color: var(--neon-blue); font-family: 'Orbitron'; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1rem; opacity: 0.8; text-align: center;}
+        .question-text { font-size: clamp(1.15rem, 4vw, 1.4rem); font-weight: 600; line-height: 1.6; margin: 1.5rem 0 2rem 0; color: var(--text-main); }
+        
+        .options-container { display: flex; flex-direction: column; gap: 1rem; }
+        .option-btn { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); padding: clamp(1rem, 4vw, 1.25rem) clamp(1.5rem, 5vw, 2rem); color: var(--text-main); font-size: clamp(1.05rem, 3.5vw, 1.2rem); cursor: pointer; text-align: left; min-height: 65px; display: flex; align-items: center; font-weight: 500; position: relative; overflow: hidden; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); }
+        .option-btn::before { content: ''; position: absolute; left: 0; top: 0; width: 6px; height: 100%; background: var(--neon-blue); transform: scaleY(0); transition: transform 0.2s; }
+        .option-btn:hover:not(:disabled) { border-color: var(--neon-blue); background: rgba(0, 229, 255, 0.08); }
+        .option-btn:hover:not(:disabled)::before { transform: scaleY(1); }
+        .option-btn.correct { border-color: var(--neon-green); color: var(--neon-green); background: rgba(0, 255, 65, 0.1); }
+        .option-btn.correct::before { background: var(--neon-green); transform: scaleY(1); }
+        .option-btn.wrong { border-color: var(--neon-red); color: var(--neon-red); background: rgba(255, 0, 60, 0.1); }
+        .option-btn.wrong::before { background: var(--neon-red); transform: scaleY(1); text-decoration: line-through;}
+
+        /* --- VENTANAS MODALES --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; display: none; justify-content: center; align-items: center; }
+        .notes-modal { background: var(--card-bg); border: 1px solid var(--neon-amber); border-left: 8px solid var(--neon-amber); width: 95%; max-width: 700px; padding: 2rem; box-shadow: 0 0 50px rgba(255, 102, 0, 0.3); position: relative; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px); max-height: 85vh; overflow-y: auto;}
+        
+        .notes-modal.guide-modal { border-color: var(--neon-purple); border-left-color: var(--neon-purple); box-shadow: 0 0 50px rgba(176, 0, 255, 0.3); }
+        .notes-modal.guide-modal h4 { color: var(--neon-purple); border-bottom-color: rgba(176, 0, 255, 0.3); }
+
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .notes-modal h4 { color: var(--neon-amber); font-family: 'Orbitron', sans-serif; font-size: 1.2rem; margin-bottom: 1rem; letter-spacing: 2px; border-bottom: 1px solid rgba(255, 102, 0, 0.3); padding-bottom: 0.5rem;}
+        .notes-modal p, .notes-modal li { font-size: 1.1rem; line-height: 1.6; color: var(--text-main); margin-bottom: 0.8rem;}
+        .close-modal-btn { position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid var(--neon-red); color: var(--neon-red); width: 30px; height: 30px; cursor: pointer; font-family: 'Orbitron'; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+        .close-modal-btn:hover { background: var(--neon-red); color: #fff; box-shadow: 0 0 10px var(--neon-red); }
+
+        .action-btn { width: 100%; margin-top: 2rem; padding: 1.2rem; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 900; color: #000; background: var(--neon-blue); border: none; cursor: pointer; display: none; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); text-transform: uppercase; clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px); transition: 0.3s; position: relative; z-index: 30;}
+        .action-btn.share { background: var(--neon-green); box-shadow: 0 0 20px rgba(0, 255, 65, 0.4); display: block;}
+        .action-btn.menu { background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue); display: block;}
+
+        .creator-info { text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(0, 229, 255, 0.2); font-family: 'Exo 2', sans-serif; font-size: 0.95rem; color: var(--text-muted); font-weight: 600; width: 100%; max-width: 800px;}
+        .creator-info span { color: var(--neon-blue); font-weight: 700; text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);}
+
+        #result-screen { text-align: center; display: none; }
+        .final-score { font-size: 5rem; font-family: 'Orbitron', sans-serif; font-weight: 900; color: var(--neon-green); text-shadow: 0 0 30px rgba(0,255,65,0.5); margin: 1rem 0; }
+        .final-stats { display: flex; justify-content: space-around; margin-bottom: 2.5rem; color: var(--text-main); font-size: 1.1rem;}
+        .final-stats span { display: block; margin-top: 0.5rem; font-family: 'Orbitron'; font-weight: bold;}
+
+        /* Scrollbar personalizado para los apuntes */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
+        ::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-purple); }
+
+        @media (max-width: 480px) { .nav-controls .nav-btn { font-size: 0.8rem; padding: 0 10px; } body { padding: 0.5rem; } .top-nav, .quiz-container, .module-btn { clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); } }
+    </style>
+</head>
+<body>
+
+    <div id="init-overlay" onclick="bootSystem()">
+        <div class="blinking-text">[ INICIALIZAR TERMINAL UTN ]</div>
+        <p style="color:var(--neon-blue); margin-top:20px; text-align: center; font-family: 'Exo 2'; opacity: 0.7;">Toque la pantalla para activar el motor háptico y base de datos.</p>
+    </div>
+
+    <canvas id="particle-canvas"></canvas>
+    <div class="space-background" id="space-bg"><div class="black-hole" id="black-hole"></div></div>
+    <div class="grid-overlay"></div>
+
+    <header class="top-nav" id="main-nav" style="display: none;">
+        <div class="nav-brand">UTN FRT | FÍSICA II</div>
+        <div class="nav-controls">
+            <button class="nav-btn study" id="btn-guide" onclick="toggleGuide()" style="display: none;">📚 BASE DE DATOS</button>
+            <button class="nav-btn" id="btn-audio" onclick="toggleAudio()">🔊 AUDIO</button>
+        </div>
+    </header>
+
+    <div id="module-selection">
+        <h2 style="font-family: 'Orbitron'; color: var(--text-main); margin-bottom: 0.5rem; letter-spacing: 1px; text-align: center;">SEARS-ZEMANSKY (VOL 2)</h2>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem;">Seleccione el protocolo de evaluación a iniciar.</p>
+        
+        <div class="modules-grid">
+            <div class="module-btn" onclick="startModule(1, 'Módulo 1: Carga y Fuerza Eléctrica')">
+                <h2>MÓDULO 1</h2><p>Carga y Fuerza Eléctrica</p>
+            </div>
+            <div class="module-btn mod-2" onclick="startModule(2, 'Módulo 2: Campo Eléctrico')">
+                <h2>MÓDULO 2</h2><p>Campo Eléctrico</p>
+            </div>
+            <div class="module-btn mod-3" onclick="startModule(3, 'Módulo 3: Ley de Gauss')">
+                <h2>MÓDULO 3</h2><p>Ley de Gauss</p>
+            </div>
+            <div class="module-btn mod-4" onclick="startModule(4, 'Módulo 4: Potencial Eléctrico')">
+                <h2>MÓDULO 4</h2><p>Potencial Eléctrico y Trabajo</p>
+            </div>
+            <div class="module-btn mod-5" onclick="startModule(5, 'Módulo 5: Capacitancia')">
+                <h2>MÓDULO 5</h2><p>Capacitancia y Dieléctricos</p>
+            </div>
+            <div class="module-btn mod-6" onclick="startModule(6, 'Módulo 6: Corriente y FEM')">
+                <h2>MÓDULO 6</h2><p>Corriente, Resistencia y FEM</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="quiz-container" id="quiz-container">
+        <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+
+        <div id="quiz-content">
+            <div class="counter-badge" id="question-counter">VECTOR 1</div>
+            
+            <div class="stats-header">
+                <div class="streak-counter" id="streak-display">🔥 SECUENCIA: 0</div>
+                <div class="timer" id="timer-display">⏱️ 02:00</div>
+            </div>
+            
+            <h3 class="unit-title" id="module-title">TÍTULO DEL MÓDULO</h3>
+            <div class="question-text" id="question-text"></div>
+            <div class="options-container" id="options-container"></div>
+            <button id="next-btn" class="action-btn" onclick="nextQuestion()">Siguiente Vector ⭢</button>
+        </div>
+
+        <div id="result-screen">
+            <h2 style="font-family: 'Orbitron'; color: var(--text-main); letter-spacing: 2px;">MÓDULO COMPLETADO</h2>
+            <div class="final-score" id="final-score-text">0/0</div>
+            <div class="final-stats">
+                <div>Secuencia Máxima<br><span id="final-streak" style="color:var(--neon-amber);">0</span></div>
+                <div>Precisión<br><span id="final-accuracy" style="color:var(--neon-blue);">0%</span></div>
+            </div>
+            <button class="action-btn share" onclick="compartirResultados()">📲 Transmitir Log al Profe</button>
+            <button class="action-btn menu" onclick="location.reload()" style="margin-top: 1rem;">Volver al Menú Principal</button>
+        </div>
+    </div>
+
+    <div class="creator-info" id="creator-info" style="display: none;">
+        Autoridad: <span>Facundo Barrojo</span> | Contacto: <span>3815690147</span>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="notes-modal">
+            <button class="close-modal-btn" onclick="closeModal('modal-overlay')">X</button>
+            <h4>[ CORRECCIÓN ANALÍTICA ]</h4>
+            <p id="notes-content"></p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="guide-overlay">
+        <div class="notes-modal guide-modal">
+            <button class="close-modal-btn" onclick="closeModal('guide-overlay')">X</button>
+            <h4>[ 📚 BANCO DE DATOS MATEMÁTICOS ]</h4>
+            <div id="guide-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- BASE DE DATOS DE MÓDULOS (PREGUNTAS) ---
+        const modulesData = {
+            1: [
+                { 
+                    q: "[Nivel 1: Fácil] Frotas una varilla de vidrio con un paño de seda y la varilla adquiere una carga neta positiva. De acuerdo con el principio de conservación de la carga, ¿qué ocurrió a nivel subatómico?", 
+                    options: [
+                        "La varilla de vidrio creó protones adicionales debido a la fricción.", 
+                        "El paño de seda transfirió protones hacia la varilla de vidrio.", 
+                        "La varilla de vidrio transfirió electrones hacia el paño de seda.", 
+                        "La fricción destruyó electrones en la varilla de vidrio, dejando un exceso de protones."
+                    ], 
+                    correct: 2, 
+                    note: "La carga no se crea ni se destruye. Los protones están fijos en los núcleos atómicos; lo que se transfiere por fricción superficial son los electrones de valencia. El vidrio los pierde (cediéndolos a la seda) y, por tanto, queda con un exceso neto de carga positiva." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Tienes dos cargas puntuales, \\( q_1 \\) y \\( q_2 \\), separadas por una distancia \\( r \\). Si decides duplicar la distancia que las separa (\\( 2r \\)) y al mismo tiempo duplicar el valor de ambas cargas (\\( 2q_1 \\) y \\( 2q_2 \\)), la nueva magnitud de la fuerza eléctrica entre ellas será:", 
+                    options: [
+                        "La mitad de la fuerza original.", 
+                        "Igual a la fuerza original.", 
+                        "El doble de la fuerza original.", 
+                        "Cuatro veces la fuerza original."
+                    ], 
+                    correct: 1, 
+                    note: "Aplicando la Ley de Coulomb: el numerador se multiplica por 4 debido a las cargas (\\( 2 \\times 2 \\)), y el denominador al estar al cuadrado también se multiplica por 4 (\\( 2^2 \\)). Ambos factores se cancelan ($$ 4/4 = 1 $$), manteniendo la magnitud de la fuerza original." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] La carga eléctrica está cuantizada, lo que significa que solo puede existir en múltiplos enteros de la carga elemental \\( e \\approx 1.6 \\times 10^{-19} \\text{ C} \\). ¿Cuál de las siguientes cargas netas es físicamente imposible que posea un objeto?", 
+                    options: [
+                        "\\( -3.2 \\times 10^{-19} \\text{ C} \\)", 
+                        "\\( +4.8 \\times 10^{-19} \\text{ C} \\)", 
+                        "\\( -2.4 \\times 10^{-19} \\text{ C} \\)", 
+                        "\\( +1.6 \\times 10^{-18} \\text{ C} \\)"
+                    ], 
+                    correct: 2, 
+                    note: "Cualquier carga observable debe ser un múltiplo entero de \\( 1.6 \\times 10^{-19} \\text{ C} \\). El valor de \\( 2.4 \\) equivaldría a 1.5 veces 'e', lo cual implicaría fraccionar un electrón, un fenómeno imposible en la electrostática clásica." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Una carga puntual de \\( +10 \\, \\mu\\text{C} \\) ejerce una fuerza de repulsión de \\( 5 \\text{ N} \\) sobre una carga puntual de \\( +1 \\, \\mu\\text{C} \\). Según la Tercera Ley de Newton y la Ley de Coulomb, la fuerza que la carga de \\( +1 \\, \\mu\\text{C} \\) ejerce sobre la carga de \\( +10 \\, \\mu\\text{C} \\) es:", 
+                    options: [
+                        "\\( 0.5 \\text{ N} \\) de repulsión.", 
+                        "\\( 5 \\text{ N} \\) de repulsión.", 
+                        "\\( 50 \\text{ N} \\) de repulsión.", 
+                        "\\( 5 \\text{ N} \\) de atracción."
+                    ], 
+                    correct: 1, 
+                    note: "El postulado de acción y reacción (3ra Ley de Newton) dicta que ambas cargas experimentan fuerzas de igual magnitud pero en direcciones opuestas. Al tener el mismo signo, ambas fuerzas son de repulsión con una magnitud exacta de \\( 5 \\text{ N} \\)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Acercas una varilla de plástico con carga negativa a una esfera metálica neutra aislada, sin llegar a tocarla. Mientras la varilla está cerca, conectas la esfera a tierra por un instante mediante un cable y luego quitas el cable. Finalmente, alejas la varilla. ¿Cuál es el estado final de la esfera metálica?", 
+                    options: [
+                        "Queda con carga neta negativa.", 
+                        "Queda eléctricamente neutra.", 
+                        "Queda con carga neta positiva.", 
+                        "Queda polarizada, con una mitad positiva y otra negativa."
+                    ], 
+                    correct: 2, 
+                    note: "Este es el método de carga por inducción. La varilla negativa repele a los electrones libres de la esfera hacia tierra. Al cortar el cable, los electrones no pueden volver, dejando a la esfera con un déficit de electrones (carga neta positiva)." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Dos esferas conductoras idénticas y pequeñas tienen cargas iniciales de \\( +6 \\, \\mu\\text{C} \\) y \\( -2 \\, \\mu\\text{C} \\), y están separadas por una distancia \\( d \\), experimentando una fuerza de atracción de magnitud \\( F \\). Si las esferas se ponen en contacto físico y luego se devuelven a su separación original \\( d \\), la nueva fuerza entre ellas será:", 
+                    options: [
+                        "Una fuerza de atracción de magnitud \\( F/3 \\).", 
+                        "Una fuerza de repulsión de magnitud \\( F/3 \\).", 
+                        "Una fuerza de atracción de magnitud \\( F \\).", 
+                        "Una fuerza de repulsión de magnitud \\( F/4 \\)."
+                    ], 
+                    correct: 1, 
+                    note: "Al contactarse, la carga neta es \\( +6 - 2 = +4 \\, \\mu\\text{C} \\). Por simetría se reparte \\( +2 \\, \\mu\\text{C} \\) a cada una (fuerza de repulsión). El producto de cargas original era \\( |6 \\times -2| = 12 \\), el nuevo es \\( |2 \\times 2| = 4 \\). Como 4 es la tercera parte de 12, la nueva fuerza es \\( F/3 \\)." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Tres cargas puntuales se ubican sobre el eje x. La carga \\( q_1 = +2 \\, \\mu\\text{C} \\) está en el origen (\\( x=0 \\)). La carga \\( q_2 = -3 \\, \\mu\\text{C} \\) está en \\( x=2 \\text{ m} \\). ¿Dónde debe colocarse una tercera carga \\( q_3 \\) (de cualquier signo) para que la fuerza eléctrica neta sobre \\( q_3 \\) sea cero?", 
+                    options: [
+                        "En algún punto entre \\( x=0 \\) y \\( x=2 \\text{ m} \\).", 
+                        "En algún punto a la derecha de \\( x=2 \\text{ m} \\) (donde \\( x > 2 \\)).", 
+                        "En algún punto a la izquierda del origen (donde \\( x < 0 \\)).", 
+                        "Es imposible que la fuerza neta sobre \\( q_3 \\) sea cero en este sistema."
+                    ], 
+                    correct: 2, 
+                    note: "Para que las fuerzas se anulen, deben tener sentidos opuestos (imposible entre las dos cargas de distinto signo). Debe ubicarse en el exterior del segmento, más cerca de la carga de menor magnitud absoluta (\\( +2\\mu\\text{C} \\)) para compensar la lejanía de la carga mayor. Esto se cumple a la izquierda del origen." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Si comparamos la magnitud de la fuerza de repulsión eléctrica entre dos electrones separados por una distancia \\( r \\), con la magnitud de la fuerza de atracción gravitatoria entre esos mismos dos electrones a la misma distancia, encontramos que:", 
+                    options: [
+                        "Son aproximadamente del mismo orden de magnitud.", 
+                        "La fuerza gravitatoria es mucho mayor (órdenes de magnitud superior).", 
+                        "La fuerza eléctrica es mucho mayor (órdenes de magnitud superior).", 
+                        "Depende exclusivamente del valor de la distancia \\( r \\)."
+                    ], 
+                    correct: 2, 
+                    note: "La constante dieléctrica de Coulomb (\\( k \\)) es colosal comparada con la constante de gravitación universal (\\( G \\)), y la relación carga/masa del electrón agudiza esto. La fuerza eléctrica resulta ser aproximadamente \\( 10^{42} \\) veces mayor que la gravitacional." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Se tienen cuatro cargas de igual magnitud situadas en los vértices de un cuadrado. Dos cargas son positivas y están en los vértices superiores. Dos cargas son negativas y están en los vértices inferiores. Si se coloca una carga de prueba positiva en el centro geométrico del cuadrado, la fuerza eléctrica neta sobre ella apuntará:", 
+                    options: [
+                        "Hacia el lado superior del cuadrado.", 
+                        "Hacia el lado inferior del cuadrado.", 
+                        "Hacia la derecha.", 
+                        "La fuerza neta será cero por simetría."
+                    ], 
+                    correct: 1, 
+                    note: "La carga central (positiva) es rechazada por los vértices superiores (positivos) y atraída por los vértices inferiores (negativos). Todos los vectores resultantes tienen una componente neta que empuja hacia la cara inferior del cuadrado." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] ¿Por qué un globo frotado contra el cabello (cargado estáticamente) puede atraer pequeños pedacitos de papel que son eléctricamente neutros?", 
+                    options: [
+                        "Porque el papel es un conductor perfecto que permite el flujo de electrones hacia el globo.", 
+                        "Porque la carga del globo induce un reordenamiento de las cargas dentro de las moléculas del papel (polarización), atrayendo más a la carga de signo opuesto que está más cerca.", 
+                        "Porque la fricción del globo en el aire crea cargas en el papel antes de tocarlo.", 
+                        "Porque los aislantes neutros no obedecen la Ley de Coulomb."
+                    ], 
+                    correct: 1, 
+                    note: "El papel es un dieléctrico. El campo eléctrico del globo deforma las nubes electrónicas del papel, alejando las cargas de igual signo y acercando las de signo opuesto. Al estar la carga opuesta a menor distancia, la fuerza de atracción supera a la de repulsión." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Dos pequeñas esferas de masa \\( m \\) y carga idéntica \\( +q \\) cuelgan de dos hilos aislantes de longitud \\( L \\), unidos a un mismo punto en el techo. Debido a la repulsión electrostática, las esferas se separan hasta alcanzar el equilibrio, formando un ángulo \\( \\theta \\) cada hilo respecto a la vertical. En esta situación de equilibrio, la fuerza eléctrica de repulsión \\( F_e \\) entre ellas es igual a:", 
+                    options: [
+                        "\\( mg \\cdot \\sin(\\theta) \\)", 
+                        "\\( mg \\cdot \\cos(\\theta) \\)", 
+                        "\\( mg \\cdot \\tan(\\theta) \\)", 
+                        "\\( \\frac{k q^2}{L^2} \\)"
+                    ], 
+                    correct: 2, 
+                    note: "A partir del diagrama de cuerpo libre: La componente vertical de la tensión equilibra al peso ($$ T \\cos\\theta = mg $$) y la componente horizontal contrarresta la repulsión ($$ T \\sin\\theta = F_e $$). Dividiendo ambas ecuaciones se obtiene $$ F_e = mg \\tan\\theta $$." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] En un hexágono regular de lado \\( a \\), se colocan cargas idénticas \\( +Q \\) en cinco de sus seis vértices. El sexto vértice se deja vacío. ¿Cuál es la magnitud de la fuerza eléctrica neta que experimentaría una carga puntual \\( -q \\) situada en el centro exacto del hexágono?", 
+                    options: [
+                        "Cero.", 
+                        "\\( k \\frac{Qq}{a^2} \\)", 
+                        "\\( 5 k \\frac{Qq}{a^2} \\)", 
+                        "\\( k \\frac{Qq}{6a^2} \\)"
+                    ], 
+                    correct: 1, 
+                    note: "Si el hexágono estuviera completo (6 cargas), la fuerza neta en el centro sería nula por simetría. Faltar una carga equivale a tener el sistema en cero menos la fuerza de ese vértice. El resultado neto equivale exactamente a la fuerza de una sola carga \\( Q \\) interactuando con \\( -q \\)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Dos cargas positivas fijas \\( +Q \\) están separadas por una distancia \\( 2d \\) sobre el eje \\( x \\) (una en \\( +d \\) y otra en \\( -d \\)). Una tercera carga positiva \\( +q \\) se coloca exactamente en el origen (punto medio). Si la carga \\( +q \\) se desplaza una pequeñísima distancia sobre el eje \\( y \\) y se suelta, su comportamiento será:", 
+                    options: [
+                        "Oscilar alrededor del origen (equilibrio estable en el eje \\( y \\)).", 
+                        "Alejarse indefinidamente a lo largo del eje \\( y \\) (equilibrio inestable en el eje \\( y \\)).", 
+                        "Regresar al origen y detenerse instantáneamente.", 
+                        "Desviarse hacia una de las cargas \\( +Q \\)."
+                    ], 
+                    correct: 1, 
+                    note: "Al desplazarla sobre el eje \\( y \\) (perpendicular), las componentes horizontales de las fuerzas de repulsión se siguen cancelando, pero las componentes verticales se suman empujando la partícula y alejándola aún más del origen, lo que define un punto de equilibrio inestable." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Tres cargas puntuales están en los vértices de un triángulo rectángulo isósceles. La carga \\( q_1 = +Q \\) está en el origen (0,0). La carga \\( q_2 = +Q \\) está en (a,0) y la carga \\( q_3 = -Q \\) está en (0,a). La fuerza eléctrica neta que el sistema ejerce sobre la carga \\( q_1 \\) en el origen tiene una magnitud de:", 
+                    options: [
+                        "Cero.", 
+                        "\\( k \\frac{Q^2}{a^2} \\)", 
+                        "\\( \\sqrt{2} k \\frac{Q^2}{a^2} \\)", 
+                        "\\( 2 k \\frac{Q^2}{a^2} \\)"
+                    ], 
+                    correct: 2, 
+                    note: "La carga 2 empuja a la carga 1 hacia la izquierda (eje -X) con una fuerza de magnitud \\( F \\). La carga 3 atrae a la carga 1 hacia arriba (eje +Y) con igual magnitud \\( F \\). Sumando vectorialmente dos fuerzas perpendiculares idénticas, la hipotenusa (módulo resultante) es $$ F_{neto} = \\sqrt{F^2 + F^2} = F\\sqrt{2} $$." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Se tiene un anillo cargado de forma continua. Al calcular la fuerza que este anillo ejerce sobre una carga puntual en su centro, integramos la Ley de Coulomb sobre todos los diferenciales de carga \\( dq \\). ¿Cuál de las siguientes es la razón estrictamente vectorial por la cual la fuerza en el centro de un anillo con carga uniforme es cero?", 
+                    options: [
+                        "Porque al integrar \\( \\frac{1}{r^2} \\), el valor de \\( r \\) tiende a infinito.", 
+                        "Porque cada componente diferencial de fuerza \\( d\\vec{F} \\) encuentra una componente simétricamente opuesta al otro lado del anillo que la anula.", 
+                        "Porque la densidad lineal de carga \\( \\lambda \\) es inversamente proporcional a la distancia al centro.", 
+                        "Porque los portadores de carga en el anillo se repelen y escapan hacia el exterior, dejando el centro aislado."
+                    ], 
+                    correct: 1, 
+                    note: "El principio de superposición vectorial garantiza que, por la geometría del anillo, a cada elemento diferencial de carga en un punto le corresponde un elemento diametralmente opuesto. Los vectores de fuerza que generan poseen igual magnitud pero sentidos contrarios, cancelándose perfectamente." 
+                }
+            ],
+            2: [
+                { 
+                    q: "[Nivel 1: Fácil] Por convención histórica y definición matemática, el vector campo eléctrico \\( \\vec{E} \\) en un punto del espacio tiene la misma dirección y sentido que:", 
+                    options: [
+                        "La velocidad de cualquier partícula cargada que pase por ese punto.", 
+                        "La fuerza eléctrica que experimentaría una carga de prueba positiva colocada en ese punto.", 
+                        "La fuerza eléctrica que experimentaría un electrón colocado en ese punto.", 
+                        "El gradiente de masa de la partícula fuente."
+                    ], 
+                    correct: 1, 
+                    note: "Por definición fundamental en la electrostática clásica, el campo eléctrico en un punto es la fuerza neta por unidad de carga que experimentaría una carga de prueba positiva imaginaria (\\( \\vec{E} = \\vec{F}/q_0 \\))." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Una carga puntual negativa se encuentra aislada en el espacio. Las líneas de campo eléctrico que genera dicha distribución tienen un patrón:", 
+                    options: [
+                        "Circular, formando lazos cerrados alrededor de la carga.", 
+                        "Radial y apuntando hacia afuera (alejándose de la carga).", 
+                        "Radial y apuntando hacia adentro (buscando a la carga).", 
+                        "Paralelo y uniforme en todas las direcciones."
+                    ], 
+                    correct: 2, 
+                    note: "Las líneas de campo eléctrico siempre nacen (divergen) de las cargas positivas y mueren (convergen) en las cargas negativas. Para una carga negativa aislada, las líneas de campo son estrictamente radiales apuntando hacia la singularidad." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] ¿Cuáles son las unidades del campo eléctrico en el Sistema Internacional (SI)?", 
+                    options: [
+                        "Joules por Coulomb (J/C)", 
+                        "Newtons por Coulomb (N/C)", 
+                        "Coulombs por Newton (C/N)", 
+                        "Newtons por metro cuadrado (N/m²)"
+                    ], 
+                    correct: 1, 
+                    note: "Derivado de su ecuación definitoria \\( \\vec{E} = \\vec{F}/q \\), la fuerza se mide en Newtons (N) y la carga en Coulombs (C), resultando en la unidad compuesta N/C. (Nota: Es dimensionalmente equivalente a Voltios/metro, V/m)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] El Principio de Superposición establece que si tenemos múltiples cargas fuente (\\( q_1, q_2, q_3... \\)), el campo eléctrico neto en un punto \\( P \\) es:", 
+                    options: [
+                        "El producto escalar de todos los campos eléctricos individuales.", 
+                        "La suma algebraica de las magnitudes de los campos individuales.", 
+                        "La suma vectorial de los campos eléctricos que cada carga produciría en \\( P \\) si estuviera sola.", 
+                        "Igual al campo de la carga más cercana, despreciando a las demás."
+                    ], 
+                    correct: 2, 
+                    note: "El principio de superposición garantiza que el campo neto en cualquier coordenada del espacio es la suma vectorial estricta (considerando tanto magnitud como dirección geométrica) de los campos radiados individualmente por cada carga del sistema." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Si colocamos un electrón (carga \\( -e \\)) en una región donde existe un campo eléctrico uniforme que apunta rígidamente hacia el Este, el electrón experimentará una fuerza eléctrica que lo empujará hacia el:", 
+                    options: [
+                        "Este, con aceleración constante.", 
+                        "Oeste, con aceleración constante.", 
+                        "Norte, desviando su trayectoria.", 
+                        "El electrón no se moverá si el campo es estático."
+                    ], 
+                    correct: 1, 
+                    note: "La fuerza eléctrica obedece \\( \\vec{F} = q\\vec{E} \\). Como la carga del electrón es negativa, el vector fuerza tiene sentido antiparalelo al campo. Si \\( \\vec{E} \\) va al Este, \\( \\vec{F} \\) apunta al Oeste. Al ser uniforme, la fuerza (y por tanto la aceleración inducida) es constante." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Dos cargas puntuales están sobre el eje x. La carga \\( q_1 = +4 \\, \\mu\\text{C} \\) está en el origen (\\( x = 0 \\)) y la carga \\( q_2 = +1 \\, \\mu\\text{C} \\) está en \\( x = 3 \\text{ m} \\). ¿En qué coordenada exacta del eje x el campo eléctrico neto es igual a cero?", 
+                    options: [
+                        "En \\( x = 1.0 \\text{ m} \\)", 
+                        "En \\( x = 1.5 \\text{ m} \\)", 
+                        "En \\( x = 2.0 \\text{ m} \\)", 
+                        "En \\( x = 4.0 \\text{ m} \\)"
+                    ], 
+                    correct: 2, 
+                    note: "Para que se anule, los campos deben oponerse. Al tener mismo signo, el punto de equilibrio está entre ellas. Igualando magnitudes: $$ \\frac{k(4)}{x^2} = \\frac{k(1)}{(3-x)^2} \\implies \\frac{2}{x} = \\frac{1}{3-x} $$ Resolviendo: \\( 6 - 2x = x \\implies 3x = 6 \\implies x = 2 \\text{ m} \\)." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un dipolo eléctrico está formado por una carga \\( +q \\) y una carga \\( -q \\) separadas por una distancia \\( d \\). Si nos paramos exactamente en el punto medio de la línea que une a ambas cargas, el vector campo eléctrico neto:", 
+                    options: [
+                        "Es cero por cancelación simétrica.", 
+                        "Apunta hacia la carga positiva, con magnitud \\( \\frac{8kq}{d^2} \\).", 
+                        "Apunta hacia la carga negativa, con magnitud \\( \\frac{4kq}{d^2} \\).", 
+                        "Apunta hacia la carga negativa, con magnitud \\( \\frac{8kq}{d^2} \\)."
+                    ], 
+                    correct: 3, 
+                    note: "En el punto medio (\\( r = d/2 \\)), el campo radiado por \\( +q \\) apunta hacia \\( -q \\) con módulo \\( \\frac{kq}{(d/2)^2} = \\frac{4kq}{d^2} \\). El campo de \\( -q \\) también apunta hacia sí misma con igual módulo. La superposición colineal suma ambos vectores: $$ \\vec{E}_{neto} = \\frac{8kq}{d^2} $$ hacia la carga negativa." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un momento dipolar eléctrico \\( \\vec{p} \\) se encuentra inmerso en un campo eléctrico uniforme \\( \\vec{E} \\). El sistema se encontrará en una posición de equilibrio INESTABLE (máxima energía potencial) cuando el ángulo entre \\( \\vec{p} \\) y \\( \\vec{E} \\) sea de:", 
+                    options: [
+                        "\\( 0^\\circ \\) (paralelos)", 
+                        "\\( 90^\\circ \\) (perpendiculares)", 
+                        "\\( 180^\\circ \\) (antiparalelos)", 
+                        "\\( 45^\\circ \\)"
+                    ], 
+                    correct: 2, 
+                    note: "La energía potencial del dipolo es $$ U = -\\vec{p} \\cdot \\vec{E} = -pE \\cos(\\theta) $$ La energía es matemáticamente máxima (equilibrio inestable, a punto de rotar violentamente) cuando \\( \\cos(\\theta) = -1 \\), lo que sucede exactamente en \\( \\theta = 180^\\circ \\)." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Tres cargas idénticas \\( +Q \\) están fijas en tres de los cuatro vértices de un cuadrado de lado \\( a \\). En el cuarto vértice (vacío) colocamos el origen de nuestro sistema de coordenadas para medir el campo neto. La dirección del vector campo eléctrico en ese cuarto vértice apuntará:", 
+                    options: [
+                        "Hacia el centro del cuadrado.", 
+                        "Alejándose del centro del cuadrado, sobre la línea diagonal.", 
+                        "Paralelo a uno de los lados del cuadrado.", 
+                        "Es exactamente nulo en ese punto."
+                    ], 
+                    correct: 1, 
+                    note: "Las dos cargas ubicadas en los vértices adyacentes generan campos ortogonales que, sumados vectorialmente, resultan en una componente que apunta hacia el exterior sobre la diagonal. La tercera carga (en el vértice opuesto) también empuja sobre esa misma diagonal. El vector neto resultante escapa radialmente del cuadrado." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Una partícula alfa (núcleo de Helio, carga \\( +2e \\)) y un protón (carga \\( +e \\)) se colocan sucesivamente en el mismo punto de un campo eléctrico \\( \\vec{E} \\). Comparando las magnitudes de las fuerzas que experimentan, podemos afirmar que:", 
+                    options: [
+                        "Ambas experimentan la misma fuerza, porque el campo \\( \\vec{E} \\) es el mismo.", 
+                        "La partícula alfa experimenta la mitad de la fuerza que el protón.", 
+                        "La partícula alfa experimenta el doble de fuerza que el protón.", 
+                        "La fuerza depende de las masas, no de la carga, por lo que la partícula alfa siente 4 veces más fuerza."
+                    ], 
+                    correct: 2, 
+                    note: "La fuerza electromagnética experimentada es estricta función de la carga (\\( F = qE \\)). La inercia (masa) no afecta a la magnitud de la fuerza electrostática. Al poseer la partícula alfa el doble de carga fundamental que el protón, la fuerza experimentada se duplica exactamente." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Al analizar una línea de carga infinitamente larga y recta con densidad lineal uniforme \\( \\lambda \\), observamos que la magnitud del campo eléctrico a una distancia radial \\( r \\) de la línea decae de manera:", 
+                    options: [
+                        "Directamente proporcional a \\( 1/r^2 \\).", 
+                        "Directamente proporcional a \\( 1/r \\).", 
+                        "Directamente proporcional a \\( 1/r^3 \\).", 
+                        "Es constante en todo el espacio exterior a la línea."
+                    ], 
+                    correct: 1, 
+                    note: "Utilizando el Teorema de Gauss para una geometría cilíndrica coaxial: $$ \\oint E \\cdot dA = E(2\\pi r L) = \\frac{\\lambda L}{\\varepsilon_0} $$ Al despejar, se constata que el campo cae asintóticamente como $$ E = \\frac{\\lambda}{2\\pi\\varepsilon_0 r} $$, mostrando proporcionalidad estricta con \\( 1/r \\)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Un anillo circular delgado de radio \\( R \\) tiene una carga \\( +Q \\) distribuida uniformemente. Analizando el campo eléctrico neto sobre el eje perpendicular que pasa por su centro (eje x), sabemos que en el centro (\\( x=0 \\)) el campo es nulo. A medida que nos alejamos sobre el eje +x, la magnitud del campo eléctrico:", 
+                    options: [
+                        "Aumenta continuamente hasta un valor constante en el infinito.", 
+                        "Aumenta hasta alcanzar un valor máximo en la coordenada \\( x = R/\\sqrt{2} \\), y luego disminuye tendiendo a cero en el infinito.", 
+                        "Disminuye exponencialmente desde el primer momento.", 
+                        "Tiene una dependencia de \\( 1/x^2 \\) en todos los puntos del eje, sin importar la distancia."
+                    ], 
+                    correct: 1, 
+                    note: "La ecuación exacta del campo axial es $$ E_x = \\frac{kQx}{(x^2 + R^2)^{3/2}} $$ Aplicando la derivada primera e igualando a cero (\\( dE_x/dx = 0 \\)) para buscar puntos críticos, se demuestra analíticamente que el campo radiado alcanza un máximo escalar exactamente en \\( x = \\pm R/\\sqrt{2} \\)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Un disco aislante plano y de radio infinito posee una densidad superficial de carga \\( \\sigma \\) constante y positiva. Si medimos el campo eléctrico a \\( 10 \\text{ cm} \\) de su superficie y luego a \\( 100 \\text{ cm} \\) de su superficie, encontraremos que:", 
+                    options: [
+                        "El campo a \\( 100 \\text{ cm} \\) es 100 veces menor.", 
+                        "El campo a \\( 100 \\text{ cm} \\) es 10 veces menor.", 
+                        "El campo tiene exactamente la misma magnitud en ambas posiciones.", 
+                        "El campo se anula más allá de los \\( 50 \\text{ cm} \\) por interferencia destructiva."
+                    ], 
+                    correct: 2, 
+                    note: "Las líneas de campo radiadas por un plano infinito uniformemente cargado son perfectamente paralelas y equiespaciadas. La magnitud derivada por Ley de Gauss es $$ E = \\frac{\\sigma}{2\\varepsilon_0} $$, demostrando matemáticamente que el campo es constante y no depende de la coordenada de profundidad espacial." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Se tiene un dipolo eléctrico y se desea medir la magnitud de su campo eléctrico en puntos muy alejados a lo largo de su eje principal (\\( r \\gg d \\), siendo \\( d \\) la separación entre las cargas). A esas distancias lejanas, la magnitud del campo del dipolo decae en proporción a:", 
+                    options: [
+                        "\\( 1/r \\)", 
+                        "\\( 1/r^2 \\) (como una carga puntual)", 
+                        "\\( 1/r^3 \\)", 
+                        "\\( 1/r^4 \\)"
+                    ], 
+                    correct: 2, 
+                    note: "A grandes escalas cosmológicas, los vectores de campo de la carga positiva y negativa tienden a neutralizarse. Sin embargo, el sutil desfasaje geométrico (distancia \\( d \\)) evita una cancelación absoluta, produciendo un campo residual en el eje que decae violentamente en proporción al inverso del cubo: \\( 1/r^3 \\)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Para calcular el campo eléctrico generado por una varilla cargada finita sobre un punto \\( P \\), se toma un diferencial de carga \\( dq = \\lambda \\, dx \\). Al escribir la magnitud del campo diferencial \\( dE \\), el denominador de la expresión SIEMPRE representa:", 
+                    options: [
+                        "El cuadrado de la distancia perpendicular desde la varilla hasta el punto \\( P \\).", 
+                        "El cuadrado de la coordenada x del diferencial \\( dq \\).", 
+                        "El cuadrado de la distancia real en línea recta entre el diferencial \\( dq \\) específico y el punto \\( P \\).", 
+                        "El cubo de la distancia, para compensar el vector direccional."
+                    ], 
+                    correct: 2, 
+                    note: "En la integración diferencial de la Ley de Coulomb ($$ dE = k \\frac{dq}{r^2} $$), el término métrico \\( r \\) define universalmente la distancia euclidiana en línea recta desde la coordenada exacta de la singularidad fuente (\\( dq \\)) hasta el vector de posición del observador (\\( P \\))." 
+                }
+            ],
+            3: [
+                { 
+                    q: "[Nivel 1: Fácil] El flujo eléctrico total que atraviesa una superficie gaussiana cerrada imaginaria es directamente proporcional a:", 
+                    options: [
+                        "El volumen total encerrado por dicha superficie.", 
+                        "La densidad de carga del medio en el que se encuentra la superficie.", 
+                        "La carga eléctrica neta encerrada dentro de la superficie.", 
+                        "El área superficial total de la forma geométrica elegida."
+                    ], 
+                    correct: 2, 
+                    note: "El Teorema Fundamental de Gauss establece que $$ \\Phi_E = \\oint \\vec{E} \\cdot d\\vec{A} = \\frac{q_{\\text{enc}}}{\\varepsilon_0} $$ El flujo neto que atraviesa un horizonte cerrado depende estrictamente y de forma directa de la carga neta confinada en su volumen interior." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Si colocamos una carga puntual \\( +Q \\) exactamente en el centro geométrico de una superficie imaginaria de forma cúbica, y luego cambiamos esa superficie por una superficie esférica que también encierra a la carga, el flujo eléctrico neto total a través de la nueva superficie:", 
+                    options: [
+                        "Será mayor, porque la esfera no tiene esquinas donde el campo se debilite.", 
+                        "Será menor, porque el área de la esfera es menor que la del cubo que la contiene.", 
+                        "Será cero, porque las líneas de campo son perpendiculares a la superficie esférica.", 
+                        "Permanece exactamente igual, sin importar el cambio de forma geométrica."
+                    ], 
+                    correct: 3, 
+                    note: "Por la Ley de Gauss, el flujo eléctrico total a través de cualquier superficie topológicamente cerrada equivale exactamente a \\( Q/\\varepsilon_0 \\). La morfología geométrica de la cápsula (cubo, esfera, poliedro irregular) es irrelevante mientras contenga la misma singularidad." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Se tiene un conductor macizo de forma irregular cargado positivamente y en equilibrio electrostático. ¿Cómo es el campo eléctrico en el interior de este conductor?", 
+                    options: [
+                        "Es mayor en las zonas cercanas a la superficie.", 
+                        "Es inversamente proporcional a la distancia desde el centro de masa.", 
+                        "Es exactamente cero en todos los puntos de su interior.", 
+                        "Depende de la distribución externa de cargas."
+                    ], 
+                    correct: 2, 
+                    note: "Bajo la condición de equilibrio electrostático estricto, los portadores de carga libre se redistribuyen de forma casi instantánea en la superficie para anular cualquier campo eléctrico en el seno del conductor. Todo exceso de carga reside exteriormente." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Para que la Ley de Gauss sea útil como herramienta analítica para calcular la magnitud del campo eléctrico \\( \\vec{E} \\), es un requisito indispensable que:", 
+                    options: [
+                        "El sistema posea un alto grado de simetría (esférica, cilíndrica o plana).", 
+                        "Las cargas eléctricas estén en constante movimiento.", 
+                        "El campo eléctrico sea nulo en la superficie elegida.", 
+                        "El flujo eléctrico neto sea igual a cero."
+                    ], 
+                    correct: 0, 
+                    note: "La integración analítica del flujo (\\( \\oint \\vec{E} \\cdot d\\vec{A} \\)) sólo puede resolverse y despejarse si el vector \\( \\vec{E} \\) es constante y paralelo al vector normal de área. Esta simplificación matemática exige geometrías altamente simétricas." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Justo en el exterior de la superficie de un conductor cargado en equilibrio electrostático, el vector campo eléctrico \\( \\vec{E} \\) es siempre:", 
+                    options: [
+                        "Tangente a la superficie del conductor.", 
+                        "Perpendicular a la superficie del conductor.", 
+                        "Cero, debido al efecto de apantallamiento.", 
+                        "Paralelo a la fuerza de gravedad."
+                    ], 
+                    correct: 1, 
+                    note: "Si el campo eléctrico presentara cualquier componente tangencial, sometería a los portadores de carga superficiales a una fuerza que generaría corrientes. Para preservar el estatus de equilibrio estático, el campo debe emanar de forma estrictamente perpendicular (normal) a la superficie." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Una carga puntual \\( +q \\) se encuentra exactamente en el centro geométrico de un cubo imaginario de arista \\( L \\). ¿Cuál es el flujo eléctrico que atraviesa exclusivamente UNA de las seis caras de dicho cubo?", 
+                    options: [
+                        "\\( q / \\varepsilon_0 \\)", 
+                        "\\( q / (6 \\varepsilon_0) \\)", 
+                        "\\( q / (L^2 \\varepsilon_0) \\)", 
+                        "\\( 6q / \\varepsilon_0 \\)"
+                    ], 
+                    correct: 1, 
+                    note: "El flujo total emergente del prisma cúbico es íntegramente \\( q / \\varepsilon_0 \\). Al descansar la singularidad \\( +q \\) en el centroide geométrico exacto, la inquebrantable simetría euclidiana de 6 caras garantiza que cada cara asimila algebraicamente una sexta parte del flujo total." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un cascarón esférico conductor grueso, que tiene una carga neta nula (descargado), contiene una cavidad hueca en su interior. Se introduce una carga puntual \\( +Q \\) en la cavidad, suspendida de un hilo aislante. En equilibrio, ¿qué cargas se inducen en la superficie interna y en la superficie externa del cascarón?", 
+                    options: [
+                        "Superficie interna: \\( 0 \\); Superficie externa: \\( +Q \\)", 
+                        "Superficie interna: \\( -Q \\); Superficie externa: \\( 0 \\)", 
+                        "Superficie interna: \\( -Q \\); Superficie externa: \\( +Q \\)", 
+                        "Superficie interna: \\( +Q \\); Superficie externa: \\( -Q \\)"
+                    ], 
+                    correct: 2, 
+                    note: "Para anular el campo dentro de la masa metálica, la superficie limítrofe interna debe inducir polaridad opuesta (\\( -Q \\)) que encapsule totalmente a la fuente. Dado que el cascarón es un sistema eléctricamente aislado y neutro (suma cero), la superficie externa manifestará por defecto el excedente de \\( +Q \\)." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Dos láminas planas, paralelas e infinitas, poseen densidades superficiales de carga uniformes y opuestas (\\( +\\sigma \\) y \\( -\\sigma \\)). De acuerdo con la Ley de Gauss, la magnitud del campo eléctrico en el espacio comprendido entre ambas láminas es:", 
+                    options: [
+                        "Cero.", 
+                        "\\( \\sigma / (2\\varepsilon_0) \\)", 
+                        "\\( \\sigma / \\varepsilon_0 \\)", 
+                        "\\( 2\\sigma / \\varepsilon_0 \\)"
+                    ], 
+                    correct: 2, 
+                    note: "Cada placa irradia un campo uniforme escalar de \\( \\sigma / (2\\varepsilon_0) \\). En la región central, las líneas divergen de la positiva y convergen a la negativa poseyendo el mismo sentido. Superponiendo ambos vectores co-lineales: $$ \\frac{\\sigma}{2\\varepsilon_0} + \\frac{\\sigma}{2\\varepsilon_0} = \\frac{\\sigma}{\\varepsilon_0} $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Una esfera maciza aislante de radio \\( R \\) posee una carga \\( +Q \\) distribuida uniformemente en todo su volumen. Si medimos el campo eléctrico en su interior, a una distancia \\( r \\) del centro (donde \\( r < R \\)), observamos que su magnitud:", 
+                    options: [
+                        "Crece linealmente con \\( r \\).", 
+                        "Decae con \\( 1/r^2 \\).", 
+                        "Es constante y distinta de cero en todo el interior.", 
+                        "Es cero, al igual que en un conductor."
+                    ], 
+                    correct: 0, 
+                    note: "Para una distribución volumétrica uniforme (aislante), la porción de carga encerrada por una esfera interna de radio \\( r \\) escala volumétricamente (\\( \\propto r^3 \\)). Al aplicar Gauss, el área gaussiana crece según \\( r^2 \\). Dividiendo proporciones: \\( E \\propto r^3/r^2 = r \\). Es un crecimiento lineal proporcional al radio." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Se tiene una línea de carga infinita con densidad lineal \\( \\lambda \\). Para calcular su campo eléctrico con Gauss, trazamos una superficie cilíndrica concéntrica de radio \\( r \\) y longitud \\( L \\). El flujo eléctrico total a través de las dos TAPAS PLANAS imaginarias es:", 
+                    options: [
+                        "\\( \\lambda L / \\varepsilon_0 \\)", 
+                        "\\( \\lambda / (2\\pi r \\varepsilon_0) \\)", 
+                        "Infinito, al tratarse de una línea infinita.", 
+                        "Cero."
+                    ], 
+                    correct: 3, 
+                    note: "Los vectores del campo eléctrico radiado por un filamento rectilíneo infinito son estrictamente transversales (radiales) en todo punto. Por consiguiente, son perfectamente paralelos al plano de las tapas (ángulo de 90° respecto al vector normal de área). El producto escalar \\( \\vec{E} \\cdot d\\vec{A} \\) resulta cero." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Un cascarón esférico conductor, neutro y grueso, encierra una cavidad. En el interior de dicha cavidad se coloca una carga puntual \\( +Q \\) pero en una posición descentrada. Si se evalúa el campo eléctrico en el exterior del cascarón conductor, se observará que:", 
+                    options: [
+                        "El campo exterior es nulo debido al apantallamiento del metal.", 
+                        "El campo exterior tiene mayor intensidad en el lado más cercano a la carga descentrada.", 
+                        "El campo exterior es perfectamente radial y simétrico, como si la carga \\( +Q \\) estuviera en el centro exacto.", 
+                        "El campo exterior no se puede calcular con la Ley de Gauss por falta de simetría."
+                    ], 
+                    correct: 2, 
+                    note: "El espesor metálico conductor proporciona un apantallamiento absoluto a la información posicional interior. La carga inducida externa (\\( +Q \\)) carece de conocimiento sobre la asimetría interna y, buscando minimizar su potencial electromagnético, se redistribuye con simetría geométrica perfecta alrededor del horizonte del cascarón exterior." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Una esfera no conductora de radio \\( R \\) posee una densidad de carga volumétrica variable que aumenta con la distancia según \\( \\rho(r) = \\alpha \\cdot r \\) (\\( \\alpha > 0 \\)). Aplicando Gauss, la magnitud del campo eléctrico en su interior (\\( r < R \\)) es proporcional a:", 
+                    options: [
+                        "\\( r \\)", 
+                        "\\( r^2 \\)", 
+                        "\\( 1/r \\)", 
+                        "Es constante."
+                    ], 
+                    correct: 1, 
+                    note: "La suma diferencial interior se realiza integrando el volumen: $$ Q_{\\text{enc}} = \\int_0^r (\\alpha r)(4\\pi r^2) dr = \\pi \\alpha r^4 $$ La Ley de Gauss postula: $$ E(4\\pi r^2) = \\frac{\\pi \\alpha r^4}{\\varepsilon_0} $$ Despejando se evidencia que el campo decae su componente cuadrada, resultando en un escalar estrictamente proporcional a \\( r^2 \\)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Considere una placa plana infinita de material aislante con grosor total de \\( 2d \\). La placa posee una densidad volumétrica uniforme \\( \\rho \\). Si situamos el origen de coordenadas \\( x=0 \\) en el centro de la placa, el campo eléctrico en un punto interior a una distancia \\( x < d \\) del centro, tiene una magnitud de:", 
+                    options: [
+                        "\\( \\rho x / \\varepsilon_0 \\)", 
+                        "\\( \\rho d / \\varepsilon_0 \\)", 
+                        "\\( \\rho / (2\\varepsilon_0) \\)", 
+                        "Cero en todo el interior."
+                    ], 
+                    correct: 0, 
+                    note: "Definimos un prisma gaussiano desde el plano medio de simetría (donde analíticamente \\( E=0 \\)) hasta la cota \\( x \\). La carga envuelta es volumétricamente \\( Q_{\\text{enc}} = \\rho A x \\). El único vector flujo surge por la tapa a cota \\( x \\). Igualando topologías: $$ E \\cdot A = \\frac{\\rho A x}{\\varepsilon_0} \\implies E = \\frac{\\rho x}{\\varepsilon_0} $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] En un cable coaxial muy largo, el cilindro conductor central (macizo) transporta densidad lineal \\( -\\lambda \\). El tubo conductor exterior que lo rodea posee una carga neta \\( +3\\lambda \\). ¿Cuál es la magnitud del campo eléctrico en el espacio exterior a todo el cable coaxial?", 
+                    options: [
+                        "Cero.", 
+                        "\\( 2\\lambda / (2\\pi \\varepsilon_0 r) \\)", 
+                        "\\( 3\\lambda / (2\\pi \\varepsilon_0 r) \\)", 
+                        "\\( 4\\lambda / (2\\pi \\varepsilon_0 r) \\)"
+                    ], 
+                    correct: 1, 
+                    note: "Utilizando una macro-superficie cilíndrica de Gauss que envuelva todo el constructo coaxial (\\( r > R_{\\text{ext}} \\)), el álgebra de suma interior arroja una carga neta de: $$ \\lambda_{\\text{neta}} = -\\lambda + 3\\lambda = +2\\lambda $$ Por ley fundamental, la región hiperespacial responde como un único filamento infinito de densidad \\( +2\\lambda \\)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Se sabe que el campo justo afuera de un conductor plano grueso cargado es \\( E = \\sigma / \\varepsilon_0 \\), mientras que el de una lámina aislante infinita es \\( E = \\sigma / (2\\varepsilon_0) \\). ¿Cuál es la razón física de esta diferencia geométrica si ambos tienen igual densidad \\( \\sigma \\)?", 
+                    options: [
+                        "El aislante pierde la mitad de su energía en polarizarse.", 
+                        "En el aislante el flujo escapa en dos sentidos, mientras que en el conductor interiormente es cero, obligando a que todo el flujo Gaussiano emane en un solo sentido exterior.", 
+                        "Los conductores tienen el doble de electrones libres que los aislantes termodinámicos.", 
+                        "La Ley de Gauss no es aplicable a superficies planas dieléctricas sin límites."
+                    ], 
+                    correct: 1, 
+                    note: "Una lámina dieléctrica muy fina irradia líneas de campo divergiendo bi-direccionalmente por ambas caras (\\( E\\cdot A + E\\cdot A = 2EA \\)). En una placa conductora sólida el equilibrio suprime el campo interior a cero, obligando algebraicamente a todo el vector flujo a escapar direccionalmente por un único horizonte superficial (\\( EA + 0 = EA \\))." 
+                }
+            ],
+            4: [
+                { q: "[Nivel Fácil] La diferencia de potencial eléctrico \\( \\Delta V \\) entre dos puntos A y B se define como el trabajo por unidad de carga necesario para mover una partícula de prueba. Si movemos una carga a lo largo de una superficie equipotencial, el trabajo realizado es:", options: ["Máximo, ya que la fuerza es paralela a la trayectoria", "Depende de la magnitud de la carga de prueba", "Estrictamente cero", "Negativo, pues el sistema pierde energía"], correct: 2, note: "Por definición, en una superficie equipotencial \\( \\Delta V = 0 \\). Como el trabajo externo es $$ W = q \\Delta V $$ al ser nula la diferencia de potencial, el trabajo es matemáticamente cero (la fuerza eléctrica es siempre perpendicular al desplazamiento)." },
+                { q: "[Nivel Medio] Se tienen dos cargas puntuales idénticas \\( +Q \\) separadas una distancia \\( 2a \\). En el punto medio exacto de la recta que las une, el campo eléctrico \\( E \\) y el potencial eléctrico \\( V \\) (asumiendo \\( V=0 \\) en el infinito) son:", options: ["\\( E = 0 \\) y \\( V = 0 \\)", "\\( E = 0 \\) y \\( V = 2kQ/a \\)", "\\( E = 2kQ/a^2 \\) y \\( V = 0 \\)", "\\( E = 2kQ/a^2 \\) y \\( V = 2kQ/a \\)"], correct: 1, note: "El Campo Eléctrico es un vector: en el medio, los vectores de ambas cargas tienen igual módulo y sentidos opuestos, por lo que $$ \\vec{E}_{neto} = 0 $$. El Potencial es escalar: se suman algebraicamente. $$ V_{neto} = \\frac{kQ}{a} + \\frac{kQ}{a} = \\frac{2kQ}{a} $$" },
+                { q: "[Nivel Difícil] Un electrón (masa \\( m \\), carga \\( -e \\)) se libera desde el reposo cerca de la placa negativa de un capacitor plano. La diferencia de potencial entre las placas es \\( V \\). La velocidad escalar \\( v \\) con la que el electrón impacta la placa positiva es:", options: ["\\( v = \\sqrt{\\frac{eV}{m}} \\)", "\\( v = \\sqrt{\\frac{2eV}{m}} \\)", "\\( v = \\frac{eV}{2m} \\)", "\\( v = \\sqrt{\\frac{e}{mV}} \\)"], correct: 1, note: "Por conservación de la energía, la pérdida de energía potencial eléctrica se transforma íntegramente en energía cinética: $$ \\Delta K = - \\Delta U \\implies \\frac{1}{2}mv^2 = -(-e)(V) $$ Despejando la velocidad: $$ v = \\sqrt{\\frac{2eV}{m}} $$" },
+                { q: "[Nivel Medio] El potencial eléctrico \\( V(x,y,z) \\) en una región del espacio está dado por \\( V = 5x^2 - 3y \\). La componente \\( x \\) del vector campo eléctrico, \\( E_x \\), en dicha región es:", options: ["\\( 10x \\)", "\\( -10x \\)", "\\( 5x \\)", "\\( -5x^2 \\)"], correct: 1, note: "El campo eléctrico es el gradiente negativo del potencial escalar. Para la componente \\( x \\), derivamos parcialmente: $$ E_x = - \\frac{\\partial V}{\\partial x} = - \\frac{\\partial}{\\partial x}(5x^2 - 3y) = -10x $$" }
+            ],
+            5: [
+                { q: "[Nivel Fácil] La capacitancia \\( C \\) de un capacitor de placas paralelas en el vacío es directamente proporcional a:", options: ["La diferencia de potencial aplicada entre las placas", "La carga almacenada en las placas", "El área transversal de las placas", "La distancia de separación entre las placas"], correct: 2, note: "La capacitancia de un capacitor plano depende exclusivamente de su geometría. Su ecuación rectora es: $$ C = \\varepsilon_0 \\frac{A}{d} $$ Por tanto, es directamente proporcional al Área (A) e inversamente proporcional a la distancia (d)." },
+                { q: "[Nivel Medio] Se tienen dos capacitores, \\( C_1 = 3\\mu F \\) y \\( C_2 = 6\\mu F \\), conectados en serie a una batería de \\( 9V \\). ¿Cuál es la carga almacenada en el capacitor \\( C_1 \\)?", options: ["\\( 18 \\mu C \\)", "\\( 27 \\mu C \\)", "\\( 54 \\mu C \\)", "\\( 9 \\mu C \\)"], correct: 0, note: "En serie, la capacitancia equivalente es: $$ C_{eq} = \\left( \\frac{1}{3} + \\frac{1}{6} \\right)^{-1} = 2\\mu F $$ La carga total del sistema es $$ Q = C_{eq}V = (2\\mu F)(9V) = 18\\mu C $$. En conexión serie, todos los capacitores almacenan exactamente la misma carga \\( Q \\)." },
+                { q: "[Nivel Difícil] Un capacitor plano aislado y desconectado de cualquier batería tiene una carga \\( Q_0 \\), área \\( A \\) y separación \\( d \\). Se introduce un bloque dieléctrico de constante \\( \\kappa > 1 \\) que llena todo el espacio. La energía potencial almacenada en el sistema:", options: ["Aumenta por un factor \\( \\kappa \\)", "Disminuye por un factor \\( \\kappa \\)", "Se mantiene constante por conservación", "Aumenta por un factor \\( \\kappa^2 \\)"], correct: 1, note: "Al estar desconectado, la carga \\( Q_0 \\) es constante. La nueva capacitancia es \\( C = \\kappa C_0 \\). La energía inicial es $$ U_0 = \\frac{Q_0^2}{2C_0} $$. La nueva energía será $$ U = \\frac{Q_0^2}{2(\\kappa C_0)} = \\frac{U_0}{\\kappa} $$. Como \\( \\kappa > 1 \\), la energía disminuye (el sistema hace trabajo atrayendo al dieléctrico)." }
+            ],
+            6: [
+                { q: "[Nivel Fácil] De acuerdo a la Ley de Ohm macroscópica, si se grafica la Diferencia de Potencial (V) en función de la Corriente (I) para un resistor óhmico ideal, la pendiente de la recta obtenida representa:", options: ["La resistividad del material", "La potencia disipada", "La conductancia", "La resistencia eléctrica del elemento"], correct: 3, note: "La ecuación lineal de Ohm establece que $$ V = R \\cdot I $$. En un gráfico V vs I, esta es la ecuación de una recta con ordenada al origen cero, donde la constante de proporcionalidad (la pendiente métrica) es precisamente la Resistencia \\( R \\)." },
+                { q: "[Nivel Medio] Se tiene un alambre cilíndrico de cobre de longitud \\( L \\) y radio \\( r \\) con resistencia \\( R_0 \\). Si el alambre se estira mecánicamente (sin perder masa ni volumen) hasta duplicar su longitud (\\( 2L \\)), la nueva resistencia será:", options: ["\\( R_0 \\)", "\\( 2R_0 \\)", "\\( 4R_0 \\)", "\\( R_0 / 2 \\)"], correct: 2, note: "El volumen es constante: $$ Vol = A_0 L = A_{nueva} (2L) \\implies A_{nueva} = A_0 / 2 $$. La resistencia se define como: $$ R = \\rho \\frac{L}{A} $$. La nueva resistencia será: $$ R_{nueva} = \\rho \\frac{2L}{A_0 / 2} = 4 \\left( \\rho \\frac{L}{A_0} \\right) = 4R_0 $$" },
+                { q: "[Nivel Difícil] Una batería posee una fuerza electromotriz (fem) de \\( \\varepsilon = 12V \\) y una resistencia interna \\( r = 1\\Omega \\). Se conecta a un resistor externo \\( R = 5\\Omega \\). La diferencia de potencial \\( V_{ab} \\) medida en los bornes reales de la batería será:", options: ["\\( 12V \\)", "\\( 10V \\)", "\\( 14V \\)", "\\( 0V \\)"], correct: 1, note: "La corriente total del circuito es $$ I = \\frac{\\varepsilon}{R + r} = \\frac{12V}{5\\Omega + 1\\Omega} = 2A $$. El voltaje en bornes (lo que realmente entrega la batería) cae debido a su resistencia interna: $$ V_{ab} = \\varepsilon - I r = 12V - (2A)(1\\Omega) = 10V $$" }
+            ]
+        };
+
+        // --- BASES DE DATOS MATEMÁTICOS (GUIAS DE APUNTES) ---
+        const guideData = {
+            1: "<ul><li><strong>Fuerza Eléctrica (Ley de Coulomb):</strong><br>$$ \\vec{F} = \\frac{1}{4\\pi\\varepsilon_0} \\frac{|q_1 q_2|}{r^2} \\hat{r} $$</li><li><strong>Constante Eléctrica:</strong><br>$$ k = \\frac{1}{4\\pi\\varepsilon_0} \\approx 9 \\times 10^9 \\, \\frac{\\text{N}\\cdot\\text{m}^2}{\\text{C}^2} $$</li><li><strong>Cuantización de la carga:</strong><br>$$ Q = n \\cdot e \\quad (e = 1.602 \\times 10^{-19} \\text{C}) $$</li></ul>",
+            2: "<ul><li><strong>Definición de Campo Eléctrico:</strong><br>$$ \\vec{E} = \\frac{\\vec{F}}{q_0} $$</li><li><strong>Campo de Carga Puntual:</strong><br>$$ E = \\frac{1}{4\\pi\\varepsilon_0} \\frac{|q|}{r^2} $$</li><li><strong>Torque sobre un Dipolo:</strong><br>$$ \\vec{\\tau} = \\vec{p} \\times \\vec{E} $$</li><li><strong>Momento Dipolar:</strong><br>$$ p = q \\cdot d $$</li></ul>",
+            3: "<ul><li><strong>Flujo Eléctrico:</strong><br>$$ \\Phi_E = \\int \\vec{E} \\cdot d\\vec{A} $$</li><li><strong>Ley Fundamental de Gauss:</strong><br>$$ \\oint \\vec{E} \\cdot d\\vec{A} = \\frac{Q_{\\text{enc}}}{\\varepsilon_0} $$</li><li><strong>Campo cerca de plano infinito:</strong><br>$$ E = \\frac{\\sigma}{2\\varepsilon_0} $$</li><li><strong>Campo superficie conductor:</strong><br>$$ E = \\frac{\\sigma}{\\varepsilon_0} $$</li></ul>",
+            4: "<ul><li><strong>Trabajo y Energía Potencial:</strong><br>$$ W_{a\\to b} = -\\Delta U = U_a - U_b $$</li><li><strong>Potencial Eléctrico (V):</strong><br>$$ V = \\frac{U}{q_0} = \\frac{1}{4\\pi\\varepsilon_0} \\frac{q}{r} $$</li><li><strong>Relación V y E:</strong><br>$$ V_a - V_b = \\int_a^b \\vec{E} \\cdot d\\vec{l} $$</li><li><strong>Campo como Gradiente:</strong><br>$$ \\vec{E} = -\\nabla V = -\\left( \\frac{\\partial V}{\\partial x}\\hat{i} + \\frac{\\partial V}{\\partial y}\\hat{j} + \\frac{\\partial V}{\\partial z}\\hat{k} \\right) $$</li></ul>",
+            5: "<ul><li><strong>Definición de Capacitancia:</strong><br>$$ C = \\frac{Q}{V_{ab}} $$</li><li><strong>Capacitor Placas Paralelas:</strong><br>$$ C = \\kappa \\varepsilon_0 \\frac{A}{d} $$</li><li><strong>Sistemas Equivalentes:</strong><br>Serie: $$ \\frac{1}{C_{eq}} = \\sum \\frac{1}{C_i} $$ Paralelo: $$ C_{eq} = \\sum C_i $$</li><li><strong>Energía Almacenada:</strong><br>$$ U = \\frac{Q^2}{2C} = \\frac{1}{2} C V^2 $$</li></ul>",
+            6: "<ul><li><strong>Corriente Eléctrica:</strong><br>$$ I = \\frac{dQ}{dt} = n|q|v_d A $$</li><li><strong>Resistencia (Ley de Pouillet):</strong><br>$$ R = \\rho \\frac{L}{A} $$</li><li><strong>Ley de Ohm (Macroscópica):</strong><br>$$ V = I \\cdot R $$</li><li><strong>Tensión en bornes de FEM:</strong><br>$$ V_{ab} = \\varepsilon - I \\cdot r_{\\text{interna}} $$</li><li><strong>Potencia Eléctrica:</strong><br>$$ P = V_{ab} \\cdot I = I^2 R $$</li></ul>"
+        };
+
+        let currentModuleId = null;
+        let currentModuleData = [];
+        let currentQuestionIndex = 0, score = 0, currentStreak = 0, maxStreak = 0;
+        let isAnswered = false;
+        let timeLimit = 120, timeRemaining = timeLimit, timerInterval;
+
+        // --- SISTEMA DE MOTOR (CANVAS, AUDIO, HÁPTICA) ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor() { this.reset(true); }
+            reset(randomizeRadius = false) {
+                this.angle = Math.random() * Math.PI * 2;
+                this.radius = randomizeRadius ? Math.random() * canvas.width : canvas.width * 0.8 + Math.random() * 200;
+                this.speed = (Math.random() * 0.01) + 0.002;
+                this.size = Math.random() * 2 + 0.5;
+                const colors = ['#00e5ff', '#b000ff', '#ffffff', '#ff003c'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.alpha = Math.random() * 0.5 + 0.3;
+            }
+            update() { this.angle -= this.speed; this.radius -= this.speed * 150; if (this.radius < 20) this.reset(); }
+            draw() {
+                const cx = canvas.width * 0.85, cy = canvas.height * 0.85;
+                ctx.fillStyle = this.color; ctx.globalAlpha = this.alpha;
+                ctx.beginPath(); ctx.arc(cx + Math.cos(this.angle) * this.radius, cy + Math.sin(this.angle) * this.radius, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        for(let i=0; i<40; i++) particles.push(new Particle());
+        function animateParticles() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animateParticles); }
+        animateParticles();
+
+        function expandirUniverso() {
+            for(let i = 0; i < 15; i++) { particles.push(new Particle()); }
+            const spaceBg = document.getElementById('space-bg');
+            const astro = document.createElement('div'); astro.className = 'cosmic-object';
+            const size = Math.random() * 8 + 2; astro.style.width = size + 'px'; astro.style.height = size + 'px';
+            astro.style.top = Math.random() * 100 + 'vh'; astro.style.left = Math.random() * 100 + 'vw';
+            astro.style.background = Math.random() > 0.5 ? 'var(--neon-blue)' : 'var(--neon-purple)';
+            astro.style.boxShadow = `0 0 ${size * 2}px ${astro.style.background}`;
+            spaceBg.appendChild(astro);
+            setTimeout(() => { astro.style.opacity = Math.random() * 0.6 + 0.2; }, 100);
+        }
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx, masterGain, pulsarOsc, droneOsc, audioHabilitado = false;
+
+        function initAudio() { if (!audioCtx) { audioCtx = new AudioContext(); } if (audioCtx.state === 'suspended') audioCtx.resume(); }
+        function vibrar(patron) { if ("vibrate" in navigator) navigator.vibrate(patron); }
+
+        function startBackgroundDrone() {
+            if (!audioCtx || masterGain) return; 
+            masterGain = audioCtx.createGain(); masterGain.connect(audioCtx.destination); masterGain.gain.value = 0.08;
+            droneOsc = audioCtx.createOscillator(); droneOsc.type = 'sine'; droneOsc.frequency.value = 40; droneOsc.connect(masterGain); droneOsc.start();
+            pulsarOsc = audioCtx.createOscillator(); pulsarOsc.type = 'square'; pulsarOsc.frequency.value = 150; 
+            const pulsarGain = audioCtx.createGain(); pulsarGain.gain.value = 0; 
+            const lfo = audioCtx.createOscillator(); lfo.type = 'sawtooth'; lfo.frequency.value = 6; 
+            const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 0.5; 
+            lfo.connect(lfoGain); lfoGain.connect(pulsarGain.gain); pulsarOsc.connect(pulsarGain); pulsarGain.connect(masterGain);
+            pulsarOsc.start(); lfo.start(); audioHabilitado = true;
+        }
+
+        function playCorrectSound() {
+            if (!audioCtx || !audioHabilitado) return;
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; const now = audioCtx.currentTime; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(1600, now + 0.1);
+            gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.2, now + 0.02); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5); vibrar(100); 
+        }
+
+        function playWrongSound() {
+            if (!audioCtx || !audioHabilitado) return;
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth'; const now = audioCtx.currentTime; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(60, now + 0.4);
+            gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.2, now + 0.02); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5); vibrar([200, 100, 200]); 
+        }
+
+        function toggleAudio() {
+            const btn = document.getElementById('btn-audio');
+            if (audioHabilitado) {
+                if(masterGain) masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                audioHabilitado = false; btn.innerText = '🔇 AUDIO'; btn.style.color = 'var(--neon-red)'; btn.style.borderColor = 'var(--neon-red)';
+            } else {
+                if(masterGain) masterGain.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
+                audioHabilitado = true; btn.innerText = '🔊 AUDIO'; btn.style.color = 'var(--neon-blue)'; btn.style.borderColor = 'var(--neon-blue)';
+            }
+        }
+
+        // --- LÓGICA INTERFAZ Y MÓDULOS ---
+        function bootSystem() {
+            initAudio(); startBackgroundDrone();
+            document.getElementById('init-overlay').style.display = 'none';
+            document.getElementById('main-nav').style.display = 'flex';
+            document.getElementById('module-selection').style.display = 'flex';
+            document.getElementById('creator-info').style.display = 'block';
+        }
+
+        function startModule(moduleId, title) {
+            currentModuleId = moduleId;
+            currentModuleData = modulesData[moduleId];
+            currentQuestionIndex = 0; score = 0; currentStreak = 0; maxStreak = 0;
+            
+            document.getElementById('module-selection').style.display = 'none';
+            document.getElementById('btn-guide').style.display = 'flex'; // Habilitar botón de Apuntes
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('module-title').innerText = title;
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false; timeRemaining = timeLimit;
+            document.getElementById('next-btn').style.display = 'none';
+            closeModal('modal-overlay');
+            closeModal('guide-overlay');
+            
+            document.getElementById('progress-bar').style.width = `${(currentQuestionIndex / currentModuleData.length) * 100}%`;
+            document.getElementById('options-container').innerHTML = '';
+
+            const currentData = currentModuleData[currentQuestionIndex];
+            document.getElementById('question-counter').innerText = `VECTOR ${currentQuestionIndex + 1} / ${currentModuleData.length}`;
+            document.getElementById('question-text').innerHTML = currentData.q;
+            document.getElementById('notes-content').innerHTML = currentData.note;
+
+            currentData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn'; btn.innerHTML = opt;
+                btn.onclick = () => checkAnswer(btn, index === currentData.correct, index);
+                document.getElementById('options-container').appendChild(btn);
+            });
+
+            // Forzar renderizado matemático en la interfaz de pregunta y notas
+            renderMathInElement(document.getElementById('quiz-container'), { delimiters: [ {left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false} ] });
+            renderMathInElement(document.getElementById('modal-overlay'), { delimiters: [ {left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false} ] });
+            
+            iniciarTemporizador();
+        }
+
+        function iniciarTemporizador() {
+            clearInterval(timerInterval); actualizarDisplayTiempo();
+            timerInterval = setInterval(() => {
+                timeRemaining--; actualizarDisplayTiempo();
+                if(timeRemaining <= 10 && timeRemaining > 0 && !isAnswered) vibrar(50);
+                if (timeRemaining <= 0) { clearInterval(timerInterval); checkAnswer(null, false, -1); }
+            }, 1000);
+        }
+
+        function actualizarDisplayTiempo() {
+            const timerDisplay = document.getElementById('timer-display');
+            const min = Math.floor(timeRemaining / 60), seg = timeRemaining % 60;
+            timerDisplay.innerText = `⏱️ ${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`;
+            if (timeRemaining <= 15) timerDisplay.classList.add('danger'); else timerDisplay.classList.remove('danger');
+        }
+
+        function checkAnswer(selectedBtn, isCorrect, selectedIndex) {
+            if (isAnswered) return;
+            isAnswered = true; clearInterval(timerInterval);
+            expandirUniverso();
+
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+            const currentData = currentModuleData[currentQuestionIndex];
+
+            if(masterGain) masterGain.gain.setTargetAtTime(0.02, audioCtx.currentTime, 0.1);
+
+            if (isCorrect) {
+                if (selectedBtn) selectedBtn.classList.add('correct');
+                score++; currentStreak++; if (currentStreak > maxStreak) maxStreak = currentStreak;
+                
+                const streakDisplay = document.getElementById('streak-display');
+                streakDisplay.innerText = `🔥 SECUENCIA: ${currentStreak}`;
+                streakDisplay.style.transform = 'scale(1.2)'; setTimeout(() => streakDisplay.style.transform = 'scale(1)', 300);
+                playCorrectSound();
+            } else {
+                if (selectedBtn) selectedBtn.classList.add('wrong');
+                allBtns[currentData.correct].classList.add('correct');
+                document.getElementById('modal-overlay').style.display = 'flex'; 
+                currentStreak = 0; document.getElementById('streak-display').innerText = `🔥 SECUENCIA: 0`;
+                playWrongSound();
+            }
+
+            if(masterGain && audioHabilitado) { setTimeout(() => masterGain.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.5), 500); }
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentModuleData.length) loadQuestion(); else mostrarResultados();
+        }
+
+        function mostrarResultados() {
+            document.getElementById('quiz-content').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'none';
+            document.getElementById('btn-guide').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'block';
+            
+            document.getElementById('final-score-text').innerText = `${score}/${currentModuleData.length}`;
+            document.getElementById('final-streak').innerText = maxStreak;
+            document.getElementById('final-accuracy').innerText = `${Math.round((score / currentModuleData.length) * 100)}%`;
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function toggleGuide() {
+            const guideModal = document.getElementById('guide-overlay');
+            if (guideModal.style.display === 'flex') {
+                guideModal.style.display = 'none';
+            } else {
+                // Cargar datos de la guía del módulo actual
+                document.getElementById('guide-content').innerHTML = guideData[currentModuleId];
+                // Forzar KaTeX a renderizar las matemáticas recién inyectadas
+                renderMathInElement(document.getElementById('guide-content'), { delimiters: [ {left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false} ] });
+                guideModal.style.display = 'flex';
+            }
+        }
+        
+        function compartirResultados() {
+            const accuracy = Math.round((score / currentModuleData.length) * 100);
+            const titulo = document.getElementById('module-title').innerText;
+            const texto = `🌌 *Telemetría UTN - Física II*\n${titulo} completado.\n\n✅ Aciertos: ${score}/${currentModuleData.length}\n🔥 Max. Secuencia: ${maxStreak}\n🎯 Precisión: ${accuracy}%\n\n¡Preparándome para el parcial!\nAutoridad: Facundo Barrojo`;
+            navigator.clipboard.writeText(texto).then(() => alert("¡Registro copiado al portapapeles!")).catch(e => console.error(e));
+        }
+    </script>
+</body>
+</html>
