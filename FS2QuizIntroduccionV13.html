@@ -140,6 +140,7 @@
     <header class="top-nav" id="main-nav" style="display: none;">
         <div class="nav-brand">UTN FRT | FÍSICA II</div>
         <div class="nav-controls">
+            <button class="nav-btn" onclick="returnToMenu()" title="Volver al Menú Principal">🏠</button>
             <button class="nav-btn study" id="btn-guide" onclick="toggleGuide()" style="display: none;">📚 BASE DE DATOS</button>
             <button class="nav-btn" id="btn-audio" onclick="toggleAudio()">🔊 AUDIO</button>
         </div>
@@ -167,6 +168,27 @@
             </div>
             <div class="module-btn mod-6" onclick="startModule(6, 'Módulo 6: Corriente y FEM')">
                 <h2>MÓDULO 6</h2><p>Corriente, Resistencia y FEM</p>
+            </div>
+            <div class="module-btn mod-7" onclick="startModule(7, 'Módulo 7: Circuitos Eléctricos')">
+                <h2>MÓDULO 7</h2><p>Circuitos Eléctricos</p>
+            </div>
+            <div class="module-btn mod-8" onclick="startModule(8, 'Módulo 8: Campo magnético y fuerzas magnéticas')">
+                <h2>MÓDULO 8</h2><p> Campo magnetico y fuerzas magneticas</p>
+            </div>
+            <div class="module-btn mod-9" onclick="startModule(9, 'Módulo 9: Fuentes de campos mageticos')">
+                <h2>MÓDULO 9</h2><p>Fuentes de campos magneticos</p>
+            </div>
+            <div class="module-btn mod-10" onclick="startModule(10, 'Módulo 10: induccion electromagnetica')">
+                <h2>MÓDULO 10</h2><p>Inducción Electromagnética</p>
+            </div>
+            <div class="module-btn mod-11" onclick="startModule(11, 'Módulo 11: inductancia')">
+                <h2>MÓDULO 11</h2><p>Inductancia</p>
+            </div>
+            <div class="module-btn mod-12" onclick="startModule(12, 'Módulo 12: Circuitos de Corriente Alterna')">
+                <h2>MÓDULO 12</h2><p>Circuitos de Corriente Alterna</p>
+            </div>
+            <div class="module-btn mod-13" onclick="startModule(13, 'Módulo 13: Ondas Electromagnéticas')">
+                <h2>MÓDULO 13</h2><p>Ondas Electromagnéticas</p>
             </div>
         </div>
     </div>
@@ -198,7 +220,7 @@
                 <div>Precisión<br><span id="final-accuracy" style="color:var(--neon-blue);">0%</span></div>
             </div>
             <button class="action-btn share" onclick="compartirResultados()">📲 Transmitir Log al Profe</button>
-            <button class="action-btn menu" onclick="location.reload()" style="margin-top: 1rem;">Volver al Menú Principal</button>
+            <button class="action-btn menu" onclick="returnToMenu()" style="margin-top: 1rem;">Volver al Menú Principal</button>
         </div>
     </div>
 
@@ -727,21 +749,1338 @@
                 }
             ],
             4: [
-                { q: "[Nivel Fácil] La diferencia de potencial eléctrico \\( \\Delta V \\) entre dos puntos A y B se define como el trabajo por unidad de carga necesario para mover una partícula de prueba. Si movemos una carga a lo largo de una superficie equipotencial, el trabajo realizado es:", options: ["Máximo, ya que la fuerza es paralela a la trayectoria", "Depende de la magnitud de la carga de prueba", "Estrictamente cero", "Negativo, pues el sistema pierde energía"], correct: 2, note: "Por definición, en una superficie equipotencial \\( \\Delta V = 0 \\). Como el trabajo externo es $$ W = q \\Delta V $$ al ser nula la diferencia de potencial, el trabajo es matemáticamente cero (la fuerza eléctrica es siempre perpendicular al desplazamiento)." },
-                { q: "[Nivel Medio] Se tienen dos cargas puntuales idénticas \\( +Q \\) separadas una distancia \\( 2a \\). En el punto medio exacto de la recta que las une, el campo eléctrico \\( E \\) y el potencial eléctrico \\( V \\) (asumiendo \\( V=0 \\) en el infinito) son:", options: ["\\( E = 0 \\) y \\( V = 0 \\)", "\\( E = 0 \\) y \\( V = 2kQ/a \\)", "\\( E = 2kQ/a^2 \\) y \\( V = 0 \\)", "\\( E = 2kQ/a^2 \\) y \\( V = 2kQ/a \\)"], correct: 1, note: "El Campo Eléctrico es un vector: en el medio, los vectores de ambas cargas tienen igual módulo y sentidos opuestos, por lo que $$ \\vec{E}_{neto} = 0 $$. El Potencial es escalar: se suman algebraicamente. $$ V_{neto} = \\frac{kQ}{a} + \\frac{kQ}{a} = \\frac{2kQ}{a} $$" },
-                { q: "[Nivel Difícil] Un electrón (masa \\( m \\), carga \\( -e \\)) se libera desde el reposo cerca de la placa negativa de un capacitor plano. La diferencia de potencial entre las placas es \\( V \\). La velocidad escalar \\( v \\) con la que el electrón impacta la placa positiva es:", options: ["\\( v = \\sqrt{\\frac{eV}{m}} \\)", "\\( v = \\sqrt{\\frac{2eV}{m}} \\)", "\\( v = \\frac{eV}{2m} \\)", "\\( v = \\sqrt{\\frac{e}{mV}} \\)"], correct: 1, note: "Por conservación de la energía, la pérdida de energía potencial eléctrica se transforma íntegramente en energía cinética: $$ \\Delta K = - \\Delta U \\implies \\frac{1}{2}mv^2 = -(-e)(V) $$ Despejando la velocidad: $$ v = \\sqrt{\\frac{2eV}{m}} $$" },
-                { q: "[Nivel Medio] El potencial eléctrico \\( V(x,y,z) \\) en una región del espacio está dado por \\( V = 5x^2 - 3y \\). La componente \\( x \\) del vector campo eléctrico, \\( E_x \\), en dicha región es:", options: ["\\( 10x \\)", "\\( -10x \\)", "\\( 5x \\)", "\\( -5x^2 \\)"], correct: 1, note: "El campo eléctrico es el gradiente negativo del potencial escalar. Para la componente \\( x \\), derivamos parcialmente: $$ E_x = - \\frac{\\partial V}{\\partial x} = - \\frac{\\partial}{\\partial x}(5x^2 - 3y) = -10x $$" }
+                { 
+                    q: "[Nivel 1: Fácil] ¿Cuál es la definición física fundamental del Potencial Eléctrico (\\( V \\)) en un punto del espacio?", 
+                    options: [
+                        "La fuerza eléctrica total que experimenta una carga.", 
+                        "La energía potencial eléctrica por unidad de carga en ese punto.", 
+                        "El trabajo total realizado por la fuerza de rozamiento.", 
+                        "La velocidad que adquiere un electrón al pasar por ese punto."
+                    ], 
+                    correct: 1, 
+                    note: "El potencial eléctrico (\\( V \\)) es una propiedad del espacio escalar. Se define formalmente como la energía potencial electrostática (\\( U \\)) por unidad de carga de prueba (\\( q_0 \\)). Matemáticamente: $$ V = \\frac{U}{q_0} $$" 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] En el Sistema Internacional (SI), ¿cuál es la unidad de medida del Potencial Eléctrico y a qué equivale?", 
+                    options: [
+                        "El Newton (N), equivalente a Joule/metro.", 
+                        "El Faradio (F), equivalente a Coulomb/Voltio.", 
+                        "El Voltio (V), equivalente a Joule/Coulomb.", 
+                        "El Ampere (A), equivalente a Coulomb/segundo."
+                    ], 
+                    correct: 2, 
+                    note: "Como el potencial se define como energía por unidad de carga, sus unidades son Joules (J) divididos por Coulombs (C). A esta relación (\\( 1 \\text{ J/C} \\)) se la denomina universalmente Voltio (V)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] A diferencia del Campo Eléctrico, que es una magnitud vectorial, el Potencial Eléctrico es una magnitud:", 
+                    options: [
+                        "Tensorial.", 
+                        "Vectorial pero de sentido único.", 
+                        "Escalar.", 
+                        "Exponencial."
+                    ], 
+                    correct: 2, 
+                    note: "El potencial eléctrico es un escalar (solo tiene magnitud y signo algebraico, carece de dirección y sentido). Esto hace que calcular el potencial neto de varias cargas sea una simple suma algebraica, sin necesidad de descomponer vectores." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] ¿Cuánto trabajo realiza la fuerza eléctrica para mover una carga puntual de prueba a lo largo de una superficie equipotencial?", 
+                    options: [
+                        "El trabajo es máximo y positivo.", 
+                        "El trabajo es estrictamente cero.", 
+                        "El trabajo depende de la masa de la carga.", 
+                        "El trabajo es negativo porque se opone al campo."
+                    ], 
+                    correct: 1, 
+                    note: "Una superficie equipotencial tiene el mismo valor de \\( V \\) en todos sus puntos. El trabajo eléctrico es $$ W = -q \\Delta V $$. Como \\( \\Delta V = 0 \\), el trabajo es matemáticamente cero. Esto implica que la fuerza eléctrica es siempre perpendicular al desplazamiento." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Si el campo eléctrico en una región del espacio es exactamente cero en todos sus puntos, ¿qué podemos afirmar sobre el potencial eléctrico en esa misma región?", 
+                    options: [
+                        "El potencial también debe ser estrictamente cero.", 
+                        "El potencial debe ser negativo.", 
+                        "El potencial debe ser un valor constante (que puede ser distinto de cero).", 
+                        "El potencial fluctúa linealmente."
+                    ], 
+                    correct: 2, 
+                    note: "El campo eléctrico es el gradiente negativo del potencial ($$ E_x = -dV/dx $$). Si la derivada de una función es cero en una región (\\( E = 0 \\)), significa que la función original (el potencial \\( V \\)) es una constante." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] La relación geométrica entre las líneas de campo eléctrico y las superficies equipotenciales siempre es:", 
+                    options: [
+                        "Son completamente paralelas entre sí.", 
+                        "Se cruzan formando un ángulo de 45°.", 
+                        "Son mutuamente perpendiculares en cualquier punto del espacio.", 
+                        "No tienen ninguna relación geométrica establecida."
+                    ], 
+                    correct: 2, 
+                    note: "Para que no se realice trabajo al mover una carga sobre una superficie equipotencial, la fuerza eléctrica (y por lo tanto, las líneas de campo) debe ser estrictamente perpendicular (ortogonal) a la superficie en cada punto." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Si una carga positiva se abandona en reposo en presencia de un campo eléctrico, esta tenderá espontáneamente a moverse hacia:", 
+                    options: [
+                        "Regiones de mayor potencial eléctrico.", 
+                        "Regiones de menor potencial eléctrico.", 
+                        "Puntos donde el potencial sea exactamente nulo.", 
+                        "Regiones de mayor campo magnético."
+                    ], 
+                    correct: 1, 
+                    note: "Las cargas positivas son empujadas en la dirección de las líneas de campo eléctrico. Como las líneas de campo siempre apuntan desde potenciales altos hacia potenciales bajos, la carga se acelerará hacia regiones de menor potencial eléctrico." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] ¿Cuál es el signo del potencial eléctrico radiado por una carga puntual negativa aislada en el vacío (asumiendo \\( V=0 \\) en el infinito)?", 
+                    options: [
+                        "Siempre es positivo.", 
+                        "Siempre es negativo.", 
+                        "Puede ser positivo o negativo dependiendo de la distancia.", 
+                        "Es nulo en todo el espacio."
+                    ], 
+                    correct: 1, 
+                    note: "El potencial de una carga puntual es $$ V = k \\frac{q}{r} $$. Si la carga \\( q \\) es negativa, la constante y la distancia (\\( r \\)) son positivas, por lo que el resultado algebraico del potencial será negativo en cualquier punto finíto del espacio." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] En condiciones de equilibrio electrostático, todo el volumen interior y la superficie de un conductor metálico sólido conforman:", 
+                    options: [
+                        "Un volumen con potencial cero.", 
+                        "Un volumen de potencial infinito.", 
+                        "Un volumen equipotencial (con un único valor de \\( V \\) constante).", 
+                        "Un volumen con un gradiente de potencial variable."
+                    ], 
+                    correct: 2, 
+                    note: "En equilibrio, el campo eléctrico interno es nulo (\\( \\vec{E} = 0 \\)). Puesto que no hay campo que realice trabajo entre dos puntos cualesquiera del conductor, la diferencia de potencial es nula. Por lo tanto, todo el conductor es una única gran región equipotencial." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] El \"electrón-voltio\" (eV) es una unidad de uso común en física atómica y nuclear. Físicamente, el electrón-voltio es una unidad de:", 
+                    options: [
+                        "Potencial eléctrico.", 
+                        "Carga eléctrica.", 
+                        "Campo eléctrico.", 
+                        "Energía."
+                    ], 
+                    correct: 3, 
+                    note: "Un electrón-voltio es la cantidad de energía cinética que gana un electrón al acelerarse libremente a través de una diferencia de potencial de 1 Voltio. Es una unidad de energía, y equivale a $$ 1 \\text{ eV} = 1.602 \\times 10^{-19} \\text{ Joules} $$." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Se colocan dos cargas puntuales sobre el eje x: \\( +Q \\) en \\( x = -a \\) y \\( -Q \\) en \\( x = +a \\) (un dipolo). En el origen (\\( x=0 \\)), que es el punto medio exacto, podemos afirmar que:", 
+                    options: [
+                        "El campo eléctrico es cero, pero el potencial no.", 
+                        "El potencial eléctrico es cero, pero el campo eléctrico no.", 
+                        "Ambos, el campo y el potencial, son cero.", 
+                        "Ni el campo ni el potencial son cero."
+                    ], 
+                    correct: 1, 
+                    note: "El potencial es escalar: $$ V = \\frac{k(+Q)}{a} + \\frac{k(-Q)}{a} = 0 $$ El campo es vectorial: ambas cargas empujan/tiran de una carga de prueba positiva hacia el mismo lado (hacia la negativa), por lo que los vectores se suman y el campo neto es distinto de cero." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] El trabajo \\( W_{\\text{ext}} \\) requerido por un agente externo para mover una carga \\( q \\) con velocidad constante desde un punto A hasta un punto B, entre los cuales hay una diferencia de potencial \\( \\Delta V = V_B - V_A \\), se expresa como:", 
+                    options: [
+                        "\\( W_{\\text{ext}} = -q \\Delta V \\)", 
+                        "\\( W_{\\text{ext}} = q \\Delta V \\)", 
+                        "\\( W_{\\text{ext}} = q / \\Delta V \\)", 
+                        "\\( W_{\\text{ext}} = \\Delta V / q \\)"
+                    ], 
+                    correct: 1, 
+                    note: "El trabajo del campo eléctrico es \\( -q \\Delta V \\). Para que se mueva a velocidad constante (sin cambio de energía cinética), el trabajo neto debe ser cero. Por lo tanto, el agente externo debe realizar un trabajo de igual magnitud pero de signo opuesto: $$ W_{\\text{ext}} = +q \\Delta V $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] El potencial eléctrico en cierta región del espacio depende únicamente de la coordenada \\( x \\) según la función \\( V(x) = -4x^3 \\) (en voltios). La componente \\( x \\) del campo eléctrico (\\( E_x \\)) en esa región es:", 
+                    options: [
+                        "\\( -12x^2 \\)", 
+                        "\\( 12x^2 \\)", 
+                        "\\( -4x^2 \\)", 
+                        "\\( 12x \\)"
+                    ], 
+                    correct: 1, 
+                    note: "El campo eléctrico es el gradiente negativo del potencial escalar. Derivamos la función y le cambiamos el signo: $$ E_x = -\\frac{dV}{dx} = -\\left( \\frac{d}{dx}(-4x^3) \\right) = -(-12x^2) = +12x^2 $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Tienes tres cargas puntuales positivas \\( +q \\) situadas en tres de los cuatro vértices de un cuadrado de lado \\( L \\). El potencial eléctrico total en el cuarto vértice vacío (asumiendo \\( V=0 \\) en el infinito) es:", 
+                    options: [
+                        "\\( \\frac{kq}{L} \\left( 2 + \\frac{1}{\\sqrt{2}} \\right) \\)", 
+                        "\\( \\frac{kq}{L} \\left( 2 + \\sqrt{2} \\right) \\)", 
+                        "Cero, por tratarse de un vértice exterior.", 
+                        "\\( \\frac{3kq}{L} \\)"
+                    ], 
+                    correct: 0, 
+                    note: "El potencial es la suma algebraica escalar de las contribuciones de las tres cargas. Dos de ellas están a una distancia \\( L \\), y la carga opuesta en la diagonal está a una distancia \\( L\\sqrt{2} \\). Sumando los tres términos: $$ V_{neto} = \\frac{kq}{L} + \\frac{kq}{L} + \\frac{kq}{L\\sqrt{2}} = \\frac{kq}{L} \\left( 2 + \\frac{1}{\\sqrt{2}} \\right) $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Dos placas metálicas paralelas y muy grandes están conectadas a una batería de \\( 12 \\text{ V} \\). Si la separación entre las placas es de \\( 0.02 \\text{ m} \\) (2 cm), la magnitud del campo eléctrico uniforme entre ellas es:", 
+                    options: [
+                        "\\( 0.24 \\text{ V/m} \\)", 
+                        "\\( 6 \\text{ V/m} \\)", 
+                        "\\( 24 \\text{ V/m} \\)", 
+                        "\\( 600 \\text{ V/m} \\)"
+                    ], 
+                    correct: 3, 
+                    note: "Para un campo eléctrico uniforme, la relación entre la diferencia de potencial, el campo y la distancia es $$ V = E \\cdot d $$. Despejando el campo: $$ E = \\frac{V}{d} = \\frac{12 \\text{ V}}{0.02 \\text{ m}} = 600 \\text{ V/m} $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Una esfera conductora de radio \\( R \\) posee una carga neta \\( +Q \\). ¿Cuál es el potencial eléctrico en el centro exacto de la esfera?", 
+                    options: [
+                        "Cero.", 
+                        "\\( \\frac{kQ}{R^2} \\)", 
+                        "\\( \\frac{kQ}{R} \\)", 
+                        "Infinito."
+                    ], 
+                    correct: 2, 
+                    note: "En un conductor en equilibrio, el volumen interior es equipotencial. Esto significa que el potencial en el centro, y en cualquier punto de su interior, es exactamente igual al potencial en la superficie. El potencial superficial es $$ V = \\frac{kQ}{R} $$ por lo que este valor se mantiene constante hasta el núcleo." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Se desea acercar un protón (carga \\( +e \\)) hacia otro protón fijo. Si se disminuye a la mitad la distancia que los separa, la energía potencial electrostática del sistema de dos partículas:", 
+                    options: [
+                        "Se reduce a la mitad.", 
+                        "Se duplica.", 
+                        "Se cuadruplica.", 
+                        "No cambia, pues los protones se repelen."
+                    ], 
+                    correct: 1, 
+                    note: "La energía potencial de un sistema de dos cargas puntuales es $$ U = \\frac{k q_1 q_2}{r} $$. Como la distancia \\( r \\) está en el denominador (no elevada al cuadrado como en la fuerza), si \\( r \\) se divide por 2, la energía potencial \\( U \\) se multiplica directamente por 2." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Al integrar diferencialmente las contribuciones de carga, el potencial eléctrico \\( V \\) en un punto ubicado sobre el eje de simetría (eje x) de un anillo circular con carga uniforme \\( Q \\) y radio \\( R \\) resulta ser:", 
+                    options: [
+                        "\\( V = \\frac{kQ}{x^2 + R^2} \\)", 
+                        "\\( V = \\frac{kQ}{\\sqrt{x^2 + R^2}} \\)", 
+                        "\\( V = \\frac{kQ}{x} \\)", 
+                        "\\( V = 0 \\) en todo el eje."
+                    ], 
+                    correct: 1, 
+                    note: "Todos los elementos del anillo \\( dq \\) se encuentran exactamente a la misma distancia escalar \\( r = \\sqrt{x^2 + R^2} \\) del punto en el eje x. Como el potencial no es vector, no hay cancelaciones de componentes. La integración de \\( dq \\) simplemente suma la carga total \\( Q \\): $$ V = \\int \\frac{k\\,dq}{\\sqrt{x^2+R^2}} = \\frac{kQ}{\\sqrt{x^2 + R^2}} $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Una partícula de masa \\( m \\) y carga \\( -q \\) es acelerada desde el reposo a través de una diferencia de potencial \\( \\Delta V \\). La velocidad final de la partícula puede calcularse mediante la expresión:", 
+                    options: [
+                        "\\( v = \\sqrt{\\frac{q \\Delta V}{m}} \\)", 
+                        "\\( v = \\frac{2q \\Delta V}{m} \\)", 
+                        "\\( v = \\sqrt{\\frac{2q \\Delta V}{m}} \\)", 
+                        "\\( v = \\frac{q \\Delta V}{2m} \\)"
+                    ], 
+                    correct: 2, 
+                    note: "El trabajo realizado por el campo sobre la carga (que equivale a la pérdida de energía potencial, \\( U = q \\Delta V \\)) se transforma íntegramente en energía cinética. Planteando el teorema de trabajo-energía: $$ \\frac{1}{2} m v^2 = q \\Delta V \\implies v = \\sqrt{\\frac{2q \\Delta V}{m}} $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Si se cuenta con una esfera aislante sólida de radio \\( R \\) con densidad de carga uniforme \\( \\rho \\) y carga total \\( Q \\), el potencial en su centro (\\( r=0 \\)) en relación al potencial en su superficie (\\( r=R \\)) es:", 
+                    options: [
+                        "Menor en el centro, debido al blindaje electrostático.", 
+                        "Igual al de la superficie, pues es un volumen equipotencial.", 
+                        "Mayor en el centro, con un valor de \\( V_{centro} = \\frac{3}{2} V_{superficie} \\).", 
+                        "Mayor en el centro, tendiendo asintóticamente al infinito."
+                    ], 
+                    correct: 2, 
+                    note: "A diferencia de un conductor, el interior de un aislante tiene carga y por lo tanto posee un campo eléctrico interno \\( E \\propto r \\). Integrando este campo desde la superficie hasta el centro ($$ \\Delta V = -\\int E dr $$), se demuestra que hay un aumento extra de potencial, resultando en que el centro está a un potencial 1.5 veces mayor que la corteza." 
+                }
             ],
             5: [
-                { q: "[Nivel Fácil] La capacitancia \\( C \\) de un capacitor de placas paralelas en el vacío es directamente proporcional a:", options: ["La diferencia de potencial aplicada entre las placas", "La carga almacenada en las placas", "El área transversal de las placas", "La distancia de separación entre las placas"], correct: 2, note: "La capacitancia de un capacitor plano depende exclusivamente de su geometría. Su ecuación rectora es: $$ C = \\varepsilon_0 \\frac{A}{d} $$ Por tanto, es directamente proporcional al Área (A) e inversamente proporcional a la distancia (d)." },
-                { q: "[Nivel Medio] Se tienen dos capacitores, \\( C_1 = 3\\mu F \\) y \\( C_2 = 6\\mu F \\), conectados en serie a una batería de \\( 9V \\). ¿Cuál es la carga almacenada en el capacitor \\( C_1 \\)?", options: ["\\( 18 \\mu C \\)", "\\( 27 \\mu C \\)", "\\( 54 \\mu C \\)", "\\( 9 \\mu C \\)"], correct: 0, note: "En serie, la capacitancia equivalente es: $$ C_{eq} = \\left( \\frac{1}{3} + \\frac{1}{6} \\right)^{-1} = 2\\mu F $$ La carga total del sistema es $$ Q = C_{eq}V = (2\\mu F)(9V) = 18\\mu C $$. En conexión serie, todos los capacitores almacenan exactamente la misma carga \\( Q \\)." },
-                { q: "[Nivel Difícil] Un capacitor plano aislado y desconectado de cualquier batería tiene una carga \\( Q_0 \\), área \\( A \\) y separación \\( d \\). Se introduce un bloque dieléctrico de constante \\( \\kappa > 1 \\) que llena todo el espacio. La energía potencial almacenada en el sistema:", options: ["Aumenta por un factor \\( \\kappa \\)", "Disminuye por un factor \\( \\kappa \\)", "Se mantiene constante por conservación", "Aumenta por un factor \\( \\kappa^2 \\)"], correct: 1, note: "Al estar desconectado, la carga \\( Q_0 \\) es constante. La nueva capacitancia es \\( C = \\kappa C_0 \\). La energía inicial es $$ U_0 = \\frac{Q_0^2}{2C_0} $$. La nueva energía será $$ U = \\frac{Q_0^2}{2(\\kappa C_0)} = \\frac{U_0}{\\kappa} $$. Como \\( \\kappa > 1 \\), la energía disminuye (el sistema hace trabajo atrayendo al dieléctrico)." }
+                { 
+                    q: "[Nivel 1: Fácil] ¿Cuál es la unidad de capacitancia en el Sistema Internacional (SI) y a qué equivale fundamentalmente?", 
+                    options: [
+                        "El Henry (H), equivalente a Voltio/Amperio.", 
+                        "El Faradio (F), equivalente a Coulomb/Voltio.", 
+                        "El Tesla (T), equivalente a Weber/metro cuadrado.", 
+                        "El Ohmio (\\(\\Omega\\)), equivalente a Voltio/Coulomb."
+                    ], 
+                    correct: 1, 
+                    note: "La capacitancia se define analíticamente como \\( C = Q/V \\). Por lo tanto, un Faradio (1 F) es exactamente equivalente a 1 Coulomb de carga almacenada por cada Voltio de diferencia de potencial aplicado (1 C/V)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Para un capacitor de placas paralelas ideal en el vacío, su capacitancia \\( C \\) es:", 
+                    options: [
+                        "Directamente proporcional al área de las placas e inversamente proporcional a la distancia entre ellas.", 
+                        "Inversamente proporcional al área de las placas y directamente proporcional a la distancia.", 
+                        "Dependiente exclusivamente del material de las placas conductoras.", 
+                        "Directamente proporcional a la carga \\( Q \\) e inversamente al voltaje \\( V \\)."
+                    ], 
+                    correct: 0, 
+                    note: "La ecuación geométrica del capacitor plano es $$ C = \\varepsilon_0 \\frac{A}{d} $$. Demuestra que a mayor área (A), mayor capacitancia; y a mayor separación (d), menor capacitancia. ¡Es una propiedad puramente geométrica!" 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Cuando varios capacitores se conectan estrictamente en SERIE a una fuente de voltaje, todos ellos comparten obligatoriamente:", 
+                    options: [
+                        "La misma diferencia de potencial (voltaje) individual.", 
+                        "La misma capacitancia equivalente.", 
+                        "La misma carga eléctrica almacenada \\( Q \\).", 
+                        "La misma densidad de energía volumétrica."
+                    ], 
+                    correct: 2, 
+                    note: "En una conexión en serie, la inducción electrostática obliga a que cada placa aislada desplace exactamente la misma cantidad de electrones. Por conservación fundamental de la carga, todos los capacitores en serie almacenan idéntica carga \\( Q \\)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Cuando varios capacitores de distintas capacidades se conectan en PARALELO, la capacitancia equivalente del sistema es:", 
+                    options: [
+                        "Menor que la capacitancia del capacitor más pequeño.", 
+                        "El promedio aritmético exacto de las capacitancias.", 
+                        "Igual a la suma de los inversos de cada capacitancia.", 
+                        "Igual a la suma algebraica directa de las capacitancias individuales."
+                    ], 
+                    correct: 3, 
+                    note: "En configuración paralelo, todos los capacitores comparten los mismos bornes y por ende el mismo voltaje (V). Físicamente equivale a tener un único capacitor con un área total mayor. Su fórmula es simple: $$ C_{eq} = C_1 + C_2 + C_3 + \\dots $$" 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Si introduces un material dieléctrico aislante (con constante dieléctrica \\( \\kappa > 1 \\)) entre las placas de un capacitor llenando todo el espacio libre, la capacitancia del sistema:", 
+                    options: [
+                        "Disminuye por un factor de \\( 1/\\kappa \\).", 
+                        "Se mantiene inalterada, es una trampa teórica.", 
+                        "Aumenta multiplicándose por el factor constante \\( \\kappa \\).", 
+                        "Cae a cero debido al bloqueo físico de los electrones."
+                    ], 
+                    correct: 2, 
+                    note: "Las moléculas del dieléctrico se polarizan y debilitan el campo eléctrico interno, lo que permite acumular más carga manteniendo el mismo voltaje. La nueva capacitancia es $$ C = \\kappa C_0 $$, resultando siempre mayor a la del vacío." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] La energía potencial electrostática \\( U \\) almacenada en un capacitor de capacitancia \\( C \\) cargado a un voltaje \\( V \\) NO se puede calcular con la expresión matemática:", 
+                    options: [
+                        "\\( U = \\frac{1}{2} C V^2 \\)", 
+                        "\\( U = \\frac{Q^2}{2C} \\)", 
+                        "\\( U = \\frac{1}{2} Q V \\)", 
+                        "\\( U = \\frac{1}{2} C^2 V \\)"
+                    ], 
+                    correct: 3, 
+                    note: "Sustituyendo la definición \\( Q = CV \\) o \\( V = Q/C \\) se pueden derivar las tres primeras expresiones estándar de energía. La última opción (\\( \\frac{1}{2} C^2 V \\)) es una trampa, ya que es dimensionalmente incorrecta y no arroja Joules." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] El fenómeno conocido como 'ruptura dieléctrica' en un capacitor de la vida real ocurre de forma crítica cuando:", 
+                    options: [
+                        "El dieléctrico se enfría peligrosamente hasta el cero absoluto.", 
+                        "El campo eléctrico supera un valor límite y el material aislante se vuelve conductor, generando una chispa.", 
+                        "Las placas metálicas se tocan físicamente por accidente humano.", 
+                        "El capacitor se descarga lentamente y de forma pasiva a través de su resistencia interna."
+                    ], 
+                    correct: 1, 
+                    note: "Todo material aislante posee una 'rigidez dieléctrica' máxima (su campo eléctrico límite antes del colapso). Si se supera, la inmensa fuerza electrostática arranca los electrones de sus átomos, ionizando el material y perforándolo con una descarga destructiva." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Se tienen 3 capacitores idénticos de capacitancia \\( C \\). ¿Cómo deben conectarse los cables para asegurar que obtendremos la MÁXIMA capacitancia equivalente posible de la red?", 
+                    options: [
+                        "Los tres conectados en estricta serie.", 
+                        "Dos en paralelo y esa combinación en serie con el tercero.", 
+                        "Los tres conectados en estricto paralelo.", 
+                        "Dos en serie y esa combinación en paralelo con el tercero."
+                    ], 
+                    correct: 2, 
+                    note: "En una topología en paralelo, las capacitancias se suman directamente obteniendo el máximo valor posible ($$ C_{eq} = C + C + C = 3C $$). Cualquier inclusión de conexiones en serie introduciría sumas de inversas fraccionarias, mermando la capacitancia final." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] A un capacitor plano se le inserta un bloque dieléctrico. Debido a la deformación del material, aparecen cargas inducidas en su superficie. ¿Cómo es la magnitud escalar de esta carga de polarización \\( Q_i \\) en comparación con la carga libre \\( Q \\) que viaja por las placas?", 
+                    options: [
+                        "\\( Q_i \\) es siempre mayor que \\( Q \\).", 
+                        "\\( Q_i \\) es exactamente igual a \\( Q \\) por conservación.", 
+                        "\\( Q_i \\) es siempre estrictamente menor que \\( Q \\).", 
+                        "\\( Q_i \\) depende exclusivamente del grosor de las placas de metal."
+                    ], 
+                    correct: 2, 
+                    note: "La carga de polarización generada en la superficie de un dieléctrico siempre resulta menor a la carga libre de conducción que la provoca, dada por: $$ Q_i = Q \\left(1 - \\frac{1}{\\kappa}\\right) $$ Solo se equipararía a \\( Q \\) si insertáramos un conductor metálico perfecto (\\( \\kappa \\to \\infty \\))." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Si tienes un condensador esférico de placas separadas por el vacío, ¿cuál es el medio con la constante dieléctrica \\( \\kappa \\) más baja posible conocida en la física?", 
+                    options: [
+                        "El aire húmedo.", 
+                        "El vacío absoluto (espacio libre).", 
+                        "El teflón de alta pureza.", 
+                        "El agua destilada a temperatura ambiente."
+                    ], 
+                    correct: 1, 
+                    note: "La constante dieléctrica (\\( \\kappa \\)) es una medida relativa al vacío. Por definición fundamental en la electrostática, el vacío perfecto no posee moléculas que se puedan polarizar y oponerse al campo, por lo que su constante dieléctrica es exactamente igual a 1.0 (el límite físico inferior)." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un capacitor de placas se carga conectándolo a una batería, alcanzando un voltaje inicial \\( V_0 \\). Luego, SE DESCONECTA la batería del sistema y se introduce un dieléctrico grueso (\\( \\kappa > 1 \\)). En este nuevo estado estático:", 
+                    options: [
+                        "El voltaje y la carga permanecen inalterados.", 
+                        "El voltaje disminuye y la carga permanece constante.", 
+                        "El voltaje permanece constante y la carga aumenta.", 
+                        "Ambos parámetros, el voltaje y la carga, disminuyen exponencialmente."
+                    ], 
+                    correct: 1, 
+                    note: "Al aislarse de la batería los electrones no tienen vía de escape, por ende la carga \\( Q \\) queda fijada como una constante universal del sistema. Como \\( C \\) aumenta por culpa del dieléctrico (\\( C = \\kappa C_0 \\)) y sabiendo que \\( V = Q/C \\), el crecimiento del denominador fuerza matemáticamente a que la diferencia de potencial \\( V \\) colapse." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un capacitor de placas paralelas se encuentra conectado firmemente a una batería, manteniendo el voltaje constante \\( V_0 \\). MIENTRAS SIGUE CONECTADO, se desliza un dieléctrico (\\( \\kappa > 1 \\)) en el interior. ¿Qué ocurrirá con la energía electrostática total \\( U \\)?", 
+                    options: [
+                        "La energía almacenada permanece estrictamente constante.", 
+                        "La energía almacenada disminuye progresivamente.", 
+                        "La energía almacenada aumenta debido al trabajo de la fuente.", 
+                        "La energía se disipa casi instantáneamente como emisión calórica."
+                    ], 
+                    correct: 2, 
+                    note: "La conexión ininterrumpida a la batería dictamina que el voltaje \\( V \\) es la constante estricta del experimento. Al introducir dieléctrico, \\( C \\) crece. Acudiendo a la fórmula diseñada para voltajes invariables ($$ U = \\frac{1}{2}CV^2 $$), el aumento de \\( C \\) se traduce directamente en un incremento neto de la energía \\( U \\) almacenada." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Tienes un capacitor maestro de \\( 12 \\, \\mu\\text{F} \\) y por razones de diseño decides alterar su geometría duplicando el área plana de sus placas y reduciendo a la exacta mitad la separación entre las mismas. Su nueva capacidad final será:", 
+                    options: [
+                        "\\( 12 \\, \\mu\\text{F} \\)", 
+                        "\\( 24 \\, \\mu\\text{F} \\)", 
+                        "\\( 48 \\, \\mu\\text{F} \\)", 
+                        "\\( 3 \\, \\mu\\text{F} \\)"
+                    ], 
+                    correct: 2, 
+                    note: "Iniciamos con el axioma $$ C = \\varepsilon_0 \\frac{A}{d} $$. Evaluamos el nuevo diseño con área \\( 2A \\) y gap \\( d/2 \\): $$ C_{\\text{nueva}} = \\varepsilon_0 \\frac{2A}{d/2} = 4 \\left( \\varepsilon_0 \\frac{A}{d} \\right) = 4 \\times 12\\mu\\text{F} = 48\\mu\\text{F} $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Dos capacitores dispares, \\( C_1 = 4 \\, \\mu\\text{F} \\) y \\( C_2 = 12 \\, \\mu\\text{F} \\), están enlazados en estricta topología de SERIE y energizados por una fuente DC de \\( 10 \\text{ V} \\). La carga eléctrica que aloja el capacitor \\( C_1 \\) individualmente es:", 
+                    options: [
+                        "\\( 40 \\, \\mu\\text{C} \\)", 
+                        "\\( 30 \\, \\mu\\text{C} \\)", 
+                        "\\( 120 \\, \\mu\\text{C} \\)", 
+                        "\\( 160 \\, \\mu\\text{C} \\)"
+                    ], 
+                    correct: 1, 
+                    note: "Primero calculamos la capacidad equivalente serial: $$ C_{eq} = \\left(\\frac{1}{4} + \\frac{1}{12}\\right)^{-1} = 3\\mu\\text{F} $$. La carga madre inyectada por la fuente al sistema es $$ Q = C_{eq} V = (3\\mu\\text{F})(10\\text{V}) = 30\\mu\\text{C} $$. En conexiones serie, absolutamente todos los componentes alojan dicha carga maestra inalterada." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] ¿Cuál es el comportamiento analítico del campo eléctrico neto \\( E \\) en el interior de un sólido dieléctrico polarizado, comparándolo contra el campo de excitación externo original \\( E_0 \\)?", 
+                    options: [
+                        "Resultan idénticos matemáticamente, \\( E = E_0 \\).", 
+                        "El campo interior colapsa a cero como en un metal macizo, \\( E = 0 \\).", 
+                        "Se amplifica por inducción resonante, \\( E > E_0 \\).", 
+                        "Se encuentra atenuado pero no nulo, \\( E = E_0 / \\kappa \\)."
+                    ], 
+                    correct: 3, 
+                    note: "Las estructuras moleculares del dieléctrico efectúan un micro-giro (polarización) orquestando un campo interno inducido que lucha contra el primario. Esta batalla vectorial debilita al campo total sin erradicarlo (como sucedería en una jaula de Faraday). Físicamente: $$ E_{\\text{neto}} = \\frac{E_0}{\\kappa} $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] La métrica de densidad de energía volumétrica \\( u \\) (la cantidad de Joules compactados por metro cúbico) en el seno de un campo eléctrico \\( E \\) se expresa con rigor como:", 
+                    options: [
+                        "\\( u = \\frac{1}{2} \\varepsilon_0 E^2 \\)", 
+                        "\\( u = \\frac{1}{2} \\varepsilon_0 E \\)", 
+                        "\\( u = \\frac{\\varepsilon_0}{2 E^2} \\)", 
+                        "\\( u = \\varepsilon_0 E^2 \\)"
+                    ], 
+                    correct: 0, 
+                    note: "La energía de un capacitor no reside en sus placas de metal, sino abstractamente en el espacio albergado por el campo. Su densidad crece ferozmente con el cuadrado de la magnitud del vector campo eléctrico: $$ u = \\frac{1}{2} \\varepsilon_0 E^2 $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] La función de capacitancia de un cable coaxial infinito (capacitor de simetría cilíndrica) de longitud operativa \\( L \\), hilo central de radio \\( a \\) y coraza externa hueca de radio \\( b \\) posee una dependencia espacial estructurada en:", 
+                    options: [
+                        "Una proporción fraccionaria simple \\( (b - a) / ab \\).", 
+                        "Un logaritmo natural \\( \\ln(b/a) \\) operando en el denominador.", 
+                        "El inverso de un binomio cuadrático \\( 1 / (b^2 - a^2) \\).", 
+                        "Un logaritmo natural \\( \\ln(a/b) \\) operando en el numerador."
+                    ], 
+                    correct: 1, 
+                    note: "Mediante integración de la caída de potencial dictada por un hilo de Gauss infinito ($$ \\Delta V = \\int \\frac{\\lambda}{2\\pi\\varepsilon_0 r} dr $$), el cálculo arroja un resultado logarítmico. Evaluando \\( C = Q/\\Delta V \\) la ecuación colapsa a la forma universal del coaxial: $$ C = \\frac{2\\pi\\varepsilon_0 L}{\\ln(b/a)} $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Un capacitor robusto \\( C_1 \\) cargado a \\( V_0 \\) se aísla de su batería nodriza y se enlaza en topología paralelo a un capacitor secundario \\( C_2 \\) totalmente desprovisto de carga. Alcanzada la nueva quietud electrostática, ¿qué dictamina la física sobre la energía total del sistema?", 
+                    options: [
+                        "Se conserva intacta sin pérdidas, amparada por la primera ley termodinámica.", 
+                        "Presenta un aumento fantasma, ya que ahora dos unidades portan campo activo.", 
+                        "Muestra una caída inevitable, dissipándose el delta como efecto Joule en las trazas y ondas EM.", 
+                        "La energía resultante queda sujeta a si \\( C_2 \\) aventaja capacitivamente a \\( C_1 \\) o viceversa."
+                    ], 
+                    correct: 2, 
+                    note: "El súbito flujo re-equilibrador de cargas desata una violenta corriente transitoria. Ningún circuito físico posee resistencia nula absoluta; por consiguiente, una porción de energía potencial primaria se inmola irrevocablemente en los filamentos como emisión de fotones térmicos y radiación pura." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] La formulación generalizada de la Ley de Gauss, estructurada para dominios repletos de dieléctricos, recurre al novedoso vector Desplazamiento Eléctrico \\( \\vec{D} \\). ¿Cuál de estas ecuaciones representa su axioma correcto?", 
+                    options: [
+                        "\\( \\oint \\vec{D} \\cdot d\\vec{A} = Q_{\\text{inducida}} \\)", 
+                        "\\( \\oint \\vec{D} \\cdot d\\vec{A} = Q_{\\text{libre}} \\)", 
+                        "\\( \\oint \\vec{D} \\cdot d\\vec{A} = Q_{\\text{total}} / \\kappa \\)", 
+                        "\\( \\oint \\vec{D} \\cdot d\\vec{A} = 0 \\) de manera universal."
+                    ], 
+                    correct: 1, 
+                    note: "El campo vectorial de desplazamiento se enuncia algebraicamente como $$ \\vec{D} = \\varepsilon \\vec{E} $$. Su brillantez radica en que la integral sobre un horizonte cerrado ignora el caótico enjambre de cargas moleculares inducidas y contabiliza, única y majestuosamente, a la carga libre de conducción introducida por la mano humana." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Analice un capacitor de placas estáticas al cual se le inserta un bloque dieléctrico denso dejándolo expuesto solo hasta la mitad de la inserción, estando el equipo aislado de cualquier fuente. Las leyes de la naturaleza ejercerán sobre el bloque una fuerza mecánica que tenderá a:", 
+                    options: [
+                        "Repelerlo y expulsarlo violentamente de las placas.", 
+                        "Someterlo a fuerzas estáticas manteniendo un reposo inerte.", 
+                        "Succionarlo hacia el interior de las placas buscando rellenar el volumen restante.", 
+                        "Inducir un torque transversal haciéndolo girar como un motor electrostático incipiente."
+                    ], 
+                    correct: 2, 
+                    note: "Es un mandato supremo del universo que todo sistema librado a sí mismo orbite inexorablemente hacia su configuración de mínima energía potencial. Como el sistema está aislado (\\( Q \\) constante), absorber al dieléctrico íntegramente catapulta la capacitancia \\( C \\) al alza, minimizando de forma pasiva la energía potencial total almacenada en el estado dictado por \\( U = Q^2/2C \\)." 
+                }
             ],
             6: [
-                { q: "[Nivel Fácil] De acuerdo a la Ley de Ohm macroscópica, si se grafica la Diferencia de Potencial (V) en función de la Corriente (I) para un resistor óhmico ideal, la pendiente de la recta obtenida representa:", options: ["La resistividad del material", "La potencia disipada", "La conductancia", "La resistencia eléctrica del elemento"], correct: 3, note: "La ecuación lineal de Ohm establece que $$ V = R \\cdot I $$. En un gráfico V vs I, esta es la ecuación de una recta con ordenada al origen cero, donde la constante de proporcionalidad (la pendiente métrica) es precisamente la Resistencia \\( R \\)." },
-                { q: "[Nivel Medio] Se tiene un alambre cilíndrico de cobre de longitud \\( L \\) y radio \\( r \\) con resistencia \\( R_0 \\). Si el alambre se estira mecánicamente (sin perder masa ni volumen) hasta duplicar su longitud (\\( 2L \\)), la nueva resistencia será:", options: ["\\( R_0 \\)", "\\( 2R_0 \\)", "\\( 4R_0 \\)", "\\( R_0 / 2 \\)"], correct: 2, note: "El volumen es constante: $$ Vol = A_0 L = A_{nueva} (2L) \\implies A_{nueva} = A_0 / 2 $$. La resistencia se define como: $$ R = \\rho \\frac{L}{A} $$. La nueva resistencia será: $$ R_{nueva} = \\rho \\frac{2L}{A_0 / 2} = 4 \\left( \\rho \\frac{L}{A_0} \\right) = 4R_0 $$" },
-                { q: "[Nivel Difícil] Una batería posee una fuerza electromotriz (fem) de \\( \\varepsilon = 12V \\) y una resistencia interna \\( r = 1\\Omega \\). Se conecta a un resistor externo \\( R = 5\\Omega \\). La diferencia de potencial \\( V_{ab} \\) medida en los bornes reales de la batería será:", options: ["\\( 12V \\)", "\\( 10V \\)", "\\( 14V \\)", "\\( 0V \\)"], correct: 1, note: "La corriente total del circuito es $$ I = \\frac{\\varepsilon}{R + r} = \\frac{12V}{5\\Omega + 1\\Omega} = 2A $$. El voltaje en bornes (lo que realmente entrega la batería) cae debido a su resistencia interna: $$ V_{ab} = \\varepsilon - I r = 12V - (2A)(1\\Omega) = 10V $$" }
+                { 
+                    q: "[Nivel 1: Fácil] ¿Cuál es la definición física fundamental de la corriente eléctrica que circula por un conductor?", 
+                    options: [
+                        "La cantidad de energía potencial transferida por unidad de tiempo.", 
+                        "La velocidad promedio a la que se mueven los electrones.", 
+                        "La tasa neta de flujo de carga eléctrica a través de un área transversal.", 
+                        "El trabajo realizado por el campo eléctrico por unidad de longitud."
+                    ], 
+                    correct: 2, 
+                    note: "La corriente eléctrica \\( I \\) se define macroscópicamente como la derivada temporal de la carga que atraviesa una sección topológica transversal: $$ I = \\frac{dQ}{dt} $$ Se cuantifica en Amperios (Coulombs por segundo)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Por convención histórica en el análisis de circuitos, la dirección de la corriente eléctrica se define como:", 
+                    options: [
+                        "La dirección del flujo real de los electrones libres.", 
+                        "La dirección perpendicular al campo eléctrico interno.", 
+                        "La dirección en la que se moverían hipotéticos portadores de carga positiva.", 
+                        "La dirección de mayor a menor resistencia ohmica."
+                    ], 
+                    correct: 2, 
+                    note: "Aunque en los metales los portadores móviles son los electrones (negativos), la convención estipula que la corriente tiene la dirección del flujo de carga positiva (que posee el mismo sentido que el vector campo eléctrico \\( \\vec{E} \\) impulsando la carga)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] A una temperatura termodinámica dada, la resistividad (\\( \\rho \\)) de un material conductor metálico puro:", 
+                    options: [
+                        "Depende linealmente del largo y del área transversal del cable.", 
+                        "Es una propiedad intrínseca e intensiva del material, independiente de su forma geométrica.", 
+                        "Aumenta drásticamente al aumentar el diámetro cilíndrico del cable.", 
+                        "Es exactamente equivalente a su resistencia eléctrica (\\( R \\))."
+                    ], 
+                    correct: 1, 
+                    note: "La resistencia \\( R \\) es macroscópica y geométrica ($$ R = \\rho \\frac{L}{A} $$), pero la resistividad \\( \\rho \\) es una propiedad molecular y estructural intrínseca del propio material (ej. cobre, oro), totalmente independiente de sus dimensiones de corte." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] A pesar de su engañoso nombre histórico, la Fuerza Electromotriz (FEM, o \\( \\varepsilon \\)) de una batería no es un vector de fuerza. ¿En qué unidades se cuantifica en el Sistema Internacional?", 
+                    options: [
+                        "Newtons (N)", 
+                        "Joules (J)", 
+                        "Amperios (A)", 
+                        "Voltios (V)"
+                    ], 
+                    correct: 3, 
+                    note: "La FEM define el trabajo por unidad de carga que realiza una fuente no electrostática (reacción química, cinética magnética) para forzar a los portadores a elevar su potencial. Sus unidades son Joules/Coulomb, lo cual se traduce en Voltios (V)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Para un material que obedece rigurosamente la Ley de Ohm a temperatura constante, la curva característica de Densidad de Corriente (\\( J \\)) en función del Campo Eléctrico aplicado (\\( E \\)) traza:", 
+                    options: [
+                        "Una parábola cóncava.", 
+                        "Una línea recta con pendiente constante que pasa por el origen.", 
+                        "Una curva exponencial de saturación térmica.", 
+                        "Una recta horizontal sin dependencia."
+                    ], 
+                    correct: 1, 
+                    note: "El enunciado de Ohm en formato microscópico decreta que $$ \\vec{J} = \\sigma \\vec{E} $$. En dieléctricos y conductores óhmicos puros, la conductividad \\( \\sigma \\) es una constante de proporcionalidad estricta, perfilando una función de grado 1 (lineal perfecta)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] La tasa instantánea a la cual la energía eléctrica se disipa transmutándose en emisión térmica (Efecto Joule) en una resistencia \\( R \\) atravesada por una corriente \\( I \\) es:", 
+                    options: [
+                        "\\( P = I^2 R \\)", 
+                        "\\( P = I R^2 \\)", 
+                        "\\( P = V / R^2 \\)", 
+                        "\\( P = V^2 I \\)"
+                    ], 
+                    correct: 0, 
+                    note: "La potencia matriz eléctrica es \\( P = V_{ab} I \\). Evaluando una componente disipativa, inyectamos la Ley de Ohm (\\( V_{ab} = IR \\)) obteniendo la gloriosa ecuación de calor: $$ P = (IR)I = I^2 R $$" 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] En la red reticular de la inmensa mayoría de los metales puros, ¿qué ocurre experimentalmente con su resistividad al incrementar abruptamente la temperatura?", 
+                    options: [
+                        "Disminuye exponencialmente, forjando mejores conductores.", 
+                        "Aumenta, producto de la interferencia generada por la vibración atómica agudizada.", 
+                        "Permanece inalterada por efecto del apantallamiento de banda térmica.", 
+                        "Cae a cero absoluto induciendo un estado superconductor cálido."
+                    ], 
+                    correct: 1, 
+                    note: "Al inyectar fonones térmicos, los núcleos iónicos de la matriz cristalina del metal vibran con excesiva amplitud espacial, dilatando la sección de colisión contra los electrones libres. Esto entorpece la movilidad, inflando la resistividad estructural del medio." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Cuando el haz de luz de una linterna decae y parpadea tras varias horas, nos indica el agotamiento de la batería de litio. Físicamente, la degradación química de esta batería REAL propicia:", 
+                    options: [
+                        "Un aumento ilusorio de su fuerza electromotriz teórica (\\( \\varepsilon \\)).", 
+                        "Una minimización de su resistencia interna parasita (\\( r \\)).", 
+                        "Un drástico incremento de su resistencia interna de los electrolitos (\\( r \\)).", 
+                        "La inversión de la polaridad en los terminales metálicos."
+                    ], 
+                    correct: 2, 
+                    note: "El colapso de las reacciones redox vuelve a los catalizadores químicos mucho menos eficientes, lo que se modeliza en circuitos como un implacable aumento en la resistencia interna propia (\\( r \\)), induciendo una hemorragia de voltaje dentro del propio envase de la batería." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Imagine un circuito topológico de lazo único que conecta una batería a dos resistores de dispar tamaño óhmico. El caudal de corriente eléctrica \\( I \\) que evacúa el polo positivo de la batería:", 
+                    options: [
+                        "Se fatiga y atenúa al sortear cada resistor secuencial.", 
+                        "Es matemáticamente el mismo en cualquier coordenada de la topología.", 
+                        "Alcanza su cénit de magnitud en la salida, extinguiéndose al retornar al cátodo.", 
+                        "Opera condicionado al calibre volumétrico del cable en cada sección."
+                    ], 
+                    correct: 1, 
+                    note: "Dictaminado por el sacro principio de conservación continua de la carga, la materia electromagnética no puede aglomerarse ni aniquilarse en las tuberías de un nodo cerrado. La corriente \\( I \\) se mantiene perennemente idéntica a lo largo y ancho de un lazo sin ramificaciones." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] La magnitud media de la velocidad de deriva (arrastre) \\( v_d \\) de la marea de electrones en el tendido eléctrico domiciliario transita en el orden cinemático de:", 
+                    options: [
+                        "La velocidad de propagación de la luz en el cobre (\\( \\sim 10^8 \\text{ m/s} \\)).", 
+                        "El régimen sónico o acústico (\\( \\sim 340 \\text{ m/s} \\)).", 
+                        "Velocidades perceptibles para el ojo (\\( \\sim 10 \\text{ m/s} \\)).", 
+                        "Escalas submili-métricas (fracciones de milímetro por segundo)."
+                    ], 
+                    correct: 3, 
+                    note: "Si bien el aura del campo electromagnético barre la circuitería a inmensas fracciones de \\( c \\), encendiendo las lámparas al tacto; la procesión real y neta de los electrones lidia con choques colosales, reduciendo su avance neto a la imperceptible escala de escasos milímetros por cada tic del segundero." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Se maquina un conductor de cobre esculpido en forma de tronco cónico que vehiculiza una corriente constante \\( I \\). Navegando hacia la región de cuello angosto (menor diámetro), la velocidad de deriva \\( v_d \\) y la densidad vectorial de corriente \\( J \\) sufren la siguiente mutación:", 
+                    options: [
+                        "Ambas escalan su magnitud (aumentan).", 
+                        "Ambas se atenúan conjuntamente (disminuyen).", 
+                        "\\( v_d \\) se acelera, pero \\( J \\) es intrínsecamente constante.", 
+                        "\\( J \\) experimenta un alza, mientras \\( v_d \\) se comprime."
+                    ], 
+                    correct: 0, 
+                    note: "Por dictado conservativo, \\( I \\) es constante total. Como $$ J = I/A $$ la contracción del área (\\( A \\)) cataliza el aumento geométrico de la densidad \\( J \\). Concurrentemente, la microscopía exige que $$ J = n|q|v_d $$ Tratándose del mismo cobre puro (\\( n \\) fijo), el auge de \\( J \\) arrastra compulsoriamente a una mayor aceleración neta \\( v_d \\) de la marea electrónica." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un alambre maestro calibrado detenta una resistencia pasiva de \\( R_0 \\). Es sometido a estiramiento plástico de elongación 2X (longitud \\( 2L \\)) bajo el axioma de invariancia de masa y volumen. La nueva impedancia óhmica será:", 
+                    options: [
+                        "\\( R_0 \\)", 
+                        "\\( 2R_0 \\)", 
+                        "\\( 4R_0 \\)", 
+                        "\\( R_0 / 2 \\)"
+                    ], 
+                    correct: 2, 
+                    note: "El confinamiento volumétrico exige que $$ Vol = A_0 L = A_{final} (2L) \\implies A_{final} = A_0/2 $$. Invocando a Pouillet: $$ R_f = \\rho \\frac{2L}{A_0/2} = 4 \\left( \\rho \\frac{L}{A_0} \\right) = 4R_0 $$ El cordón es, de manera simultánea, del doble de trayecto y la mitad del grosor original." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un generador real (FEM \\( \\varepsilon = 12 \\text{ V} \\), impedancia de fuga interna \\( r = 2 \\, \\Omega \\)) provee energía a una carga y es purgado con un consumo activo de \\( 2 \\text{ A} \\). La telemetría en los bornes expuestos leerá un diferencial eléctrico de:", 
+                    options: [
+                        "\\( 12 \\text{ V} \\)", 
+                        "\\( 16 \\text{ V} \\)", 
+                        "\\( 8 \\text{ V} \\)", 
+                        "\\( 0 \\text{ V} \\)"
+                    ], 
+                    correct: 2, 
+                    note: "En la fase de descarga emisiva, la batería es asfixiada por una sustracción de voltaje en las entrañas de su propio electrolito (efecto de carga óhmica). El remanente cedido al mundo exterior dicta: $$ V_{ab} = \\varepsilon - Ir = 12\\text{V} - (2\\text{A})(2\\Omega) = 8\\text{V} $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Si al generador químico precedente (\\( \\varepsilon = 12 \\text{ V} \\), \\( r = 2 \\, \\Omega \\)) se le inyecta una terapia de carga forzando un torrente revertido de \\( 3 \\text{ A} \\) por el anodo positivo, la tensión de asimilación escalará a:", 
+                    options: [
+                        "\\( 12 \\text{ V} \\)", 
+                        "\\( 6 \\text{ V} \\)", 
+                        "\\( 18 \\text{ V} \\)", 
+                        "\\( 0 \\text{ V} \\)"
+                    ], 
+                    correct: 2, 
+                    note: "En modalidad de recarga regenerativa, la marea galvánica es embutida contra-flujo de la FEM. El ente cargador debe someter tanto la voluntad química de la pila como la fricción óhmica de su resistencia: $$ V_{ab} = \\varepsilon + Ir = 12\\text{V} + (3\\text{A})(2\\Omega) = 18\\text{V} $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] La sintaxis infinitesimal y madre de todo modelo conductivo, empareja al vector campo polarizador \\( \\vec{E} \\) y al vector densidad fluida \\( \\vec{J} \\) gobernada estrictamente por el escalar de:", 
+                    options: [
+                        "La permisividad cuántica del vacío \\( \\varepsilon_0 \\).", 
+                        "La fricción intrínseca del material, resistividad \\( \\rho \\).", 
+                        "El área de sección euclidiana de corte \\( A \\).", 
+                        "El salto termodinámico de la Fuerza Electromotriz."
+                    ], 
+                    correct: 1, 
+                    note: "El teorema reticular de Drude deriva el formato puro y universal de la Ley de Ohm, prescindiendo de morfologías toscas, acotando el caos a nivel puntual: $$ \\vec{E} = \\rho \\vec{J} \\quad \\text{o su análoga} \\quad \\vec{J} = \\sigma \\vec{E} $$ donde el parámetro es dictado por el material." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Ante el trágico puenteo (cortocircuito) de los bornes de un acumulador electroquímico real con conductores exentos de resistencia, la avalancha de corriente terminal desatada:", 
+                    options: [
+                        "Es una divergencia de valor infinito matemático, calcinando el espacio.", 
+                        "Se encuentra dictada por la opacidad dielectrica de la atmósfera local.", 
+                        "Converge a un valor físicamente estricto y finito dictado por \\( I = \\varepsilon / r \\).", 
+                        "Se inhibe a cero asintótico al anularse la tensión de contacto exterior."
+                    ], 
+                    correct: 2, 
+                    note: "En el abismo de un cortocircuito perfecto (\\( R_{\\text{externa}} = 0 \\)), el freno exclusivo contra una implosión eléctrica reposa en la trinchera de la fricción resistiva interna (\\( r \\)) del acumulador. La entrega de colapso queda acotada finitamente a $$ I_{cc} = \\frac{\\varepsilon}{r} $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Teorema de Maximización de Potencia de Red: Acoplamos un motor consumista de resistencia \\( R \\) variable a una matriz de poder (FEM \\( \\varepsilon \\), fuga \\( r \\)). La termodinámica asegura que la disipación máxima explotable ocurre en el régimen donde:", 
+                    options: [
+                        "\\( R \\to 0 \\) simulando un cuasi cortocircuito letal.", 
+                        "\\( R \\to \\infty \\) limitando el estrés calórico de la malla.", 
+                        "\\( R = r \\) consumando el acople perfecto de impedancias.", 
+                        "\\( R = \\varepsilon / r \\) sintonizando voltajes."
+                    ], 
+                    correct: 2, 
+                    note: "El sumidero externo devora potencia bajo la curva $$ P = \\left(\\frac{\\varepsilon}{R+r}\\right)^2 R $$ Aplicando el operador diferencial (\\( dP/dR = 0 \\)) para escrutar el zenit matemático, se devela sin misericordia que el punto crítico opera cuando el consumidor mimetiza con exactitud al lastre interno: la condición de oro \\( R = r \\)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Traspasando la lúgubre barrera de la temperatura crítica (\\( T_c \\)), los exóticos superconductores criogénicos sufren una purga cuántica en donde su resistencia \\( \\rho \\) asume el comportamiento de:", 
+                    options: [
+                        "Una asíntota residual sostenida por la corrupción de impurezas atómicas.", 
+                        "Un abismo abrupto, colapsando al estrato estricto y matemático del Cero Absoluto (0).", 
+                        "Una divergencia de Mott, donde la red encadena violentamente a los electrones.", 
+                        "El reino de la resistencia escalar negativa, forjando masa nula."
+                    ], 
+                    correct: 1, 
+                    note: "Bajo la sinfonía cuántica explicada por BCS, el entrelazamiento de portadores en pares de Cooper surfea el océano iónico del metal anulando completamente el esparcimiento (scattering). El termómetro atestigua la anulación absoluta y repentina de la resistividad ($$ \\rho = 0 \\, \\Omega\\cdot\\text{m} $$)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Al diseñar la integración topológica que deduce la resistencia transversal óhmica de un cable coaxial hueco o placa anular, (donde la corriente \\( I \\) huye radialmente desde una cota interior \\( a \\) al borde externo \\( b \\)), el cálculo penaliza al integrar porque:", 
+                    options: [
+                        "Exige integrar anillos expansivos donde el área de asalto vectorial \\( A(r) = 2\\pi r L \\) es una entidad mutable que se dilata con el radio.", 
+                        "Fuerza a considerar la sección volumétrica ecuatorial como un monolito cristalino invariable.", 
+                        "Obliga a acoplar la resistividad a un tensor magnético cruzado de deformación de Lorentz.", 
+                        "Presupone un tiempo de tránsito relativista asintótico a infinito."
+                    ], 
+                    correct: 0, 
+                    note: "El fluido eléctrico irrumpe de forma concéntrica en caparazones cilíndricos sucesivos con frentes de onda (áreas \\( A \\)) en constante expansión a medida que huyen. La microscopía se somete a la integral logarítmica: $$ dR = \\rho \\frac{dr}{2\\pi r L} \\implies R = \\frac{\\rho}{2\\pi L} \\ln\\left(\\frac{b}{a}\\right) $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Analizando los engranajes microscópicos de conducción (Modelo cinético de Drude), la elasticidad óhmica de un metal \\( \\sigma \\) descansa sobre la densidad \\( n \\) e inercia \\( m \\) de portadores, el quantum de carga \\( q \\), y vitalmente del pulso de supervivencia entre colisiones termales \\( \\tau \\). La ecuación reina es:", 
+                    options: [
+                        "\\( \\sigma = \\frac{n q^2 \\tau}{m} \\)", 
+                        "\\( \\sigma = \\frac{n q \\tau^2}{m} \\)", 
+                        "\\( \\sigma = \\frac{m}{n q^2 \\tau} \\)", 
+                        "\\( \\sigma = n q m \\tau \\)"
+                    ], 
+                    correct: 0, 
+                    note: "Sometido al dictamen newtoniano de sacudidas abruptas que cercenan la velocidad: la marcha de deriva asume $$ v_d = \\left( \\frac{qE}{m} \\right) \\tau $$. Reemplazando en la médula de flujo $$ J = nqv_d $$, se consolida la Ley Ohmica elemental: $$ J = \\left( \\frac{nq^2\\tau}{m} \\right) E $$, consagrando el corchete como el estandarte universal de la conductividad \\( \\sigma \\)." 
+                }
+            ],
+            7: [
+                { 
+                    q: "[Nivel 1: Fácil] La Regla de los Nodos de Kirchhoff (la suma algebraica de las corrientes en cualquier unión es cero) es una consecuencia directa del principio físico de la conservación de:", 
+                    options: [
+                        "La energía mecánica del sistema.", 
+                        "La cantidad de movimiento lineal.", 
+                        "La carga eléctrica.", 
+                        "El flujo magnético estacionario."
+                    ], 
+                    correct: 2, 
+                    note: "La regla de uniones se basa en que la carga no puede acumularse ni crearse en un punto del circuito. Toda la carga por unidad de tiempo (corriente) que entra a un nodo debe ser exactamente igual a la que sale." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] La Regla de las Mallas de Kirchhoff establece que la suma de las diferencias de potencial a través de una trayectoria cerrada es cero. Este principio se fundamenta en la conservación de:", 
+                    options: [
+                        "La carga eléctrica.", 
+                        "La energía.", 
+                        "El campo eléctrico.", 
+                        "La masa relativista."
+                    ], 
+                    correct: 1, 
+                    note: "Como el campo eléctrico electrostático es conservativo, el trabajo neto para mover una carga alrededor de un lazo cerrado es cero. La energía ganada en las fuentes (FEM) se consume exactamente en los resistores." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Para medir correctamente la corriente eléctrica que atraviesa una resistencia \\( R \\), un amperímetro ideal debe conectarse en:", 
+                    options: [
+                        "Paralelo, y poseer una resistencia interna infinita.", 
+                        "Paralelo, y poseer una resistencia interna nula.", 
+                        "Serie, y poseer una resistencia interna infinita.", 
+                        "Serie, y poseer una resistencia interna nula."
+                    ], 
+                    correct: 3, 
+                    note: "El amperímetro debe conectarse en serie para que toda la corriente del ramal pase a través de él. Para no alterar la corriente original del circuito, su resistencia interna debe ser idealmente cero (un cortocircuito perfecto)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Para medir la diferencia de potencial (caída de voltaje) entre los extremos de una resistencia \\( R \\), un voltímetro ideal debe conectarse en:", 
+                    options: [
+                        "Paralelo, y poseer una resistencia interna infinita.", 
+                        "Paralelo, y poseer una resistencia interna nula.", 
+                        "Serie, y poseer una resistencia interna infinita.", 
+                        "Serie, y poseer una resistencia interna nula."
+                    ], 
+                    correct: 0, 
+                    note: "El voltímetro se conecta en paralelo para sondear los mismos nodos que la resistencia. Para no 'robar' corriente del circuito principal y alterar el sistema, su resistencia interna debe ser idealmente infinita." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] En un circuito compuesto por una batería ideal de voltaje \\( V \\), una resistencia \\( R \\) y un capacitor \\( C \\) descargado (Circuito RC). En el instante exacto \\( t = 0 \\) en que se cierra el interruptor, el capacitor se comporta físicamente como:", 
+                    options: [
+                        "Un circuito abierto (corriente nula).", 
+                        "Un cortocircuito ideal (un cable de resistencia cero).", 
+                        "Una resistencia de valor \\( R \\).", 
+                        "Una fuente de voltaje de valor \\( -V \\)."
+                    ], 
+                    correct: 1, 
+                    note: "En \\( t=0 \\), la carga del capacitor es nula (\\( q=0 \\)), por lo que el voltaje entre sus placas es \\( V_c = q/C = 0 \\). Al no oponer resistencia inicial al flujo, actúa momentáneamente como un cable ideal, permitiendo la corriente máxima \\( I_0 = V/R \\)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] En un circuito RC en serie, al transcurrir un tiempo muy prolongado (\\( t \\to \\infty \\)) y alcanzarse el estado estacionario, ¿qué sucede con la rama que contiene al capacitor?", 
+                    options: [
+                        "Se comporta como un cable ideal y la corriente es máxima.", 
+                        "Se comporta como un circuito abierto y la corriente cesa completamente.", 
+                        "El capacitor se descarga rítmicamente generando corriente alterna.", 
+                        "La corriente se estabiliza en un valor de \\( V/R \\)."
+                    ], 
+                    correct: 1, 
+                    note: "Cuando \\( t \\to \\infty \\), el capacitor se carga por completo y su voltaje iguala al de la fuente. En este punto, ejerce una fuerza electromotriz contraria exacta a la de la batería, por lo que bloquea el paso de electrones actuando como un interruptor abierto (\\( I = 0 \\))." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] La dinámica de carga y descarga de un circuito RC en serie está gobernada por la 'constante de tiempo', definida como \\( \\tau = R \\cdot C \\). ¿Qué unidades posee esta magnitud en el SI?", 
+                    options: [
+                        "Ohmios por Faradio (\\( \\Omega/\\text{F} \\))", 
+                        "Amperios (\\( \\text{A} \\))", 
+                        "Segundos (\\( \\text{s} \\))", 
+                        "Faradios por Ohmio (\\( \\text{F}/\\Omega \\))"
+                    ], 
+                    correct: 2, 
+                    note: "Dimensionalmente: $$ [R] = \\frac{\\text{V}}{\\text{A}} = \\frac{\\text{J}/\\text{C}}{\\text{C}/\\text{s}} $$ y $$ [C] = \\frac{\\text{C}}{\\text{V}} = \\frac{\\text{C}}{\\text{J}/\\text{C}} $$. Al multiplicar ambas (\\( R \\times C \\)), la unidad residual resultante es exclusivamente el segundo (s)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Al recorrer una malla aplicando la Ley de Kirchhoff en el sentido de las agujas del reloj, si cruzamos una batería ideal pasando desde su terminal POSITIVO (+) hacia su terminal NEGATIVO (-), el cambio de potencial \\( \\Delta V \\) a incluir en la ecuación debe ser:", 
+                    options: [
+                        "Positivo (\\( +\\varepsilon \\))", 
+                        "Negativo (\\( -\\varepsilon \\))", 
+                        "Cero, porque las baterías ideales no consumen voltaje.", 
+                        "Positivo solo si la corriente va en esa dirección."
+                    ], 
+                    correct: 1, 
+                    note: "Al atravesar una fuente desde su polo de mayor potencial (+) hacia el de menor potencial (-), el potencial decae. Por convención estricta de Kirchhoff, esto representa una caída de tensión y se anota como un valor negativo (\\( -\\varepsilon \\)) en la suma algebraica." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Se desea convertir un galvanómetro sensible (con resistencia interna \\( R_g \\)) en un AMPERÍMETRO capaz de medir corrientes altas. Para lograrlo, se debe conectar:", 
+                    options: [
+                        "Una resistencia 'shunt' de valor muy pequeño en paralelo al galvanómetro.", 
+                        "Una resistencia multiplicadora de valor muy alto en serie al galvanómetro.", 
+                        "Un capacitor en paralelo para desviar el exceso de flujo.", 
+                        "Una resistencia 'shunt' de valor muy grande en paralelo."
+                    ], 
+                    correct: 0, 
+                    note: "Para no quemar el delicado galvanómetro, la mayor parte de la corriente alta debe ser 'desviada' (shunted) por otro camino. Esto se logra colocando una resistencia derivadora (shunt) minúscula conectada en paralelo." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Se desea convertir un galvanómetro sensible (con resistencia interna \\( R_g \\)) en un VOLTÍMETRO para medir caídas de tensión elevadas. Para lograrlo, se debe conectar:", 
+                    options: [
+                        "Una resistencia derivadora pequeña en paralelo.", 
+                        "Una resistencia derivadora grande en paralelo.", 
+                        "Una resistencia multiplicadora de valor muy pequeño en serie.", 
+                        "Una resistencia multiplicadora de valor muy alto en serie."
+                    ], 
+                    correct: 3, 
+                    note: "Un voltímetro se conecta en paralelo al circuito y no debe robar corriente. Al colocar una resistencia gigante en serie con el galvanómetro, limitamos la corriente que entra al instrumento, permitiéndole soportar y medir voltajes muy altos con seguridad." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Durante el proceso de carga de un capacitor \\( C \\) a través de una resistencia \\( R \\) alimentado por una batería \\( \\varepsilon \\), la función matemática que describe la carga \\( q(t) \\) en las placas en función del tiempo es:", 
+                    options: [
+                        "\\( q(t) = C\\varepsilon \\cdot e^{-t/RC} \\)", 
+                        "\\( q(t) = C\\varepsilon \\left( 1 - e^{-t/RC} \\right) \\)", 
+                        "\\( q(t) = \\frac{\\varepsilon}{R} e^{-t/RC} \\)", 
+                        "\\( q(t) = C\\varepsilon \\left( 1 - e^{t/RC} \\right) \\)"
+                    ], 
+                    correct: 1, 
+                    note: "La carga inicia en cero y crece asintóticamente hasta su valor máximo \\( Q_{\\max} = C\\varepsilon \\). La función exponencial que describe este crecimiento saturado es $$ q(t) = Q_{\\max} \\left( 1 - e^{-t/\\tau} \\right) $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Se descarga un capacitor inicialmente cargado \\( Q_0 \\) a través de un resistor \\( R \\). ¿Qué le sucede a la corriente en el circuito a medida que transcurre el tiempo?", 
+                    options: [
+                        "Comienza en cero y aumenta exponencialmente.", 
+                        "Se mantiene constante hasta que se vacía el capacitor.", 
+                        "Comienza en un valor máximo \\( I_0 \\) y decae exponencialmente hacia cero.", 
+                        "Oscila armónicamente cambiando de sentido."
+                    ], 
+                    correct: 2, 
+                    note: "Al cerrar el circuito de descarga, la alta diferencia de potencial del capacitor lleno impulsa un torrente máximo de electrones (\\( I_0 = V_0/R \\)). Conforme el capacitor pierde carga, su voltaje cae, reduciendo el empuje y provocando un decaimiento exponencial de la corriente." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Una corriente principal \\( I \\) llega a un nodo y se bifurca en dos ramas conectadas en paralelo: una con resistencia \\( R_1 = 10 \\, \\Omega \\) y otra con \\( R_2 = 40 \\, \\Omega \\). ¿Qué afirmación es correcta sobre las corrientes \\( I_1 \\) e \\( I_2 \\)?", 
+                    options: [
+                        "\\( I_1 \\) e \\( I_2 \\) son iguales.", 
+                        "\\( I_1 \\) será 4 veces mayor que \\( I_2 \\).", 
+                        "\\( I_2 \\) será 4 veces mayor que \\( I_1 \\).", 
+                        "La corriente elegirá exclusivamente el camino de 10 \\(\\Omega\\)."
+                    ], 
+                    correct: 1, 
+                    note: "En paralelo, el voltaje \\( V \\) es el mismo en ambas ramas. Por Ley de Ohm (\\( I = V/R \\)), la corriente es inversamente proporcional a la resistencia. Al ser \\( R_1 \\) cuatro veces menor que \\( R_2 \\), la corriente buscará masivamente el camino fácil, haciendo a \\( I_1 \\) cuatro veces mayor." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] En el interior de un circuito complejo de una sola malla se colocan dos baterías enfrentadas (sus polos positivos están conectados entre sí). Si \\( \\varepsilon_1 = 12\\text{V} \\) y \\( \\varepsilon_2 = 5\\text{V} \\), la corriente neta será impulsada por un voltaje efectivo de:", 
+                    options: [
+                        "\\( 17\\text{V} \\)", 
+                        "\\( 7\\text{V} \\) en el sentido de \\( \\varepsilon_1 \\).", 
+                        "\\( 7\\text{V} \\) en el sentido de \\( \\varepsilon_2 \\).", 
+                        "\\( 0\\text{V} \\), porque se bloquean mutuamente."
+                    ], 
+                    correct: 1, 
+                    note: "Al estar enfrentadas (oposición), las fuerzas electromotrices se restan. La fuente más potente (12V) vence a la más débil (5V), por lo que la corriente fluirá dictada por \\( \\varepsilon_1 \\) con una fuerza de empuje neta de $$ 12\\text{V} - 5\\text{V} = 7\\text{V} $$" 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] En un arreglo RC, luego de un tiempo exactamente igual a UNA constante de tiempo (\\( t = \\tau \\)) desde que inició la descarga, la carga residual en el capacitor será aproximadamente:", 
+                    options: [
+                        "El 0% de la carga inicial.", 
+                        "El 63% de la carga inicial.", 
+                        "El 37% de la carga inicial.", 
+                        "El 50% de la carga inicial."
+                    ], 
+                    correct: 2, 
+                    note: "La ecuación de descarga es \\( q(t) = Q_0 e^{-t/RC} \\). Evaluando en \\( t = RC \\), obtenemos \\( q = Q_0 e^{-1} \\). Sabiendo que \\( e^{-1} \\approx 0.368 \\), concluimos que tras un \\( \\tau \\), al capacitor le queda ~37% de su carga original." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Un 'Puente de Wheatstone' está compuesto por 4 resistencias en forma de rombo y un galvanómetro cruzado en el centro. Se dice que el puente está 'balanceado' (el galvanómetro marca corriente cero) cuando se cumple qué condición geométrica de las resistencias:", 
+                    options: [
+                        "Todas las resistencias son de exactamente el mismo valor.", 
+                        "La suma de las resistencias del brazo superior iguala a las del inferior.", 
+                        "El producto cruzado de las resistencias de los brazos opuestos es igual (\\( R_1 R_4 = R_2 R_3 \\)).", 
+                        "El puente se desconecta de la fuente electromotriz."
+                    ], 
+                    correct: 2, 
+                    note: "Para que no haya corriente central, el potencial eléctrico en los nodos del galvanómetro debe ser idéntico (\\( V_a = V_b \\)). Al plantear las caídas de tensión de los divisores de voltaje, se demuestra que esto ocurre solo si se cumple la relación de productos cruzados: $$ R_1 R_4 = R_2 R_3 $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Considere el trabajo energético que realiza una batería ideal \\( \\varepsilon \\) para cargar por completo un capacitor \\( C \\) a través de una resistencia \\( R \\). ¿Qué fracción del trabajo total entregado por la batería se disipa irremediablemente como calor en la resistencia durante todo el proceso?", 
+                    options: [
+                        "Ninguna, toda la energía se almacena en el capacitor.", 
+                        "Exactamente el 50% de la energía entregada.", 
+                        "Exactamente el 100% de la energía entregada.", 
+                        "Depende del valor óhmico de la resistencia \\( R \\)."
+                    ], 
+                    correct: 1, 
+                    note: "La batería entrega un trabajo total \\( W = Q\\varepsilon \\). El capacitor en su plenitud almacena \\( U = \\frac{1}{2} Q\\varepsilon \\). Por conservación de la energía, la mitad restante de la energía inyectada por la fuente se quemó irremediablemente en la resistencia como emisión térmica, independientemente del tamaño de \\( R \\)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Si se recorre una resistencia \\( R \\) en dirección OPUESTA al sentido de circulación asignado a la corriente \\( I \\) en nuestro análisis de mallas de Kirchhoff, el término de diferencia de potencial que aportaremos a la suma será:", 
+                    options: [
+                        "\\( -I \\cdot R \\)", 
+                        "\\( +I \\cdot R \\)", 
+                        "Cero, porque se asume cortocircuito.", 
+                        "\\( -\\frac{I}{R} \\)"
+                    ], 
+                    correct: 1, 
+                    note: "La corriente siempre fluye desde el potencial alto al potencial bajo a través de una resistencia. Si nuestro lazo analítico 'viaja' contracorriente, estamos subiendo la escalera de potencial (del bajo al alto), por lo que registramos una ganancia algebraica o salto positivo: $$ +I R $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] En un circuito de tres mallas y dos nodos principales, tenemos 3 corrientes desconocidas (\\( I_1, I_2, I_3 \\)). Para resolver el sistema sin redundancias lineales, el número correcto de ecuaciones independientes a plantear mediante las Leyes de Kirchhoff será:", 
+                    options: [
+                        "3 de mallas.", 
+                        "2 de nodos y 1 de mallas.", 
+                        "1 de nodos y 2 de mallas.", 
+                        "3 de mallas y 2 de nodos."
+                    ], 
+                    correct: 2, 
+                    note: "Una regla topológica universal en circuitos es que necesitas \\( N-1 \\) ecuaciones de nodos (donde \\( N \\) son los nodos) y tantas ecuaciones de mallas como 'ventanas' cerradas simples haya. Aquí: 2 Nodos implica 1 ecuación de unión útil. Para las 3 incógnitas, aportamos 2 ecuaciones de malla independientes." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Durante la carga de un capacitor, la corriente eléctrica transitoria \\( i(t) \\) en el circuito puede hallarse derivando la función de la carga (\\( i = dq/dt \\)). La forma analítica de la corriente en función del tiempo es:", 
+                    options: [
+                        "\\( i(t) = \\frac{\\varepsilon}{R} \\left( 1 - e^{-t/RC} \\right) \\)", 
+                        "\\( i(t) = \\frac{\\varepsilon}{R} e^{-t/RC} \\)", 
+                        "\\( i(t) = C\\varepsilon e^{-t/RC} \\)", 
+                        "\\( i(t) = \\varepsilon R e^{-t/RC} \\)"
+                    ], 
+                    correct: 1, 
+                    note: "Si la carga es $$ q(t) = C\\varepsilon (1 - e^{-t/RC}) $$, su derivada temporal elimina el término constante y baja el factor \\( -1/RC \\). El producto \\( C\\varepsilon(-1/RC) \\) cancela la \\( C \\) y altera el signo, resultando en una corriente que inicia en un pico máximo (\\( \\varepsilon/R \\)) y decae: $$ i(t) = I_0 e^{-t/RC} $$" 
+                }
+            ],
+            8: [
+                { 
+                    q: "[Nivel 1: Fácil] Una partícula con carga puntual positiva se encuentra en REPOSO absoluto dentro de un campo magnético estático y uniforme. La fuerza magnética neta que actúa sobre ella es:", 
+                    options: [
+                        "Máxima, empujándola en dirección del campo.", 
+                        "Estrictamente cero.", 
+                        "Dependiente de la masa de la partícula.", 
+                        "Una fuerza de atracción hacia el polo sur magnético."
+                    ], 
+                    correct: 1, 
+                    note: "A diferencia del campo eléctrico, la fuerza magnética depende de la velocidad de la carga ($$ \\vec{F} = q(\\vec{v} \\times \\vec{B}) $$). Si la velocidad \\( v \\) es cero (reposo), la fuerza magnética es invariablemente nula." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Si un electrón se mueve a gran velocidad en una dirección estrictamente PARALELA a las líneas de un campo magnético uniforme, su trayectoria será:", 
+                    options: [
+                        "Una espiral o hélice cilíndrica.", 
+                        "Un círculo cerrado perfecto.", 
+                        "Una línea recta inalterada.", 
+                        "Una parábola hacia los polos."
+                    ], 
+                    correct: 2, 
+                    note: "La magnitud de la fuerza magnética es $$ F = |q|vB \\sin(\\theta) $$. Si la partícula viaja paralela al campo, el ángulo \\( \\theta \\) es \\( 0^\\circ \\) o \\( 180^\\circ \\). En ambos casos \\( \\sin(\\theta) = 0 \\), por lo que no experimenta fuerza ni desviación alguna." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Según la ecuación vectorial de Lorentz (\\( \\vec{F} = q(\\vec{v} \\times \\vec{B}) \\)), la fuerza magnética resultante es siempre:", 
+                    options: [
+                        "Perpendicular al vector velocidad \\( \\vec{v} \\), pero paralela a \\( \\vec{B} \\).", 
+                        "Paralela al vector velocidad \\( \\vec{v} \\), pero perpendicular a \\( \\vec{B} \\).", 
+                        "Perpendicular tanto al vector velocidad \\( \\vec{v} \\) como al vector campo magnético \\( \\vec{B} \\).", 
+                        "Co-lineal con el plano formado por \\( \\vec{v} \\) y \\( \\vec{B} \\)."
+                    ], 
+                    correct: 2, 
+                    note: "El producto cruz (o vectorial) de dos vectores genera matemáticamente un tercer vector que es estrictamente ortogonal (perpendicular) al plano que forman los dos primeros. De esto se deriva la famosa Regla de la Mano Derecha." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Las líneas de campo magnético difieren fundamentalmente de las líneas de campo eléctrico estático en que las magnéticas:", 
+                    options: [
+                        "Forman siempre lazos cerrados continuos, sin puntos de inicio o fin aislados.", 
+                        "No pueden atravesar el vacío.", 
+                        "Divergen de las cargas positivas y convergen en las negativas.", 
+                        "Se cruzan entre sí en puntos de alta intensidad."
+                    ], 
+                    correct: 0, 
+                    note: "Debido a la inexistencia de los monopolos magnéticos (conclusión dictada por la Ley de Gauss para el Magnetismo), las líneas de \\( \\vec{B} \\) nunca nacen ni mueren en un punto; forman bucles ininterrumpidos." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] La unidad de medida del campo magnético en el Sistema Internacional es el Tesla (T). Físicamente, un Tesla es equivalente a:", 
+                    options: [
+                        "\\( 1 \\text{ N} / (\\text{A} \\cdot \\text{m}) \\)", 
+                        "\\( 1 \\text{ J} / \\text{C} \\)", 
+                        "\\( 1 \\text{ N} \\cdot \\text{m} / \\text{A} \\)", 
+                        "\\( 1 \\text{ V} \\cdot \\text{s} \\)"
+                    ], 
+                    correct: 0, 
+                    note: "Despejando de la fuerza sobre un conductor (\\( F = I L B \\)), obtenemos que $$ B = \\frac{F}{I \\cdot L} $$. Por lo tanto, un Tesla equivale a un Newton sobre (Amperio por metro)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] ¿Cuánto trabajo mecánico NETO realiza un campo magnético estático sobre una partícula cargada que viaja libremente en su interior?", 
+                    options: [
+                        "Un trabajo máximo proporcional a la velocidad.", 
+                        "Un trabajo negativo, ya que frena a la partícula.", 
+                        "Cero absoluto.", 
+                        "Un trabajo igual a la variación de su energía potencial."
+                    ], 
+                    correct: 2, 
+                    note: "El trabajo se define como $$ W = \\int \\vec{F} \\cdot d\\vec{s} $$. Dado que la fuerza magnética es siempre perpendicular a la velocidad (y por ende al vector desplazamiento), el producto punto es siempre cero. ¡Los campos magnéticos estáticos NO alteran la energía cinética de las partículas!" 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Si una partícula cargada ingresa de manera puramente perpendicular a un campo magnético uniforme, describirá un Movimiento Circular Uniforme (MCU). En esta órbita, la fuerza magnética asume el rol físico de:", 
+                    options: [
+                        "Una fuerza inercial ficticia.", 
+                        "Una fuerza tangencial de aceleración.", 
+                        "Una fuerza restauradora elástica.", 
+                        "Una fuerza centrípeta."
+                    ], 
+                    correct: 3, 
+                    note: "Al ser perpendicular a la trayectoria en todo momento y apuntar siempre hacia un eje central, la fuerza magnética curva la trayectoria de la partícula sin cambiar el módulo de su velocidad, actuando exactamente como una fuerza centrípeta." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] El momento dipolar magnético (\\( \\vec{\\mu} \\)) de una espira plana de alambre conductor se calcula multiplicando:", 
+                    options: [
+                        "El campo magnético \\( B \\) por el área de la espira \\( A \\).", 
+                        "La corriente eléctrica \\( I \\) por el área encerrada \\( A \\).", 
+                        "La masa de la espira \\( m \\) por la corriente \\( I \\).", 
+                        "La resistencia \\( R \\) por el flujo magnético."
+                    ], 
+                    correct: 1, 
+                    note: "El momento magnético deforma a la espira en un 'imán de barra' virtual. Su magnitud escalar es $$ \\mu = I \\cdot A $$ (donde A es el área de la espira). Si hay \\( N \\) espiras apiladas (una bobina), es $$ \\mu = N \\cdot I \\cdot A $$." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Una partícula entra a un dispositivo llamado 'Selector de Velocidades', donde existen un campo eléctrico \\( E \\) y un campo magnético \\( B \\) cruzados ortogonalmente. Para lograr atravesar el filtro en línea recta sin sufrir desviación, la velocidad \\( v \\) de la partícula debe ser exactamente:", 
+                    options: [
+                        "\\( v = E \\cdot B \\)", 
+                        "\\( v = B / E \\)", 
+                        "\\( v = E / B \\)", 
+                        "\\( v = \\sqrt{E \\cdot B} \\)"
+                    ], 
+                    correct: 2, 
+                    note: "Para no desviarse, la fuerza eléctrica y la magnética deben contrarrestarse perfectamente: $$ qE = qvB $$. Cancelando la carga escalar \\( q \\), la velocidad requerida para mantener el equilibrio de fuerzas es $$ v = \\frac{E}{B} $$." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] En el movimiento circular de un ión dentro de un campo magnético perpendicular, el radio (\\( R \\)) de su órbita es:", 
+                    options: [
+                        "Directamente proporcional a su cantidad de movimiento (\\( mv \\)) e inversamente a la fuerza del campo (\\( B \\)).", 
+                        "Directamente proporcional al campo magnético (\\( B \\)) y a su masa.", 
+                        "Independiente de la velocidad de entrada del ión.", 
+                        "Inversamente proporcional al cuadrado de su carga neta."
+                    ], 
+                    correct: 0, 
+                    note: "Igualando la fuerza magnética con la fuerza centrípeta newtoniana: $$ |q|vB = m \\frac{v^2}{R} $$ Despejando se obtiene la ecuación del ciclotrón: $$ R = \\frac{mv}{|q|B} $$. A mayor masa o velocidad, la partícula traza una curva más amplia." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] El periodo de revolución (tiempo \\( T \\) en dar una órbita circular completa) de una carga en un campo magnético depende de su masa y su carga. Paradójicamente, en el régimen clásico este periodo es totalmente INDEPENDIENTE de:", 
+                    options: [
+                        "La magnitud del campo magnético \\( B \\).", 
+                        "Su velocidad escalar (y por ende de su energía cinética).", 
+                        "El signo de la carga eléctrica.", 
+                        "La densidad del espacio exterior."
+                    ], 
+                    correct: 1, 
+                    note: "Sustituyendo \\( v = 2\\pi R/T \\) en la fórmula del radio, la velocidad (\\( v \\)) se cancela algebraicamente, dando el periodo del ciclotrón: $$ T = \\frac{2\\pi m}{|q|B} $$. Una partícula más rápida recorre un radio mayor, tardando exactamente el mismo tiempo en dar una vuelta que una partícula lenta." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un tramo recto de cable rígido de longitud \\( L \\) por el que circula una corriente \\( I \\) se encuentra inmerso en un campo magnético uniforme \\( B \\). La fuerza magnética macroscópica sobre el cable será MÁXIMA cuando este se posicione:", 
+                    options: [
+                        "Perpendicular a las líneas del campo magnético.", 
+                        "Paralelo a las líneas del campo magnético.", 
+                        "Formando un ángulo de 45° con las líneas.", 
+                        "Enroscado sobre sí mismo."
+                    ], 
+                    correct: 0, 
+                    note: "La fuerza sobre un conductor está regida por el producto cruz macroscópico $$ \\vec{F} = I(\\vec{L} \\times \\vec{B}) $$, cuya magnitud es \\( ILB \\sin(\\theta) \\). Alcanza su cénit numérico cuando el ángulo de intersección es 90° (\\( \\sin 90^\\circ = 1 \\))." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] El 'Efecto Hall' es un fenómeno que induce una diferencia de potencial transversal en una cinta conductora que transporta corriente dentro de un campo magnético. Su principal gloria experimental radica en poder determinar con certeza:", 
+                    options: [
+                        "La velocidad de la luz en ese medio material.", 
+                        "La resistividad térmica de la matriz atómica.", 
+                        "El signo algebraico real y la densidad volumétrica de los portadores de carga.", 
+                        "La masa inercial de la red de iones positivos."
+                    ], 
+                    correct: 2, 
+                    note: "El campo magnético desvía a los portadores hacia una pared de la cinta. Si son electrones (-), esa pared se vuelve negativa. Si fuesen portadores positivos (huecos semiconductores), se desviarían hacia la misma pared, volviéndola positiva. Midiendo ese 'Voltaje de Hall' se revela la naturaleza cuántica del material." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un dipolo magnético de momento \\( \\vec{\\mu} \\) está inmerso en un campo magnético uniforme \\( \\vec{B} \\). La magnitud del torque magnético (momento de torsión, \\( \\vec{\\tau} \\)) que intenta forzar el giro de la espira es:", 
+                    options: [
+                        "\\( \\mu B \\cos(\\theta) \\)", 
+                        "\\( \\frac{\\mu}{B} \\sin(\\theta) \\)", 
+                        "\\( \\mu B \\sin(\\theta) \\)", 
+                        "Cero en cualquier orientación geométrica."
+                    ], 
+                    correct: 2, 
+                    note: "Al igual que el torque sobre un dipolo eléctrico, el modelo magnético se evalúa matemáticamente como un producto cruz: $$ \\vec{\\tau} = \\vec{\\mu} \\times \\vec{B} $$ Cuya magnitud escalar es estrictamente $$ \\tau = \\mu B \\sin(\\theta) $$, siendo \\( \\theta \\) el ángulo entre el vector normal a la espira y el campo." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un protón y un electrón son inyectados con exactamente la MISMA VELOCIDAD escalar de forma perpendicular a un campo magnético constante. Al trazar sus trayectorias:", 
+                    options: [
+                        "Giran en el mismo sentido y con el mismo radio.", 
+                        "El electrón describe una órbita de radio muchísimo menor, girando en sentido opuesto al protón.", 
+                        "El protón describe una órbita de radio menor, girando en el mismo sentido.", 
+                        "Ambos colisionan inmediatamente por la atracción magnética."
+                    ], 
+                    correct: 1, 
+                    note: "Al poseer cargas de signo opuesto (+ y -), la fuerza de Lorentz los empuja en direcciones curvas contrarias. Debido a que el radio es proporcional a la masa ($$ R = mv/qB $$), el electrón (siendo unas 1800 veces más liviano que el protón) traza una curva muchísimo más estrecha." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Si el vector velocidad inicial de una partícula cargada tiene un ángulo oblicuo (por ejemplo, 45°) respecto a las líneas de un campo magnético uniforme, la trayectoria tridimensional resultante será indefectiblemente:", 
+                    options: [
+                        "Una catenaria divergente.", 
+                        "Una hélice cilíndrica (espiral) a lo largo del eje del campo magnético.", 
+                        "Un movimiento pendular amortiguado.", 
+                        "Un toroide colapsado."
+                    ], 
+                    correct: 1, 
+                    note: "La componente perpendicular de la velocidad (\\( v_{\\perp} = v \\sin\\theta \\)) genera un movimiento circular continuo. La componente paralela (\\( v_{\\parallel} = v \\cos\\theta \\)) no sufre alteración magnética y arrastra a la partícula en línea recta. La combinación de 'círculo + avance' forja la trayectoria helicoidal (el principio de confinamiento magnético)." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Un cable en forma de semicircunferencia perfecta de radio \\( R \\) transporta corriente \\( I \\) y reposa en un campo magnético uniforme \\( B \\) perpendicular a su plano de arco. La fuerza magnética neta sobre este cable curvo es matemáticamente idéntica a la fuerza sobre:", 
+                    options: [
+                        "Una circunferencia completa de radio \\( R/2 \\).", 
+                        "Un cable recto de longitud \\( 2R \\) (el diámetro) que une directamente ambos extremos.", 
+                        "Cero, por la simetría de las componentes vectoriales tangenciales.", 
+                        "Un cable de longitud \\( \\pi R \\) estirado linealmente."
+                    ], 
+                    correct: 1, 
+                    note: "En un campo uniforme, la fuerza magnética sobre cualquier segmento de cable curvo se evalúa por la integral vectorial del desplazamiento: $$ \\int d\\vec{F} = I \\left( \\int d\\vec{l} \\right) \\times \\vec{B} $$ La integral de \\( d\\vec{l} \\) entre los dos puntos es simplemente el vector recto que los une (la cuerda o diámetro \\( 2R \\))." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] La energía potencial magnética \\( U \\) de una espira con momento dipolar \\( \\vec{\\mu} \\) en un campo \\( \\vec{B} \\) se define como \\( U = -\\vec{\\mu} \\cdot \\vec{B} \\). La posición de equilibrio ESTABLE (mínima energía del sistema) se alcanza mecánicamente cuando el ángulo entre ambos vectores es:", 
+                    options: [
+                        "\\( 0^\\circ \\) (los vectores son perfectamente paralelos).", 
+                        "\\( 90^\\circ \\) (ortogonales).", 
+                        "\\( 180^\\circ \\) (antiparalelos).", 
+                        "\\( 270^\\circ \\)"
+                    ], 
+                    correct: 0, 
+                    note: "El producto escalar responde a la función coseno ($$ U = -\\mu B \\cos\\theta $$). El valor más bajo (más negativo y por ende más estable físicamente) se logra cuando \\( \\cos\\theta = 1 \\), lo que ocurre si y solo si \\( \\theta = 0^\\circ \\). La espira siempre desea alinearse con el campo magnético del entorno." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] En un Motor de Corriente Continua (DC), la espira experimenta un torque que tiende a alinearla. Para evitar que se estanque en el equilibrio estable y obligar a la espira a continuar girando en un solo sentido indefinidamente, se utiliza un dispositivo mecánico rotativo crucial llamado:", 
+                    options: [
+                        "Estator de neodimio.", 
+                        "Conmutador de escobillas (o delgas partidas).", 
+                        "Transformador de fase.", 
+                        "Puente de diodos de estado sólido."
+                    ], 
+                    correct: 1, 
+                    note: "Justo cuando la espira pasa por el punto de torque nulo, el conmutador (anillos cortados a la mitad que giran frotando contra las escobillas) invierte físicamente el sentido de la corriente de la batería en la bobina. Esto reinicia el ciclo de torque magnético, perpetuando la rotación mecánica del motor." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] En un espectrómetro de masas, dos isótopos del mismo elemento (idéntica carga neta, distinta masa nuclear) ingresan con idéntica velocidad a una cámara de vacío con campo magnético perpendicular. En la placa detectora fotográfica, los isótopos dejarán una marca de impacto. El isótopo MÁS PESADO impactará:", 
+                    options: [
+                        "A un radio orbital mayor, impactando más lejos de la hendidura de entrada.", 
+                        "A un radio orbital menor, sufriendo una curva más pronunciada.", 
+                        "En exactamente el mismo punto de colisión, pues la fuerza depende solo de la carga.", 
+                        "No experimentará desviación y seguirá una senda rectilínea."
+                    ], 
+                    correct: 0, 
+                    note: "El radio de curvatura es rígidamente $$ R = \\frac{mv}{|q|B} $$ Sabiendo que \\( v, q \\) y \\( B \\) son constantes del experimento, el radio resulta ser directamente proporcional a la inercia (masa \\( m \\)). La partícula de mayor masa será más difícil de curvar para el campo, barriendo un diámetro de impacto marcadamente mayor." 
+                }
+            ],
+9: [
+                { 
+                    q: "[Nivel 1: Fácil] La Ley de Biot-Savart en el magnetismo es el equivalente analítico exacto de qué ley fundamental de la electrostática?", 
+                    options: [
+                        "La Ley de Gauss", 
+                        "La Ley de Coulomb", 
+                        "La Ley de Faraday", 
+                        "La Ley de Ohm"
+                    ], 
+                    correct: 1, 
+                    note: "Al igual que la Ley de Coulomb define el campo eléctrico diferencial generado por un minúsculo elemento de carga (\\( dq \\)), la Ley de Biot-Savart define el campo magnético diferencial generado por un elemento de corriente (\\( I\\,d\\vec{l} \\))." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] La magnitud del campo magnético \\( B \\) generado por un alambre conductor rectilíneo muy largo, a una distancia radial \\( r \\), obedece la siguiente ecuación:", 
+                    options: [
+                        "\\( B = \\frac{\\mu_0 I}{4\\pi r^2} \\)", 
+                        "\\( B = \\frac{\\mu_0 I}{2R} \\)", 
+                        "\\( B = \\frac{\\mu_0 I}{2\\pi r} \\)", 
+                        "\\( B = \\mu_0 n I \\)"
+                    ], 
+                    correct: 2, 
+                    note: "Resolviendo mediante la Ley de Ampère con una trayectoria circular concéntrica ($$ \\oint B \\cdot dl = B(2\\pi r) = \\mu_0 I $$), se demuestra que el campo magnético de un cable decae con una proporcionalidad de \\( 1/r \\)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Tienes dos alambres conductores infinitos y paralelos, separados por una distancia \\( d \\). Si por ambos circula corriente eléctrica exactamente en la MISMA dirección, los alambres:", 
+                    options: [
+                        "Se repelen electromagnéticamente.", 
+                        "No experimentan ninguna fuerza mutua.", 
+                        "Se atraen electromagnéticamente.", 
+                        "Experimentan un torque giratorio."
+                    ], 
+                    correct: 2, 
+                    note: "El cable 1 genera un campo magnético que incide sobre el cable 2. Usando la regla de la mano derecha dos veces (una para el campo de 1, otra para la fuerza \\( \\vec{F} = I\\vec{L}\\times\\vec{B} \\) sobre 2), se constata que la fuerza neta los empuja a unirse (atracción)." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Según la Ley de Ampère (\\( \\oint \\vec{B} \\cdot d\\vec{l} = \\mu_0 I_{\\text{enc}} \\)), la integral de línea del campo magnético a lo largo de una trayectoria imaginaria cerrada depende exclusivamente de:", 
+                    options: [
+                        "El campo magnético exterior al sistema.", 
+                        "La carga eléctrica estática dentro de la trayectoria.", 
+                        "La corriente neta total que atraviesa el área delimitada por dicha trayectoria cerrada.", 
+                        "La longitud total del alambre conductor."
+                    ], 
+                    correct: 2, 
+                    note: "La Ley de Ampère vincula la circulación del campo magnético a lo largo de un lazo cerrado, única y exclusivamente con la suma algebraica de las corrientes (\\( I_{\\text{enc}} \\)) que perforan la superficie definida por dicho lazo." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] La Ley de Gauss para el Magnetismo establece que el flujo magnético total a través de cualquier superficie cerrada es siempre cero (\\( \\oint \\vec{B} \\cdot d\\vec{A} = 0 \\)). Físicamente, esto demuestra de forma tajante que:", 
+                    options: [
+                        "El campo magnético en el vacío es inexistente.", 
+                        "No existen los monopolos magnéticos aislados en la naturaleza.", 
+                        "Los campos magnéticos no pueden penetrar los metales.", 
+                        "La corriente alterna no genera campos magnéticos netos."
+                    ], 
+                    correct: 1, 
+                    note: "Si el flujo neto es cero, significa que toda línea de campo magnético que sale de un volumen debe volver a entrar. No hay 'fuentes' aisladas (como una carga positiva sola) ni 'sumideros' aislados, probando que los polos Norte y Sur siempre vienen en pares." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] El campo magnético en la región central del interior de un solenoide ideal (infinitamente largo y con espiras apretadas) se caracteriza por ser:", 
+                    options: [
+                        "Uniforme, fuerte y estrictamente paralelo al eje central del cilindro.", 
+                        "Radial, apuntando desde el centro hacia las espiras de cobre.", 
+                        "Cero, por el efecto de apantallamiento de las bobinas.", 
+                        "Oscilante y perpendicular al eje longitudinal."
+                    ], 
+                    correct: 0, 
+                    note: "En un solenoide ideal, las componentes perpendiculares del campo de cada espira se cancelan entre sí, y las componentes paralelas se suman, creando un campo longitudinal masivo y homogéneo ($$ B = \\mu_0 n I $$) en su núcleo." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] En la clásica fórmula del campo magnético interior de un solenoide (\\( B = \\mu_0 n I \\)), la variable minúscula \\( n \\) representa matemáticamente:", 
+                    options: [
+                        "El número total de vueltas del solenoide.", 
+                        "El número de espiras por unidad de longitud (\\( N/L \\)).", 
+                        "El índice de refracción magnética del núcleo.", 
+                        "El número de electrones libres en el cobre."
+                    ], 
+                    correct: 1, 
+                    note: "La variable \\( n \\) minúscula es la 'densidad de espiras'. Se calcula dividiendo el número total de vueltas (\\( N \\)) por la longitud física del solenoide (\\( L \\)). A mayor densidad de espiras, más intenso será el campo concentrado." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Tienes dos alambres conductores rectilíneos, infinitos y paralelos. Si por ambos circula corriente en direcciones OPUESTAS, los alambres:", 
+                    options: [
+                        "Se atraen magnéticamente.", 
+                        "No interactúan entre sí.", 
+                        "Giran sobre su propio eje.", 
+                        "Se repelen magnéticamente."
+                    ], 
+                    correct: 3, 
+                    note: "Si las corrientes son antiparalelas, la regla de la mano derecha evidencia que el campo magnético del primer cable ejerce una fuerza de Lorentz sobre los electrones del segundo cable que lo empuja hacia el exterior, causando una violenta repulsión mutua." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] ¿Cuál es el valor constante exacto (por definición clásica) de la permeabilidad magnética del vacío (\\( \\mu_0 \\)) en el Sistema Internacional?", 
+                    options: [
+                        "\\( 8.85 \\times 10^{-12} \\text{ C}^2 / \\text{N}\\cdot\\text{m}^2 \\)", 
+                        "\\( 4\\pi \\times 10^{-7} \\text{ T}\\cdot\\text{m/A} \\)", 
+                        "\\( 3 \\times 10^8 \\text{ m/s} \\)", 
+                        "\\( 9 \\times 10^9 \\text{ N}\\cdot\\text{m}^2 / \\text{C}^2 \\)"
+                    ], 
+                    correct: 1, 
+                    note: "La constante de permeabilidad del espacio libre dicta cuán fácil es para un campo magnético establecerse en el vacío. Su valor exacto es $$ \\mu_0 = 4\\pi \\times 10^{-7} \\text{ T}\\cdot\\text{m/A} $$." 
+                },
+                { 
+                    q: "[Nivel 1: Fácil] Un cable coaxial ideal transporta una corriente \\( I \\) por el núcleo central hacia la derecha, y una corriente de retorno \\( I \\) por la coraza cilíndrica exterior hacia la izquierda. El campo magnético neto en el espacio EXTERIOR (fuera del cable) es:", 
+                    options: [
+                        "El doble del que generaría un solo cable.", 
+                        "Uniforme y paralelo al cable.", 
+                        "Cero absoluto.", 
+                        "Inversamente proporcional a \\( r^2 \\)."
+                    ], 
+                    correct: 2, 
+                    note: "Trazando un lazo de Ampère que englobe a todo el cable coaxial, la corriente neta encerrada es $$ I_{\\text{enc}} = I_{\\text{centro}} - I_{\\text{coraza}} = I - I = 0 $$. Por lo tanto, el campo magnético externo es perfectamente nulo." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] El campo magnético evaluado exactamente en el centro geométrico de una sola espira circular plana de radio \\( R \\), que transporta una corriente \\( I \\), está dado analíticamente por:", 
+                    options: [
+                        "\\( B = \\frac{\\mu_0 I}{2\\pi R} \\)", 
+                        "\\( B = \\frac{\\mu_0 I}{2R} \\)", 
+                        "\\( B = \\frac{\\mu_0 I}{4\\pi R^2} \\)", 
+                        "\\( B = 0 \\)"
+                    ], 
+                    correct: 1, 
+                    note: "Integrando la Ley de Biot-Savart para el centro de un anillo completo (integrando \\( d\\theta \\) de 0 a \\( 2\\pi \\)): $$ B = \\frac{\\mu_0 I}{4\\pi R^2} \\int dl = \\frac{\\mu_0 I (2\\pi R)}{4\\pi R^2} = \\frac{\\mu_0 I}{2R} $$ (Notar la ausencia geométrica del factor \\( \\pi \\) en el denominador)." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Analizando la Ley de Ampère clásica, James Clerk Maxwell notó una inconsistencia crítica al aplicarla al espacio vacío entre las placas de un capacitor mientras este se carga. Para salvar las leyes de la física, propuso la existencia de:", 
+                    options: [
+                        "Los monopolos magnéticos aislados.", 
+                        "La Corriente de Desplazamiento.", 
+                        "El campo de Higgs.", 
+                        "La Relatividad Especial."
+                    ], 
+                    correct: 1, 
+                    note: "Entre las placas de un capacitor no hay corriente de conducción real (\\( I = 0 \\)), por lo que Ampère fallaba. Maxwell dictaminó que la variación temporal del flujo eléctrico induce un campo magnético, bautizando a este fenómeno como 'Corriente de Desplazamiento' (\\( I_D \\))." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] A diferencia de un solenoide recto ideal, el campo magnético en el interior del núcleo de un toroide (un solenoide curvado en forma de dona) NO es perfectamente uniforme, ya que su magnitud escalar:", 
+                    options: [
+                        "Es nula en toda la dona.", 
+                        "Es mayor en el borde interno y disminuye a medida que aumenta el radio \\( r \\) respecto al centro del toroide.", 
+                        "Es nula en el borde interno y máxima en el borde externo.", 
+                        "Oscila periódicamente en cada espira."
+                    ], 
+                    correct: 1, 
+                    note: "Aplicando la Ley de Ampère a un lazo circular dentro del toroide: $$ B(2\\pi r) = \\mu_0 N I \\implies B = \\frac{\\mu_0 N I}{2\\pi r} $$ Al estar la variable \\( r \\) en el denominador, el campo es más intenso en el anillo interior (menor radio) que en el exterior." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] En la formulación diferencial de la Ley de Biot-Savart ($$ d\\vec{B} = \\frac{\\mu_0 I}{4\\pi} \\frac{d\\vec{l} \\times \\hat{r}}{r^2} $$), la dirección del campo magnético \\( d\\vec{B} \\) generado es invariablemente:", 
+                    options: [
+                        "Paralela al alambre conductor.", 
+                        "Radial hacia afuera del cable.", 
+                        "Perpendicular tanto al vector diferencial de longitud (\\( d\\vec{l} \\)) como al vector unitario de posición (\\( \\hat{r} \\)).", 
+                        "Opuesta al sentido de la corriente."
+                    ], 
+                    correct: 2, 
+                    note: "La presencia del producto vectorial (producto cruz, \\( d\\vec{l} \\times \\hat{r} \\)) en la ecuación dicta por las leyes del álgebra lineal que el vector resultante (\\( d\\vec{B} \\)) será ortogonal al plano que forman los dos vectores operados." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Un conductor cilíndrico metálico, sólido, de radio \\( R \\), transporta una corriente \\( I \\) distribuida uniformemente en toda su sección transversal. En el INTERIOR de la masa del cable (\\( r < R \\)), la magnitud del campo magnético:", 
+                    options: [
+                        "Es idénticamente cero.", 
+                        "Crece linealmente con la distancia \\( r \\) desde el centro geométrico.", 
+                        "Decae hiperbólicamente con \\( 1/r \\).", 
+                        "Es constante."
+                    ], 
+                    correct: 1, 
+                    note: "Un lazo de Ampère interno de radio \\( r \\) solo encierra una fracción de la corriente total: $$ I_{\\text{enc}} = I \\frac{\\pi r^2}{\\pi R^2} $$. Al igualar con $$ B(2\\pi r) = \\mu_0 I \\frac{r^2}{R^2} $$, una variable \\( r \\) se cancela, demostrando que $$ B = \\left(\\frac{\\mu_0 I}{2\\pi R^2}\\right) r $$, un crecimiento netamente lineal." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Al acercar un potente imán permanente a una muestra de laboratorio, esta es repelida débilmente por el imán y se opone a las líneas de campo. Podemos afirmar con certeza termodinámica que el material es de naturaleza:", 
+                    options: [
+                        "Ferromagnética.", 
+                        "Paramagnética.", 
+                        "Diamagnética.", 
+                        "Superconductora de alta temperatura."
+                    ], 
+                    correct: 2, 
+                    note: "Los materiales diamagnéticos (como el bismuto o el agua) no tienen momentos magnéticos permanentes. Al aplicarles un campo exterior \\( B \\), la inducción orbital atómica genera pequeños dipolos en sentido contrario al campo externo (Ley de Lenz a escala atómica), originando una débil repulsión." 
+                },
+                { 
+                    q: "[Nivel 2: Intermedio] Dos cables gruesos, infinitos y paralelos, separados por una métrica \\( d \\), transportan corrientes \\( I_1 \\) e \\( I_2 \\). La magnitud matemática de la fuerza magnética por unidad de longitud (\\( F/L \\)) que un cable ejerce telepáticamente sobre el otro es:", 
+                    options: [
+                        "\\( \\frac{\\mu_0 I_1 I_2}{4\\pi d^2} \\)", 
+                        "\\( \\frac{\\mu_0 I_1 I_2}{2\\pi d} \\)", 
+                        "\\( \\frac{\\mu_0 (I_1 + I_2)}{2\\pi d} \\)", 
+                        "\\( \\mu_0 I_1 I_2 d \\)"
+                    ], 
+                    correct: 1, 
+                    note: "El campo radiado por el cable 1 sobre el cable 2 es $$ B_1 = \\frac{\\mu_0 I_1}{2\\pi d} $$. La fuerza sobre el cable 2 es $$ F_2 = I_2 L B_1 $$. Sustituyendo y pasando la longitud dividiendo, emerge la famosa ecuación: $$ \\frac{F}{L} = \\frac{\\mu_0 I_1 I_2}{2\\pi d} $$" 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Una lámina plana, delgada, aislante e infinitamente extensa transporta una densidad de corriente superficial lineal (como infinitos cables pegados lado a lado). El campo magnético generado en las proximidades de la lámina es:", 
+                    options: [
+                        "Perpendicular a la lámina y nulo en su superficie.", 
+                        "Radial hacia afuera desde el centro de la lámina.", 
+                        "Uniforme en magnitud y paralelo al plano de la lámina, pero con sentidos opuestos en cada cara.", 
+                        "Cae exponencialmente con la altitud."
+                    ], 
+                    correct: 2, 
+                    note: "Aplicando un lazo de Ampère rectangular que perfore la lámina, se comprueba que el campo magnético \\( \\vec{B} \\) fluye de forma paralela y tangencial a la placa, con una magnitud constante de $$ B = \\frac{\\mu_0 K}{2} $$ independiente de la distancia a la placa." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] En un capacitor de placas paralelas inmerso en el vacío, en pleno proceso transitorio de carga a corriente \\( i_C \\), la colosal 'Corriente de Desplazamiento' (\\( i_D \\)) de Maxwell calculada en el interior de las placas:", 
+                    options: [
+                        "Es siempre menor a la corriente de conducción del circuito.", 
+                        "Se produce por la fricción de electrones contra el vacío.", 
+                        "Tiene exactamente la misma magnitud escalar que la corriente de conducción de los cables (\\( i_D = i_C \\)).", 
+                        "Es un vector nulo por la ausencia de alambres de cobre."
+                    ], 
+                    correct: 2, 
+                    note: "Para que la Ley de Ampère-Maxwell posea continuidad matemática, la corriente 'ficticia' que fluye a través del capacitor (debida a la tasa de variación del flujo eléctrico) debe igualar estrictamente a la corriente real de electrones que llega por el alambre. Así se cierra el circuito." 
+                },
+                { 
+                    q: "[Nivel 3: Difícil] Una espira circular de radio \\( R \\) transporta una corriente \\( I \\). Si calculamos con Biot-Savart el campo magnético a lo largo del eje ortogonal que pasa por su centro (eje x), a una distancia topológica muy lejana (\\( x \\gg R \\)), el campo decae en proporción a:", 
+                    options: [
+                        "\\( 1/x \\) (como un alambre).", 
+                        "\\( 1/x^2 \\) (como una partícula).", 
+                        "\\( 1/x^3 \\) (como un dipolo magnético).", 
+                        "\\( 1/x^4 \\)"
+                    ], 
+                    correct: 2, 
+                    note: "A inmensas distancias, la espira de corriente revela su verdadera naturaleza: actúa como un momento dipolar magnético puro (el famoso 'imán de barra'). Todos los campos dipolares, sean eléctricos o magnéticos, decaen agresivamente según el cubo del radio ($$ 1/x^3 $$)." 
+                }
             ]
+
         };
 
         // --- BASES DE DATOS MATEMÁTICOS (GUIAS DE APUNTES) ---
@@ -983,6 +2322,31 @@
             const titulo = document.getElementById('module-title').innerText;
             const texto = `🌌 *Telemetría UTN - Física II*\n${titulo} completado.\n\n✅ Aciertos: ${score}/${currentModuleData.length}\n🔥 Max. Secuencia: ${maxStreak}\n🎯 Precisión: ${accuracy}%\n\n¡Preparándome para el parcial!\nAutoridad: Facundo Barrojo`;
             navigator.clipboard.writeText(texto).then(() => alert("¡Registro copiado al portapapeles!")).catch(e => console.error(e));
+        }
+        function returnToMenu() {
+            // Detener el temporizador de la pregunta actual
+            clearInterval(timerInterval);
+            
+            // Ocultar las interfaces del cuestionario
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'none';
+            
+            // Restablecer la visibilidad para cuando vuelva a entrar a otro módulo
+            document.getElementById('quiz-content').style.display = 'block';
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('btn-guide').style.display = 'none';
+            
+            // Asegurarse de que los apuntes flotantes estén cerrados
+            closeModal('modal-overlay');
+            closeModal('guide-overlay');
+            
+            // Mostrar el menú principal nuevamente
+            document.getElementById('module-selection').style.display = 'flex';
+            
+            // Restaurar el volumen del agujero negro si estaba atenuado
+            if(masterGain && audioHabilitado) {
+                masterGain.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.5);
+            }
         }
     </script>
 </body>
